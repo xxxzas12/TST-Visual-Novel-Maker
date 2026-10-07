@@ -129,7 +129,7 @@ If you enjoy TSTVN and want to support its development, you can support the proj
 
 หากคุณชอบ TSTVN และต้องการสนับสนุนการพัฒนา สามารถสนับสนุนได้ที่:
 
-☕ [Buy Me a Coffee](buymeacoffee.com/xxxzas12p)
+☕ [Buy Me a Coffee](https://buymeacoffee.com/xxxzas12p)
 
 Your support helps me continue developing new features and improving TSTVN.
 
