@@ -1,116 +1,184 @@
-# TSTVN — TST Visual Novel Maker
 
-TSTVN is a desktop app for making visual novels **without writing code**:
+# TSTVN — Visual Novel Maker
 
-> Import → Organize → Create → Preview → Test → Export
+> **Create your own Visual Novel without needing to write code.**
+>
+> **สร้าง Visual Novel ของคุณเอง โดยไม่จำเป็นต้องเขียนโค้ด**
 
-Drag in a folder of art and music, build scenes visually with actions (dialogue, choices, characters,
-backgrounds, music, variables, animations), press **Play**, and export a real game for **Windows** or the
-**Web** (which also runs on phones).
+TSTVN is a simple and beginner-friendly Visual Novel Maker designed to let creators focus on their story, characters, artwork, and choices instead of programming.
 
----
-
-## Install
-
-Run **`TSTVN-Setup-1.0.0.exe`** (built into `release/` by `npm run dist`) on any Windows 10/11 x64 PC.
-It installs for the current user (no admin needed), lets you pick the folder, and creates Desktop and
-Start Menu shortcuts. Uninstall from Windows Settings → Apps.
-
-## Language / ภาษา
-
-The editor is available in **English** and **ไทย (Thai)**: switch on the start screen (🌐) or in
-**Settings → Editor language**. First run follows the Windows language. Each project also has a
-**Game language** (Settings → Game) for the menus players see (Start, Save, Load, Settings…), and new
-projects from templates are created in the current language.
-
-## Fonts & appearance
-
-**Settings → Fonts**:
-- **Program font** and **program font size** for the TSTVN interface.
-- **Dialogue font** and **dialogue font size** for the game (dialogue, names, choices, menus). The default is
-  the theme's font and size.
-- **The font picker** lists fonts installed in Windows plus **Custom Fonts**. It has search and a live sample,
-  and every font is shown in its own typeface.
-- **Import Font** adds `.ttf`/`.otf` files. They work in TSTVN without installing them in Windows. When used as
-  the dialogue font, the file is copied into the project (`fonts/`) and shipped inside exported games.
-- **Previews:** changes are previewed first (Dark and Light samples, plus the real game runtime), then
-  **Apply**, **Cancel** or **Reset to Default**. Choices are remembered across restarts.
-
-**Settings → Editor → Appearance**: Dark, Light, or Follow Windows. Both palettes are checked for WCAG contrast
-by `tests/appearance.test.ts`.
-
-## Quick start (users)
-
-1. Start TSTVN (Desktop shortcut, `release/win-unpacked/TSTVN.exe`, or `npm start` from source).
-2. **Create Project** — pick a template (Blank, Romance, Horror, Mystery, Comedy, or your own).
-3. **Assets → Import Folder** (or drag a folder onto the window). Subfolders are scanned, types detected,
-   thumbnails made, duplicates found. `Characters/Alice/happy.png` automatically becomes character
-   *Alice* with expression *Happy*.
-4. **Scenes** — drag a background or a character onto the stage, click **💬 Dialogue**, **🔀 Choice**,
-   or **＋ Action** (searchable, by category).
-5. **▶ Play** (F5) or **▶ Play From Here** (Shift+F5) — the preview is the real game runtime.
-6. **Export → EXPORT GAME** — choose Windows or Web, the export is validated before it is published.
-
-Want demo assets? `npm run samples` writes `samples/Assets` (characters, backgrounds, CG, music, SFX, voice).
-
-### Editor shortcuts
-
-| Keys | Action |
-| --- | --- |
-| Ctrl+S | Save |
-| Ctrl+Z / Ctrl+Y | Undo / Redo |
-| F5 / Shift+F5 | Play / Play From Here |
-| Ctrl+1 … Ctrl+9 | Switch workspace |
-| Ctrl+A, Ctrl+Click, Shift+Click | Multi-select (gallery, action list) |
-| Delete, F2, Ctrl+D, Ctrl+C / Ctrl+V | Delete, rename, duplicate, copy/paste actions |
-| Alt+↑ / Alt+↓ | Move selected actions |
-
-### In-game controls
-
-Click / tap / Space / Enter = continue · Esc = menu · Ctrl+S or S = save · L = load · A = auto ·
-hold Ctrl = skip · H or right-click = hide UI · F11 / Alt+Enter = fullscreen · 1–9 / arrows = choices.
+TSTVN เป็นโปรแกรมสร้าง Visual Novel ที่ออกแบบมาให้ใช้งานง่าย เหมาะสำหรับผู้เริ่มต้น โดยให้ผู้สร้างโฟกัสกับเนื้อเรื่อง ตัวละคร ภาพ และตัวเลือก โดยไม่ต้องเสียเวลาเขียนโค้ด
 
 ---
 
-## Development
+## ✨ Features | ฟีเจอร์
 
-Requirements: **Node.js 22.12+** (developed with Node 24 LTS) on Windows x64. No other tools needed.
+- 🎬 Visual Novel scene editor
+- 💬 Customizable dialogue boxes
+- 👤 Character system
+- 🖼️ Image and background support
+- 🔀 Choice / branching system
+- 🎵 Music and sound support
+- 🌐 Multi-language support
+- 🌙 Dark Mode / Light Mode
+- 🔤 Custom font support
+- 🎨 Customizable text and UI
+- 🔌 Plugin system
+- 💾 Project save/load
+- 📦 Export your project
+- 🖥️ Windows installer
 
-```bash
-npm install          # also downloads the Electron binary (postinstall)
-npm run dev          # editor with hot reload (Vite) + Electron
-npm run build        # typecheck + runtime + editor + main process → dist/
-npm start            # run the built editor
-npm run dist         # build + package → release/TSTVN-Setup-1.0.0.exe (installer) + release/win-unpacked/
-node scripts/i18n-keys.mjs --missing   # list UI strings that still need a Thai translation
-```
+### ภาษาไทย
 
-### Tests
+- 🎬 ระบบสร้างและจัดการฉาก
+- 💬 ปรับแต่งกล่องข้อความได้
+- 👤 ระบบตัวละคร
+- 🖼️ รองรับภาพและพื้นหลัง
+- 🔀 ระบบตัวเลือกและเนื้อเรื่องแยกแขนง
+- 🎵 รองรับเพลงและเสียง
+- 🌐 รองรับหลายภาษา
+- 🌙 โหมดมืด / โหมดสว่าง
+- 🔤 เปลี่ยนฟอนต์ได้
+- 🎨 ปรับแต่งข้อความและ UI ได้
+- 🔌 รองรับระบบ Plugin
+- 💾 บันทึกและโหลดโปรเจกต์
+- 📦 Export เกม
+- 🖥️ มีตัวติดตั้งสำหรับ Windows
 
-```bash
-npm run lint         # ESLint (TypeScript + React hooks)
-npm run typecheck    # tsc --noEmit, strict
-npm test             # Vitest: model, engine, importer, file manager, backups, packages, export
-npm run test:e2e     # Playwright drives the real Electron app (needs `npm run build` first)
-npm run test:all     # everything above
-```
+---
 
-The E2E suite runs the full acceptance workflow: create project → import folder → gallery → file manager →
-characters → variables → chapters/scenes → drag & drop → dialogue/choice/conditional/animation → theme →
-story flow → preview → play from here → in-game save/load → undo/redo → save/close/reopen → export Web +
-Windows → `.tstvn` package → run the exported game at PC, phone-landscape, phone-portrait and 4:3 sizes.
-`e2e/packaged.spec.ts` additionally checks that the packaged `TSTVN.exe` exports a working game.
+## 📸 Preview | ตัวอย่าง
 
-Screenshots from the last E2E run are written to `.e2e-tmp/screenshots/`.
+<!-- Add screenshots here -->
+<!-- ใส่ภาพหน้าจอโปรแกรมตรงนี้ -->
 
-### Export
+![TSTVN Preview](docs/images/preview.png)
 
-- **Windows**: a folder with `<Game>.exe` (Electron player + the game). Double-click to play. The window mode
-  (windowed / fullscreen / borderless) comes from Settings.
-- **Web / mobile browsers**: `index.html` + `runtime.js` + `game.js` + `assets/`. Open locally or upload to any
-  web host. Touch, safe areas (notches) and phone aspect ratios are supported.
+---
 
-Every export is built in a staging folder, verified (required files, runtime integrity, game data, every asset
-reference) and only then moved into place — a broken export never replaces a working one.
+## 📥 Download | ดาวน์โหลด
 
-See [docs/architecture.md](docs/architecture.md) and [docs/development-log.md](docs/development-log.md).
+You can download the latest version of TSTVN from the **Releases** page.
+
+สามารถดาวน์โหลด TSTVN เวอร์ชันล่าสุดได้จากหน้า **Releases**
+
+👉 **[Download TSTVN](../../releases/latest)**
+
+Download the `.exe` installer and follow the installation instructions.
+
+ดาวน์โหลดไฟล์ `.exe` แล้วติดตั้งตามขั้นตอนได้เลย
+
+---
+
+## 🚀 Getting Started | เริ่มต้นใช้งาน
+
+### English
+
+1. Download TSTVN.
+2. Install the application.
+3. Create a new project.
+4. Add scenes, characters, dialogue, images, and choices.
+5. Preview your Visual Novel.
+6. Export your project.
+
+### ภาษาไทย
+
+1. ดาวน์โหลด TSTVN
+2. ติดตั้งโปรแกรม
+3. สร้างโปรเจกต์ใหม่
+4. เพิ่มฉาก ตัวละคร ข้อความ ภาพ และตัวเลือก
+5. ทดลองเล่น Visual Novel
+6. Export โปรเจกต์ของคุณ
+
+---
+
+## 🔌 Plugins | ระบบ Plugin
+
+TSTVN is designed to support plugins so the community can extend the program with new features, tools, themes, and other content.
+
+TSTVN ถูกออกแบบให้รองรับระบบ Plugin เพื่อให้ชุมชนสามารถสร้างความสามารถใหม่ ๆ เพิ่มเติมให้กับโปรแกรมได้
+
+Possible community plugins may include:
+
+- 🎨 Themes
+- 🔤 Fonts
+- 🛠️ Tools
+- 🎮 Gameplay features
+- 🖼️ Templates
+- ⚙️ Extensions
+
+---
+
+## 🌱 Community | ชุมชน
+
+TSTVN is a growing project.
+
+If you create something with TSTVN, share it with the community!
+
+TSTVN เป็นโปรเจกต์ที่กำลังพัฒนาและเติบโต
+
+หากคุณสร้างเกมหรือผลงานด้วย TSTVN สามารถนำมาแบ่งปันกับชุมชนได้
+
+---
+
+## ☕ Support TSTVN | สนับสนุน TSTVN
+
+If you enjoy using TSTVN and would like to support its development, you can support the project here:
+
+หากคุณชอบ TSTVN และต้องการสนับสนุนการพัฒนา สามารถสนับสนุนได้ที่:
+
+### ☕ Buy Me a Coffee
+
+**[Support TSTVN]([YOUR_BUY_ME_A_COFFEE_LINK](https://buymeacoffee.com/xxxzas12p))**
+
+Every support helps me continue developing TSTVN, fixing bugs, and adding new features.
+
+ทุกการสนับสนุนช่วยให้ผมสามารถพัฒนา TSTVN แก้ไขข้อผิดพลาด และเพิ่มฟีเจอร์ใหม่ ๆ ต่อไปได้ ❤️
+
+---
+
+## 🛠️ Development | การพัฒนา
+
+TSTVN is currently under active development.
+
+TSTVN ยังอยู่ในระหว่างการพัฒนา ฟีเจอร์บางอย่างอาจมีการเปลี่ยนแปลงในอนาคต
+
+If you find a bug or have an idea for a new feature, feel free to open an Issue.
+
+หากพบข้อผิดพลาดหรือมีไอเดียสำหรับฟีเจอร์ใหม่ สามารถเปิด Issue เพื่อแจ้งได้
+
+---
+
+## 📋 Roadmap | แผนการพัฒนา
+
+- [x] Visual Novel editor
+- [x] Scene system
+- [x] Dialogue system
+- [x] Character system
+- [x] Choice system
+- [x] Dark / Light Mode
+- [x] Multi-language support
+- [x] Custom fonts
+- [x] Windows installer
+- [ ] Plugin marketplace
+- [ ] Community plugin system
+- [ ] More export options
+- [ ] More customization options
+
+---
+
+## 📄 License | ลิขสิทธิ์
+
+License information will be added as the project develops.
+
+ข้อมูลเกี่ยวกับ License จะถูกเพิ่มเมื่อโปรเจกต์มีความพร้อมมากขึ้น
+
+---
+
+# TSTVN
+
+**Tash so trust**
+
+Made with ❤️ for Visual Novel creators.
+
+สร้างขึ้นด้วย ❤️ สำหรับคนที่อยากสร้าง Visual Novel
