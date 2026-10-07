@@ -1,0 +1,99 @@
+{
+  "name": "tstvn",
+  "productName": "TSTVN",
+  "version": "1.0.0",
+  "description": "TSTVN - TST Visual Novel Maker. Create visual novels without writing code.",
+  "author": "TSTVN",
+  "license": "MIT",
+  "private": true,
+  "main": "dist/main/main.cjs",
+  "scripts": {
+    "postinstall": "install-electron",
+    "build:runtime": "vite build --config vite.runtime.config.mts",
+    "build:editor": "vite build --config vite.config.mts",
+    "build:main": "node scripts/build-main.mjs",
+    "build": "npm run typecheck && npm run build:runtime && npm run build:editor && npm run build:main",
+    "start": "node scripts/start.mjs",
+    "dev": "npm run build:runtime && npm run build:main && node scripts/dev.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src tests scripts e2e",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "npm run lint && npm run build && npm run test && npm run test:e2e",
+    "samples": "node scripts/make-samples.mjs",
+    "dist": "npm run build && node scripts/make-icon.mjs && electron-builder --win nsis dir"
+  },
+  "build": {
+    "appId": "com.tst.tstvn",
+    "productName": "TSTVN",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.map",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/runtime",
+        "to": "runtime"
+      },
+      {
+        "from": "dist/game-shell",
+        "to": "game-shell"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "dir"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TSTVN",
+      "multiLanguageInstaller": true,
+      "installerLanguages": [
+        "en_US",
+        "th_TH"
+      ],
+      "artifactName": "TSTVN-Setup-${version}.${ext}",
+      "uninstallDisplayName": "TSTVN Visual Novel Maker"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@tanstack/react-virtual": "^3.14.13",
+    "@xyflow/react": "^12.12.0",
+    "fflate": "^0.8.3",
+    "immer": "^11.1.21",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.6.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

@@ -1,0 +1,527 @@
+/* TSTVN runtime — the player-facing game UI. Everything is prefixed with tvn-
+   so it can never collide with a host page. Theme values arrive as CSS variables. */
+
+.tvn-root {
+  --tvn-ui-scale: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--tvn-text, #fff);
+  font-family: var(--tvn-font, system-ui, sans-serif);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  cursor: default;
+}
+.tvn-root *,
+.tvn-root *::before,
+.tvn-root *::after {
+  box-sizing: border-box;
+}
+.tvn-hidden {
+  display: none !important;
+}
+
+/* ---------- scene layers ---------- */
+.tvn-scene,
+.tvn-bg-layer,
+.tvn-cg-layer,
+.tvn-bg-item,
+.tvn-fx {
+  position: absolute;
+  inset: 0;
+}
+/* Own stacking context: character/CG z-indices must never rise above the UI. */
+.tvn-scene {
+  z-index: 0;
+}
+.tvn-bg-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tvn-stage {
+  position: absolute;
+}
+.tvn-cg-layer {
+  z-index: 400;
+}
+.tvn-char,
+.tvn-image {
+  position: absolute;
+  pointer-events: none;
+}
+.tvn-char-anim {
+  position: relative;
+  height: 100%;
+}
+.tvn-char img {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+.tvn-char-anim > .tvn-fading {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.tvn-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tvn-fx {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: #000;
+}
+.tvn-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+  color: #fff;
+  font: 600 14px system-ui, sans-serif;
+  background: repeating-linear-gradient(45deg, #5a2330, #5a2330 12px, #3d1620 12px, #3d1620 24px);
+  border: 2px dashed #ff8a9b;
+  text-align: center;
+  padding: 8px;
+}
+.tvn-missing-char {
+  aspect-ratio: 1 / 2;
+  width: auto;
+}
+
+/* ---------- in-game UI ---------- */
+.tvn-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  transition: opacity 0.2s;
+}
+.tvn-ui-hidden .tvn-ui {
+  opacity: 0;
+}
+.tvn-ui-hidden .tvn-ui * {
+  pointer-events: none !important;
+}
+
+.tvn-dialog {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(14px * var(--tvn-ui-scale) + env(safe-area-inset-bottom));
+  width: min(var(--tvn-dialog-width, 90%), calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-width: 1500px;
+  min-height: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale) * 5);
+  max-height: 44%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--tvn-dialog-padding, 24px) * var(--tvn-ui-scale));
+  padding-bottom: calc(var(--tvn-dialog-padding, 24px) * var(--tvn-ui-scale) + 0.6em);
+  background: var(--tvn-dialog-bg, rgba(16, 20, 32, 0.85));
+  border: var(--tvn-dialog-border, none);
+  border-radius: var(--tvn-dialog-radius, 12px);
+  box-shadow: var(--tvn-dialog-shadow, none);
+  font-size: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale));
+  line-height: 1.55;
+  pointer-events: auto;
+  overflow-wrap: anywhere;
+}
+.tvn-root[data-dialog-pos='top'] .tvn-dialog {
+  bottom: auto;
+  top: calc(64px * var(--tvn-ui-scale) + env(safe-area-inset-top));
+}
+.tvn-root[data-dialog-pos='middle'] .tvn-dialog {
+  bottom: auto;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.tvn-name {
+  display: inline-block;
+  margin-bottom: 0.35em;
+  padding: 0.12em 0.7em;
+  font-weight: 700;
+  font-size: 0.92em;
+  background: var(--tvn-name-bg, #4f6bff);
+  color: var(--tvn-name-color, #fff);
+  border-radius: var(--tvn-name-radius, 6px);
+  border-bottom: 3px solid var(--tvn-speaker, transparent);
+}
+.tvn-text {
+  white-space: pre-wrap;
+  min-height: 2.6em;
+}
+.tvn-narration .tvn-text {
+  opacity: 0.95;
+}
+.tvn-indicator {
+  position: absolute;
+  right: calc(18px * var(--tvn-ui-scale));
+  bottom: calc(8px * var(--tvn-ui-scale));
+  font-size: 0.6em;
+  opacity: 0;
+}
+.tvn-indicator.tvn-show {
+  opacity: 0.8;
+  animation: tvn-blink 1s ease-in-out infinite;
+}
+@keyframes tvn-blink {
+  50% {
+    transform: translateY(4px);
+    opacity: 0.3;
+  }
+}
+
+.tvn-choices {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(12px * var(--tvn-ui-scale));
+  padding: calc(56px * var(--tvn-ui-scale) + env(safe-area-inset-top)) 12px 12px;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.tvn-ui:has(.tvn-dialog:not(.tvn-hidden)) .tvn-choices {
+  padding-bottom: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale) * 6 + 40px);
+}
+.tvn-choice {
+  width: min(640px, 92%);
+  min-height: 48px;
+  padding: 0.55em 1.2em;
+  font: inherit;
+  font-size: calc(var(--tvn-font-size, 26px) * 0.92 * var(--tvn-ui-scale));
+  line-height: 1.35;
+  color: var(--tvn-choice-color, #fff);
+  background: var(--tvn-choice-bg, rgba(16, 20, 32, 0.85));
+  border: 1px solid var(--tvn-choice-border, #fff);
+  border-radius: var(--tvn-choice-radius, 12px);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  overflow-wrap: anywhere;
+}
+.tvn-choice:hover,
+.tvn-choice:focus-visible {
+  background: var(--tvn-choice-hover, #4f6bff);
+  transform: scale(1.02);
+  outline: none;
+}
+
+.tvn-quick {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: calc(10px + env(safe-area-inset-right));
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+  transition: opacity 0.4s;
+}
+.tvn-qbtn {
+  min-height: 34px;
+  min-width: 34px;
+  padding: 0 12px;
+  font: 600 13px system-ui, sans-serif;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.tvn-qbtn:hover,
+.tvn-qbtn:focus-visible {
+  background: var(--tvn-accent, #4f6bff);
+  outline: none;
+}
+.tvn-qbtn.tvn-on {
+  background: var(--tvn-accent, #4f6bff);
+}
+@media (pointer: coarse) {
+  .tvn-qbtn {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 14px;
+  }
+}
+.tvn-root[data-compact='true'] .tvn-quick [data-testid='tvn-q-load'],
+.tvn-root[data-compact='true'] .tvn-quick [data-testid='tvn-q-hide'] {
+  display: none;
+}
+.tvn-autohide.tvn-idle .tvn-quick {
+  opacity: 0;
+}
+
+/* ---------- screens (title / end / error) ---------- */
+.tvn-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.6));
+  color: var(--tvn-menu-color, #fff);
+  overflow-y: auto;
+}
+.tvn-title-box {
+  text-align: center;
+  max-width: 92%;
+}
+.tvn-game-title {
+  margin: 0 0 0.2em;
+  font-size: clamp(28px, 7vmin, 80px);
+  line-height: 1.1;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
+  overflow-wrap: anywhere;
+}
+.tvn-author {
+  opacity: 0.8;
+  margin-bottom: 1.2em;
+}
+.tvn-title-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1.4em;
+}
+.tvn-title-buttons .tvn-btn {
+  min-width: min(260px, 80vw);
+}
+.tvn-error-screen p {
+  max-width: 560px;
+  margin: 0 auto 1em;
+  line-height: 1.5;
+}
+
+.tvn-btn {
+  min-height: 44px;
+  padding: 0 22px;
+  font: 600 clamp(14px, calc(16px * var(--tvn-ui-scale)), 20px) var(--tvn-font, system-ui, sans-serif);
+  color: var(--tvn-menu-color, #fff);
+  background: var(--tvn-menu-bg, rgba(11, 14, 24, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.tvn-btn:hover,
+.tvn-btn:focus-visible {
+  border-color: var(--tvn-accent, #4f6bff);
+  outline: none;
+  background: color-mix(in srgb, var(--tvn-accent, #4f6bff) 35%, var(--tvn-menu-bg, #0b0e18));
+}
+.tvn-btn.tvn-primary {
+  background: var(--tvn-accent, #4f6bff);
+  border-color: var(--tvn-accent, #4f6bff);
+}
+
+/* ---------- menus ---------- */
+.tvn-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.55);
+}
+.tvn-menu {
+  width: min(980px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--tvn-menu-bg, #0b0e18);
+  color: var(--tvn-menu-color, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  font-family: var(--tvn-font, system-ui, sans-serif);
+}
+.tvn-pause,
+.tvn-confirm {
+  width: min(380px, 100%);
+}
+.tvn-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tvn-menu-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.tvn-close {
+  min-width: 44px;
+  padding: 0;
+}
+.tvn-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tvn-menu-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+.tvn-confirm p {
+  margin: 0;
+  line-height: 1.5;
+}
+.tvn-confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.tvn-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.tvn-root[data-compact='true'] .tvn-slots {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+.tvn-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  text-align: left;
+  font: 13px system-ui, sans-serif;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+.tvn-slot:hover:not(:disabled),
+.tvn-slot:focus-visible {
+  border-color: var(--tvn-accent, #4f6bff);
+  outline: none;
+}
+.tvn-slot:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tvn-slot-shot {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
+.tvn-slot-label {
+  font-weight: 700;
+}
+.tvn-slot-meta,
+.tvn-slot-text {
+  opacity: 0.75;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tvn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tvn-field {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 2fr 56px;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+.tvn-field.tvn-check {
+  grid-template-columns: 1fr auto;
+}
+.tvn-field select {
+  grid-column: span 2;
+  min-height: 40px;
+  font: inherit;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+.tvn-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--tvn-accent, #4f6bff);
+  min-height: 32px;
+}
+.tvn-field input[type='checkbox'] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--tvn-accent, #4f6bff);
+}
+.tvn-root[data-compact='true'] .tvn-field {
+  grid-template-columns: 1fr 48px;
+}
+.tvn-root[data-compact='true'] .tvn-field > span:first-child {
+  grid-column: span 2;
+}
+
+.tvn-toast {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font: 600 14px system-ui, sans-serif;
+  pointer-events: none;
+}
+
+.tvn-video-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: #000;
+}
+.tvn-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.tvn-video-hint {
+  position: absolute;
+  right: 16px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  font: 13px system-ui, sans-serif;
+  opacity: 0.6;
+}
+
+/* Portrait phones: give dialogue more room, keep the stage visible above. */
+.tvn-root[data-orientation='portrait'] .tvn-dialog {
+  max-height: 48%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tvn-indicator.tvn-show {
+    animation: none;
+  }
+}
