@@ -129,7 +129,7 @@ If you enjoy using TSTVN and would like to support its development, you can supp
 
 ### ☕ Buy Me a Coffee
 
-**[Support TSTVN]([YOUR_BUY_ME_A_COFFEE_LINK]https://buymeacoffee.com/xxxzas12p)**
+**[Support TSTVN]https://buymeacoffee.com/xxxzas12p)]**
 
 Every support helps me continue developing TSTVN, fixing bugs, and adding new features.
 
