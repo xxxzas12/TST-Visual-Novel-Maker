@@ -121,19 +121,21 @@ TSTVN เป็นโปรเจกต์ที่กำลังพัฒน�
 
 ---
 
-## ☕ Support TSTVN | สนับสนุน TSTVN
+---
 
-If you enjoy using TSTVN and would like to support its development, you can support the project here:
+## ❤️ Support TSTVN | สนับสนุนโปรเจกต์
+
+If you enjoy TSTVN and want to support its development, you can support the project here:
 
 หากคุณชอบ TSTVN และต้องการสนับสนุนการพัฒนา สามารถสนับสนุนได้ที่:
 
-### ☕ Buy Me a Coffee
+☕ [Buy Me a Coffee](buymeacoffee.com/xxxzas12p)
 
-**[Support TSTVN]https://buymeacoffee.com/xxxzas12p)]**
+Your support helps me continue developing new features and improving TSTVN.
 
-Every support helps me continue developing TSTVN, fixing bugs, and adding new features.
+ทุกการสนับสนุนช่วยให้ผมสามารถพัฒนาฟีเจอร์ใหม่ ๆ และปรับปรุง TSTVN ต่อไปได้ ❤️
 
-ทุกการสนับสนุนช่วยให้ผมสามารถพัฒนา TSTVN แก้ไขข้อผิดพลาด และเพิ่มฟีเจอร์ใหม่ ๆ ต่อไปได้ ❤️
+---
 
 ---
 
