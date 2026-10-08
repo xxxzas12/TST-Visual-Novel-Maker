@@ -6,6 +6,7 @@ import { BUILTIN_TEMPLATES } from '../../shared/project';
 import { api } from '../api';
 import { loadProjectResult, openProjectDir, run } from '../ops';
 import { confirmDialog, toast } from '../store/ui';
+import { AppSettingsButton } from './AppSettings';
 
 export function Welcome() {
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -73,6 +74,7 @@ export function Welcome() {
               TSTVN
             </div>
             <LanguageSelect />
+            <AppSettingsButton />
           </div>
           <h1>{tr("Create Your First Visual Novel")}</h1>
           <p>{tr("Import your art and music, build scenes visually, preview instantly and export a real game — no code needed.")}</p>

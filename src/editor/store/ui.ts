@@ -5,6 +5,8 @@ import type { ImportPlan, ImportReport } from '../../shared/api';
 import { getLanguage, setLanguage, type Lang } from '../../shared/i18n';
 import { DEFAULT_UI_FONT_SIZE, type Appearance } from '../appearance';
 
+export type AppSettingsSection = 'general' | 'interface' | 'autosave' | 'about';
+
 export type View = 'assets' | 'scenes' | 'flow' | 'characters' | 'variables' | 'themes' | 'settings' | 'export' | 'backups';
 
 export interface Toast {
@@ -77,6 +79,9 @@ export interface UiState {
   uiFontSize: number;
   appearance: Appearance;
   language: Lang;
+  /** Open Application Settings section (null = closed). */
+  appSettings: AppSettingsSection | null;
+  openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
   selectActions(ids: string[], anchor?: string | null): void;
@@ -120,6 +125,8 @@ export const useUi = create<UiState>((set, get) => ({
   uiFontSize: DEFAULT_UI_FONT_SIZE,
   appearance: 'dark',
   language: getLanguage(),
+  appSettings: null,
+  openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),
   selectActions: (actionIds, anchor) => set({ actionIds, actionAnchor: anchor === undefined ? (actionIds[actionIds.length - 1] ?? null) : anchor }),

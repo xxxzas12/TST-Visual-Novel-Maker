@@ -6,6 +6,7 @@ import { Welcome } from './views/Welcome';
 import { Shell } from './views/Shell';
 import { ImportFlow } from './views/assets/ImportFlow';
 import { PreviewModal } from './views/PreviewModal';
+import { AppSettingsDialog } from './views/AppSettings';
 import { api } from './api';
 import { applyLook, DEFAULT_UI_FONT_SIZE, registerCustomFonts } from './appearance';
 
@@ -56,6 +57,7 @@ export function App() {
       {hasProject ? <Shell /> : <Welcome />}
       {importState && <ImportFlow />}
       {preview && <PreviewModal />}
+      <AppSettingsDialog />
       <DialogHost />
       <Toasts />
     </Fragment>

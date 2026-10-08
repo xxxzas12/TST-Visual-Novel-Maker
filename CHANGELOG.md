@@ -2,6 +2,22 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.2
+### Added
+- Application Settings window (General, Interface & fonts, Autosave & recovery, About), reachable from
+  the Welcome screen (⚙ Settings) and from the top bar inside a project (⚙).
+- `e2e/screens.spec.ts` (screenshots of the main screens) and `scripts/release-gate.sh`.
+
+### Changed
+- The project page is now **Project Settings** and only contains project/game settings (game info,
+  title screen, game font, project files). Editor language, appearance, interface font/size,
+  autosave and the checklist moved to Application Settings.
+- The font settings are split: interface font (application) and game font (project), each with its own
+  preview, Apply, Cancel and Reset.
+
+### Known Issues
+- Text inputs on the Project Settings page lose focus after one character (fixed in v1.0.3).
+
 ## v1.0.1
 ### Added
 - Game UI / Theme editor: visual editing (select, drag, resize, align, nudge) of the dialogue box,

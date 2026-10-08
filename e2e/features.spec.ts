@@ -204,9 +204,10 @@ test('Thai language: editor UI, Thai template, Thai game menus in the export', a
   await expect(win.getByTestId('tvn-q-save')).toHaveText('บันทึก');
   await win.close();
 
-  // Switch back to English from Settings.
-  await page.getByTestId('nav-settings').click();
+  // Switch back to English from Application settings.
+  await page.getByTestId('app-settings').click();
   await page.getByTestId('language-select').selectOption('en');
+  await page.keyboard.press('Escape');
   await expect(page.getByTestId('nav-scenes')).toContainText('Scenes');
   expect(errors).toEqual([]);
   await app.close();
@@ -228,8 +229,9 @@ test('fonts: system UI font, imported dialogue font, sizes, preview, light mode,
   const bodyFont = (p: Page) => p.evaluate(() => getComputedStyle(document.body).fontFamily);
 
   let { app, page, errors } = await launchEditor();
-  await createProject(page, 'Font Test', 'romance');
-  await page.getByTestId('nav-settings').click();
+  // Application settings are reachable before any project exists.
+  await page.getByTestId('app-settings').click();
+  await page.getByTestId('app-settings-interface').click();
 
   // Program font from the installed fonts, with search and preview.
   await page.getByTestId('change-ui-font').click();
@@ -241,6 +243,16 @@ test('fonts: system UI font, imported dialogue font, sizes, preview, light mode,
   await expect(page.getByTestId('font-preview-light')).toHaveCSS('font-size', '16px');
   await expect(page.getByTestId('font-preview-dark')).toHaveCSS('font-family', /^"?Arial"?,/);
   expect(await bodyFont(page)).not.toContain('Arial'); // preview only — not applied yet
+  await page.getByTestId('fonts-apply').click();
+  await expect.poll(() => bodyFont(page)).toMatch(/^"?Arial/);
+  await expect(page.locator('html')).toHaveCSS('font-size', '16px');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('app-settings-dialog')).toHaveCount(0);
+
+  // The game font is a project setting.
+  await createProject(page, 'Font Test', 'romance');
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('change-ui-font')).toHaveCount(0); // no application settings here
 
   // Dialogue font imported from a .ttf (not installed in Windows) + size.
   await page.getByTestId('change-dialogue-font').click();
@@ -258,16 +270,16 @@ test('fonts: system UI font, imported dialogue font, sizes, preview, light mode,
   const frame = page.frames().find((f) => f.url().includes('preview.html'))!;
   await expect.poll(() => frame.evaluate(() => document.fonts.check('20px "TSTVN E2E Font"'))).toBe(true);
 
-  await page.getByTestId('fonts-apply').click();
-  await expect.poll(() => bodyFont(page)).toMatch(/^"?Arial/);
-  await expect(page.locator('html')).toHaveCSS('font-size', '16px');
+  await page.getByTestId('game-fonts-apply').click();
 
-  // Light mode keeps the chosen font.
+  // Light mode keeps the chosen font (Application settings from inside a project).
+  await page.getByTestId('app-settings').click();
   await page.getByTestId('appearance').selectOption('light');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(243, 244, 248)');
   expect(await bodyFont(page)).toMatch(/^"?Arial/);
   await page.screenshot({ path: path.join(TMP, 'screenshots', 'fonts-light.png') });
+  await page.keyboard.press('Escape');
   await page.getByTestId('save').click();
 
   // The exported game ships the font file and uses it.
@@ -300,12 +312,17 @@ test('fonts: system UI font, imported dialogue font, sizes, preview, light mode,
   await expect(page.getByTestId('dialogue-font-name')).toHaveText('TSTVN E2E Font');
 
   // Reset to Default (previewed first, then applied).
+  await page.getByTestId('game-fonts-reset').click();
+  await page.getByTestId('game-fonts-apply').click();
+  await expect(page.getByTestId('dialogue-font-name')).toContainText('Theme default');
+  await page.getByTestId('app-settings').click();
+  await page.getByTestId('app-settings-interface').click();
   await page.getByTestId('fonts-reset').click();
   await expect(page.getByTestId('ui-font-name')).toHaveText('Default (Segoe UI)');
   await page.getByTestId('fonts-apply').click();
   await expect(page.locator('html')).toHaveCSS('font-size', '14px');
   await expect.poll(() => bodyFont(page)).toMatch(/Segoe UI/);
-  await expect(page.getByTestId('dialogue-font-name')).toContainText('Theme default');
+  await page.getByTestId('app-settings-general').click();
   await page.getByTestId('appearance').selectOption('dark');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(errors).toEqual([]);

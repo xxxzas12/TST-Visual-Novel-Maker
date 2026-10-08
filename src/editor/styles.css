@@ -1879,3 +1879,39 @@ h3 {
     grid-template-columns: 11rem minmax(0, 1fr) 19rem;
   }
 }
+
+/* ---------- Application settings ---------- */
+.app-settings {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 1.2rem;
+  min-height: 26rem;
+}
+.app-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-right: 1px solid var(--line);
+  padding-right: 0.8rem;
+}
+.app-settings-nav button {
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.app-settings-nav button:hover {
+  background: var(--bg3);
+}
+.app-settings-nav button.active {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.app-settings-body {
+  min-width: 0;
+}

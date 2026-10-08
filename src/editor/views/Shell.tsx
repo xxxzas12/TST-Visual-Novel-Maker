@@ -15,6 +15,7 @@ import { SettingsView } from './SettingsView';
 import { ExportView } from './ExportView';
 import { BackupsView } from './BackupsView';
 import { Onboarding } from './Onboarding';
+import { AppSettingsButton } from './AppSettings';
 
 const NAV: { view: View; icon: string; label: string; tip: string }[] = [
   { view: 'scenes', icon: '🎬', label: 'Scenes', tip: 'Scene editor (Ctrl+1)' },
@@ -23,7 +24,7 @@ const NAV: { view: View; icon: string; label: string; tip: string }[] = [
   { view: 'characters', icon: '🧍', label: 'Characters', tip: 'Characters (Ctrl+4)' },
   { view: 'variables', icon: '🔢', label: 'Variables', tip: 'Variables (Ctrl+5)' },
   { view: 'themes', icon: '🎨', label: 'Themes', tip: 'Game UI theme (Ctrl+6)' },
-  { view: 'settings', icon: '⚙️', label: 'Settings', tip: 'Project settings (Ctrl+7)' },
+  { view: 'settings', icon: '🛠️', label: 'Project', tip: 'Project settings (Ctrl+7)' },
   { view: 'export', icon: '🚀', label: 'Export', tip: 'Check & export game (Ctrl+8)' },
   { view: 'backups', icon: '🛟', label: 'Backups', tip: 'Backups & restore (Ctrl+9)' },
 ];
@@ -50,7 +51,7 @@ function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const ui = useUi.getState();
-      if (ui.preview || ui.confirm || ui.prompt || ui.importState) return;
+      if (ui.preview || ui.confirm || ui.prompt || ui.importState || ui.appSettings) return;
       const ctrl = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
       if (ctrl && key === 's') {
@@ -157,6 +158,7 @@ export function Shell() {
         <button className="btn sm" onClick={() => setView('export')} title={tr("Export the game")}>
           {tr("🚀 Export")}
         </button>
+        <AppSettingsButton compact />
         <button className="btn sm ghost" onClick={() => void closeProject()} title={tr("Close project")} data-testid="close-project">
           {tr("✕ Close")}
         </button>

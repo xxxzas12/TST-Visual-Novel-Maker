@@ -1,17 +1,14 @@
 import { t as tr } from '../../shared/i18n';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LANGUAGES } from '../../shared/i18n';
-import { LanguageSelect } from '../components/LanguageSelect';
 import type { ProjectSettings } from '../../shared/types';
-import type { AppSettings } from '../../shared/api';
 import { useProject, getProject } from '../store/project';
 import { useUi, promptDialog, toast } from '../store/ui';
 import { api } from '../api';
 import { SceneSelect, NumberInput } from './scenes/fields';
 import { AssetPicker } from '../components/AssetPicker';
 import { run } from '../ops';
-import { FontSettings } from './FontSettings';
-import type { Appearance } from '../appearance';
+import { GameFontSettings } from './FontSettings';
 
 const RESOLUTIONS = [
   { label: '1920 × 1080 (16:9 Full HD)', w: 1920, h: 1080 },
@@ -25,24 +22,20 @@ export function SettingsView() {
   const project = useProject((s) => s.project)!;
   const dir = useProject((s) => s.dir)!;
   const s = project.settings;
-  const [app, setApp] = useState<AppSettings | null>(null);
   const [pick, setPick] = useState<null | 'bg' | 'music'>(null);
   const assetName = (id?: string) => (id ? (project.assets.find((a) => a.id === id)?.name ?? '⚠ missing') : 'None');
 
-  useEffect(() => {
-    void api.app.getSettings().then(setApp);
-  }, []);
-
   const set = (patch: Partial<ProjectSettings>, key?: string) => useProject.getState().update((p) => void Object.assign(p.settings, patch), key);
-  const setAppSetting = async (patch: Partial<AppSettings>) => {
-    const next = await api.app.setSettings(patch);
-    setApp(next);
-  };
 
   return (
     <>
       <div className="view-header">
-        <h2>{tr("Settings")}</h2>
+        <h2>{tr("Project Settings")}</h2>
+        <span className="muted small">{tr("Saved in this project and used by the exported game.")}</span>
+        <span className="grow" />
+        <button className="btn sm ghost" onClick={() => useUi.getState().openAppSettings('general')} data-testid="open-app-settings">
+          {tr("⚙ Application settings…")}
+        </button>
       </div>
       <div className="view-body">
         <div className="cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(22rem, 1fr))', alignItems: 'start' }}>
@@ -161,41 +154,7 @@ export function SettingsView() {
             </div>
           </div>
 
-          <FontSettings />
-
-          {app && (
-            <div className="sub-card">
-              <div className="section-title">{tr("Editor")}</div>
-              <div className="field">
-                <span className="field-label">{tr("Editor language")}</span>
-                <LanguageSelect compact />
-              </div>
-              <div className="field">
-                <span className="field-label">{tr("Appearance")}</span>
-                <select
-                  className="select"
-                  value={app.appearance ?? 'dark'}
-                  onChange={(e) => {
-                    const appearance = e.target.value as Appearance;
-                    useUi.setState({ appearance });
-                    void setAppSetting({ appearance });
-                  }}
-                  data-testid="appearance"
-                >
-                  <option value="dark">{tr("Dark")}</option>
-                  <option value="light">{tr("Light")}</option>
-                  <option value="system">{tr("Follow Windows")}</option>
-                </select>
-              </div>
-              <div className="field">
-                <span className="field-label">{tr("Autosave every (minutes, 0 = off; recovery copies are always kept)")}</span>
-                <NumberInput value={app.autosaveMinutes} min={0} max={60} onChange={(v) => void setAppSetting({ autosaveMinutes: Math.max(0, Math.round(v)) })} />
-              </div>
-              <label className="check">
-                <input type="checkbox" checked={!app.onboardingDone} onChange={(e) => void setAppSetting({ onboardingDone: !e.target.checked })} /> {tr("Show the getting-started checklist")}
-              </label>
-            </div>
-          )}
+          <GameFontSettings />
         </div>
       </div>
       {pick && (
