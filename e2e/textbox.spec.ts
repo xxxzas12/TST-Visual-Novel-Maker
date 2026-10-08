@@ -100,6 +100,9 @@ test('textbox presets: preview, apply, every shape, undo, saved, bubble tail in 
   expect(ok).toBe(true);
   await page.getByTestId('preview-frame').screenshot({ path: path.join(TMP, 'shots', 'p2-bubble-game.png') });
   await page.getByTestId('close-preview').click();
+  // Save before closing: closing with unsaved changes (correctly) offers crash recovery on the next open.
+  await page.getByTestId('save').click();
+  await expect(page.getByTestId('save-status')).toHaveText(/Saved/);
   expect(errors).toEqual([]);
   await app.close();
 

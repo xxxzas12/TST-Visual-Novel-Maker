@@ -113,6 +113,7 @@ test('advanced textbox: basic/advanced, gradient, glow, texture, frame image, ou
   await expect.poll(() => dialogStyle(design, 'border-top-left-radius')).toBe('12px');
 
   await page.getByTestId('save').click();
+  await expect(page.getByTestId('save-status')).toHaveText(/Saved/);
   expect(errors).toEqual([]);
   await app.close();
 
