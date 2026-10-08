@@ -391,6 +391,8 @@ export interface ProjectSettings {
   titleMusicAssetId?: string;
   /** Game icon (image asset): window/taskbar icon of the exported Windows game and Web favicon. Not the TSTVN logo. */
   gameIconAssetId?: string;
+  /** In-game Gallery (Extras on the title screen). */
+  gallery?: ProjectGallery;
   displayMode: 'windowed' | 'fullscreen' | 'borderless';
   /** Language of the game's own menus (Start, Save, Load…). */
   language: 'en' | 'th';
@@ -400,6 +402,26 @@ export interface ProjectSettings {
   dialogueFontSize?: number | null;
   /** 2 = game UI theme format with design-pixel sizes (older projects are migrated on load). */
   uiVersion?: number;
+}
+
+/**
+ * When a gallery item unlocks. A union so more rules (e.g. a variable condition) can be added later
+ * without changing existing data.
+ */
+export type GalleryUnlock = { mode: 'seen' } | { mode: 'always' };
+
+export interface ProjectGallery {
+  enabled: boolean;
+  sections: { cg: boolean; characters: boolean; music: boolean; endings: boolean };
+  /** Per item key (cg:<assetId>, char:<id>, music:<assetId>, ending:<actionId>); default "seen". */
+  unlock: Record<string, GalleryUnlock>;
+}
+
+export interface GameGallery {
+  sections: ('cg' | 'characters' | 'music' | 'endings')[];
+  items: { key: string; section: 'cg' | 'characters' | 'music' | 'endings'; label: string; assetId?: string; characterId?: string; sceneName?: string }[];
+  /** Keys unlocked from the start. */
+  alwaysUnlocked: string[];
 }
 
 export interface Project {
@@ -461,6 +483,8 @@ export interface GameData {
   titleMusicAssetId?: string;
   /** Project game icon (window/taskbar of the Windows game, browser tab of the Web game). */
   iconAssetId?: string;
+  /** In-game gallery; absent when the project has none. */
+  gallery?: GameGallery;
   displayMode: 'windowed' | 'fullscreen' | 'borderless';
   language?: 'en' | 'th';
   /** Embedded font files to load with @font-face (project-relative paths). */

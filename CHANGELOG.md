@@ -2,6 +2,14 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.7
+### Added
+- In-game **Gallery** for games made with TSTVN (title screen → Gallery): CG, Characters, Music and Endings
+  tabs with locked (🔒 ???) / unlocked items, unlocked counts, CG/character viewer and music player.
+  Items unlock when seen in the story and stay unlocked across new games.
+- Project Settings → **Game Gallery**: enable, choose sections, per-item unlock rule ("Unlocks when seen" /
+  "Always unlocked"); the rule is a union type ready for more conditions later.
+
 ## v1.0.6
 ### Added
 - Plugin system and **Plugin Manager** (⚙ Settings → Plugins): Installed Plugins, Enable/Disable,

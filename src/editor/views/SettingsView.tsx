@@ -10,6 +10,7 @@ import { AssetPicker } from '../components/AssetPicker';
 import { AssetThumb } from '../components/AssetThumb';
 import { run } from '../ops';
 import { GameFontSettings } from './FontSettings';
+import { GallerySettings } from './GallerySettings';
 
 const RESOLUTIONS = [
   { label: '1920 × 1080 (16:9 Full HD)', w: 1920, h: 1080 },
@@ -176,6 +177,7 @@ export function SettingsView() {
             </div>
           </div>
 
+          <GallerySettings />
           <GameFontSettings />
         </div>
       </div>

@@ -55,7 +55,8 @@ export interface RuntimeHost {
   saveMenu(mode: 'menu' | 'auto'): Promise<void>;
   loadMenu(): Promise<void>;
   toTitle(): void;
-  end(message: string): Promise<void>;
+  /** endingId = the End Game action (for the Ending gallery); absent when the story simply runs out. */
+  end(message: string, endingId?: string): Promise<void>;
   error(message: string): void;
   /** The story entered another scene (scene themes). */
   sceneChanged?(sceneId: string): void;
@@ -307,7 +308,7 @@ export class Engine {
       }
       case 'endGame':
         this.running = false;
-        await host.end(p.message || 'The End');
+        await host.end(p.message || 'The End', a.id);
         return 'stop';
       case 'returnToTitle':
         this.running = false;

@@ -100,4 +100,14 @@ export class SaveStorage {
   putSettings(s: PlayerSettings) {
     this.write('settings', s);
   }
+
+  /** Gallery unlocks of this game (kept across new games and save slots). */
+  getUnlocks(): Set<string> {
+    const list = this.read<string[]>('unlocks');
+    return new Set(Array.isArray(list) ? list.filter((x) => typeof x === 'string') : []);
+  }
+
+  putUnlocks(keys: Set<string>) {
+    this.write('unlocks', [...keys]);
+  }
 }

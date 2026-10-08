@@ -692,3 +692,125 @@
     animation: none;
   }
 }
+
+/* ---------- gallery (Extras) ---------- */
+.tvn-gallery {
+  width: min(1100px, 100%);
+}
+.tvn-gallery-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tvn-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+.tvn-gallery-music,
+.tvn-gallery-endings {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.tvn-root[data-compact='true'] .tvn-gallery-grid {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+.tvn-gallery-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  font: 14px system-ui, sans-serif;
+  color: inherit;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+}
+button.tvn-gallery-item {
+  cursor: pointer;
+}
+button.tvn-gallery-item:hover:not(:disabled),
+button.tvn-gallery-item:focus-visible {
+  border-color: var(--tvn-accent, #4f6bff);
+  outline: none;
+}
+.tvn-gallery-music .tvn-gallery-item,
+.tvn-gallery-endings .tvn-gallery-item {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.tvn-gallery-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 28px;
+}
+.tvn-gallery-portrait {
+  aspect-ratio: 3 / 4;
+}
+.tvn-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tvn-gallery-portrait img {
+  object-fit: contain;
+}
+.tvn-gallery-label {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tvn-gallery-meta {
+  opacity: 0.7;
+  font-size: 12px;
+}
+.tvn-gallery-play {
+  width: 32px;
+  text-align: center;
+  font-size: 18px;
+}
+.tvn-locked {
+  opacity: 0.55;
+}
+.tvn-gallery-empty {
+  opacity: 0.7;
+}
+.tvn-gallery-viewer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.92);
+  cursor: zoom-out;
+  overflow: auto;
+}
+.tvn-gallery-viewer figure {
+  margin: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.tvn-gallery-viewer img {
+  max-width: 100%;
+  max-height: calc(100vh - 80px);
+  object-fit: contain;
+}
+.tvn-gallery-viewer figcaption {
+  font: 14px system-ui, sans-serif;
+  color: #fff;
+}

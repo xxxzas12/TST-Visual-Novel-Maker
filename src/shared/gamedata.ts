@@ -2,6 +2,7 @@ import type { GameAsset, GameData, Project, Theme } from './types';
 import { collectUsedAssetIds } from './validate';
 import { orderedSceneIds } from './project';
 import { normalizeTheme, resolveTheme, themeExists, themeFontRefs } from './themes';
+import { buildGallery } from './gallery';
 
 export { cssFamily } from './themes';
 
@@ -83,6 +84,7 @@ export function buildGameData(p: Project): GameData {
     titleBackgroundAssetId: p.settings.titleBackgroundAssetId,
     titleMusicAssetId: p.settings.titleMusicAssetId,
     iconAssetId: p.settings.gameIconAssetId,
+    gallery: buildGallery(p),
     displayMode: p.settings.displayMode,
     language: p.settings.language,
   };

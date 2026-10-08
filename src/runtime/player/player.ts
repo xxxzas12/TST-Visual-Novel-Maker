@@ -61,7 +61,8 @@ const MENU_LABELS: Record<MenuAction, [string, string, string]> = {
 };
 
 type Screen = 'title' | 'game' | 'end' | 'error';
-type MenuView = 'pause' | 'save' | 'load' | 'settings' | null;
+type MenuView = 'pause' | 'save' | 'load' | 'settings' | 'gallery' | null;
+type GalleryTab = 'cg' | 'characters' | 'music' | 'endings';
 
 export class Player implements RuntimeHost {
   readonly game: GameData;
@@ -101,6 +102,10 @@ export class Player implements RuntimeHost {
   private bgKey = '';
   private cgKey = '';
   private bgmKey = '';
+  /** Gallery: what the player has seen (persisted per game). */
+  private unlocks: Set<string> = new Set();
+  private galleryTab: GalleryTab = 'cg';
+  private galleryMusic = false;
 
   private screen: Screen = 'title';
   private menu: MenuView = null;
@@ -125,6 +130,7 @@ export class Player implements RuntimeHost {
     this.storage = new SaveStorage(game.id, opts.storageNamespace ?? 'tstvn');
     this.settings = this.storage.getSettings(game.displayMode === 'borderless' && !opts.host?.supportsBorderless ? 'windowed' : game.displayMode);
     this.sound = new AudioManager(this.settings.volumes);
+    this.unlocks = this.storage.getUnlocks();
     this.engine = new Engine(game, this);
     this.mount();
   }
@@ -631,6 +637,7 @@ export class Player implements RuntimeHost {
           btn(this.tr('Start'), () => void this.startGame(null, 0), 'tvn-start', true),
           latest ? btn(this.tr('Continue'), () => void this.loadSlot(latest.slot), 'tvn-continue') : null,
           btn(this.tr('Load'), () => void this.openMenu('load'), 'tvn-load'),
+          this.game.gallery ? btn(this.tr('Gallery'), () => void this.openMenu('gallery'), 'tvn-gallery') : null,
           btn(this.tr('Settings'), () => void this.openMenu('settings'), 'tvn-settings'),
           this.opts.host?.quit ? btn(this.tr('Quit'), () => this.opts.host?.quit?.(), 'tvn-quit') : null,
         ),
@@ -828,7 +835,144 @@ export class Player implements RuntimeHost {
       } else this.sound.stopBgm(fast ? 0 : (bgmHint?.fade ?? 1));
     }
 
+    this.recordSeen(state);
     await Promise.all(jobs);
+  }
+
+  // ---------------------------------------------------------------- gallery
+
+  /** Marks a gallery item as seen (persisted). */
+  private unlock(key: string) {
+    if (!this.game.gallery || this.unlocks.has(key)) return;
+    this.unlocks.add(key);
+    this.storage.putUnlocks(this.unlocks);
+  }
+
+  private recordSeen(state: VisualState) {
+    if (!this.game.gallery || this.opts.design) return;
+    if (state.cg) this.unlock(`cg:${state.cg}`);
+    if (state.bgm) this.unlock(`music:${state.bgm.assetId}`);
+    for (const c of state.characters) {
+      this.unlock(`char:${c.id}`);
+      this.unlock(`expr:${c.id}:${c.expressionId}`);
+    }
+  }
+
+  isUnlocked(key: string): boolean {
+    return this.unlocks.has(key) || !!this.game.gallery?.alwaysUnlocked.includes(key);
+  }
+
+  private galleryView(): HTMLElement {
+    const g = this.game.gallery!;
+    if (!g.sections.includes(this.galleryTab)) this.galleryTab = g.sections[0];
+    const names: Record<GalleryTab, string> = { cg: this.tr('CG'), characters: this.tr('Characters'), music: this.tr('Music'), endings: this.tr('Endings') };
+    const tabs = h(
+      'div',
+      { class: 'tvn-gallery-tabs', role: 'tablist' },
+      ...g.sections.map((sec) => {
+        const items = g.items.filter((i) => i.section === sec);
+        const open = items.filter((i) => this.isUnlocked(i.key)).length;
+        return h(
+          'button',
+          {
+            class: `tvn-btn${sec === this.galleryTab ? ' tvn-primary' : ''}`,
+            role: 'tab',
+            'aria-selected': String(sec === this.galleryTab),
+            'data-testid': `tvn-gallery-tab-${sec}`,
+            onclick: () => {
+              this.galleryTab = sec;
+              void this.openMenu('gallery');
+            },
+          },
+          `${names[sec]} ${open}/${items.length}`,
+        );
+      }),
+    );
+    const items = g.items.filter((i) => i.section === this.galleryTab);
+    const locked = (key: string) =>
+      h(
+        'div',
+        { class: 'tvn-gallery-item tvn-locked', 'data-testid': `tvn-gallery-item-${key}`, 'data-locked': 'true', 'aria-label': this.tr('Locked') },
+        h('div', { class: 'tvn-gallery-thumb' }, '🔒'),
+        h('div', { class: 'tvn-gallery-label' }, '???'),
+      );
+    const grid = h('div', { class: `tvn-gallery-grid tvn-gallery-${this.galleryTab}` });
+    if (!items.length) grid.append(h('p', { class: 'tvn-gallery-empty' }, this.tr('Nothing here yet.')));
+    for (const it of items) {
+      if (!this.isUnlocked(it.key)) {
+        grid.append(locked(it.key));
+        continue;
+      }
+      const open = (attrs: Record<string, unknown>, ...children: (Node | string | null)[]) =>
+        h('button', { class: 'tvn-gallery-item', 'data-testid': `tvn-gallery-item-${it.key}`, 'data-locked': 'false', ...attrs }, ...children);
+      if (it.section === 'cg') {
+        const url = this.assetUrl(it.assetId);
+        grid.append(open({ onclick: () => this.galleryViewer([url]) }, h('div', { class: 'tvn-gallery-thumb' }, url ? h('img', { src: url, alt: it.label }) : '?'), h('div', { class: 'tvn-gallery-label' }, it.label)));
+      } else if (it.section === 'characters') {
+        const ch = this.game.characters.find((c) => c.id === it.characterId);
+        const always = g.alwaysUnlocked.includes(it.key);
+        const seen = (ch?.expressions ?? []).filter((e) => always || this.unlocks.has(`expr:${ch!.id}:${e.id}`));
+        const face = seen.find((e) => e.id === ch?.defaultExpressionId) ?? seen[0] ?? ch?.expressions[0];
+        const url = this.assetUrl(face?.assetId);
+        grid.append(
+          open(
+            { onclick: () => this.galleryViewer(seen.map((e) => this.assetUrl(e.assetId)), seen.map((e) => e.name)) },
+            h('div', { class: 'tvn-gallery-thumb tvn-gallery-portrait' }, url ? h('img', { src: url, alt: it.label }) : '?'),
+            h('div', { class: 'tvn-gallery-label' }, it.label),
+            h('div', { class: 'tvn-gallery-meta' }, this.tr('{n} expression(s)', { n: seen.length })),
+          ),
+        );
+      } else if (it.section === 'music') {
+        const url = this.assetUrl(it.assetId);
+        const key = `gallery:${it.assetId}`;
+        const playing = this.galleryMusic && this.bgmKey === key;
+        grid.append(
+          open(
+            {
+              onclick: () => {
+                if (!url) return;
+                if (playing) {
+                  this.sound.stopBgm(0.4);
+                  this.bgmKey = '';
+                } else {
+                  this.sound.playBgm(key, url, 100, true, 0.4);
+                  this.bgmKey = key;
+                  this.galleryMusic = true;
+                }
+                void this.openMenu('gallery');
+              },
+            },
+            h('span', { class: 'tvn-gallery-play' }, playing ? '⏸' : '▶'),
+            h('div', { class: 'tvn-gallery-label' }, it.label),
+          ),
+        );
+      } else {
+        grid.append(
+          open({ disabled: true }, h('span', { class: 'tvn-gallery-play' }, '✓'), h('div', { class: 'tvn-gallery-label' }, it.label), it.sceneName ? h('div', { class: 'tvn-gallery-meta' }, it.sceneName) : null),
+        );
+      }
+    }
+    return h('div', { class: 'tvn-gallery-body' }, tabs, grid);
+  }
+
+  /** Full-screen view of unlocked images; click anywhere to go back. */
+  private galleryViewer(urls: (string | null)[], captions: string[] = []) {
+    const box = h(
+      'div',
+      { class: 'tvn-gallery-viewer', 'data-testid': 'tvn-gallery-viewer', role: 'dialog', onclick: () => void this.openMenu('gallery') },
+      ...urls.map((u, i) => h('figure', {}, u ? h('img', { src: u, alt: '' }) : null, captions[i] ? h('figcaption', {}, captions[i]) : null)),
+    );
+    this.overlay.replaceChildren(box);
+  }
+
+  /** Leaving the gallery: back to the title music (or silence) after previewing tracks. */
+  private endGalleryMusic() {
+    if (!this.galleryMusic) return;
+    this.galleryMusic = false;
+    const music = this.screen === 'title' ? this.assetUrl(this.game.titleMusicAssetId) : null;
+    if (music) this.sound.playBgm('title', music, 80, true, 0.6);
+    else this.sound.stopBgm(0.4);
+    this.bgmKey = '';
   }
 
   async animate(cmd: AnimateCommand): Promise<void> {
@@ -1091,6 +1235,7 @@ export class Player implements RuntimeHost {
   // ---------------------------------------------------------------- menus
 
   private closeMenu() {
+    if (this.menu === 'gallery') this.endGalleryMusic();
     this.menu = null;
     this.overlay.classList.add('tvn-hidden');
     this.overlay.replaceChildren();
@@ -1162,6 +1307,8 @@ export class Player implements RuntimeHost {
         grid.append(card);
       }
       this.overlay.replaceChildren(h('div', { class: 'tvn-menu tvn-saveload' }, header(view === 'save' ? this.tr('Save Game') : this.tr('Load Game')), grid, h('div', { class: 'tvn-menu-footer' }, h('button', { class: 'tvn-btn', onclick: back }, this.tr('Back')))));
+    } else if (view === 'gallery' && this.game.gallery) {
+      this.overlay.replaceChildren(h('div', { class: 'tvn-menu tvn-gallery' }, header(this.tr('Gallery')), this.galleryView(), h('div', { class: 'tvn-menu-footer' }, h('button', { class: 'tvn-btn', onclick: back }, this.tr('Back')))));
     } else if (view === 'settings') {
       this.overlay.replaceChildren(h('div', { class: 'tvn-menu tvn-settings' }, header(this.tr('Settings')), this.settingsForm(), h('div', { class: 'tvn-menu-footer' }, h('button', { class: 'tvn-btn', onclick: back }, this.tr('Back')))));
     }
@@ -1274,7 +1421,8 @@ export class Player implements RuntimeHost {
 
   // ---------------------------------------------------------------- end / errors
 
-  async end(message: string): Promise<void> {
+  async end(message: string, endingId?: string): Promise<void> {
+    if (endingId) this.unlock(`ending:${endingId}`);
     this.sound.stopBgm(2);
     await this.liftBlackout();
     this.setScreen('end');

@@ -64,6 +64,13 @@ const TH: Record<string, string> = {
   'Skip OFF': 'โหมดข้าม: ปิด',
   'Text size': 'ขนาดตัวอักษร',
   'High contrast': 'คอนทราสต์สูง',
+  Gallery: 'แกลเลอรี',
+  CG: 'ภาพ CG',
+  Characters: 'ตัวละคร',
+  Endings: 'ฉากจบ',
+  Locked: 'ยังไม่ปลดล็อก',
+  'Nothing here yet.': 'ยังไม่มีรายการ',
+  '{n} expression(s)': '{n} สีหน้า',
 };
 
 export type Translate = (key: string, vars?: Record<string, string | number>) => string;
