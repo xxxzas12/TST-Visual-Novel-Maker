@@ -193,19 +193,37 @@
     (no shortcut or uninstall entry). A clean silent uninstall followed by a fresh install fixed it.
   - The packaged test passed against the installed copy.
 
-## Current status
+## Updates v1.0.1 – v1.0.11 (audit-driven)
+
+Audit of existing systems first ([audit-v1.0.0.md](audit-v1.0.0.md)), then one feature per version, each
+with its own tests, installer build, Git commit/tag and report in [updates/](updates/) (summary in
+[CHANGELOG.md](../CHANGELOG.md)):
+
+- **1.0.1** Game UI / Theme editor.
+- **1.0.2** Application vs Project Settings.
+- **1.0.3** Text-input focus bug.
+- **1.0.4** Two-step installer.
+- **1.0.5** Application logo and game icon.
+- **1.0.6** Plugin Manager.
+- **1.0.7** In-game Gallery.
+- **1.0.8** Point & Click, and fixes for the menu bar, the language race and EPERM.
+- **1.0.9** Variable/condition type validation.
+- **1.0.10** Autosave.
+- **1.0.11** Story Flow broken links and Duplicate Project.
+
+## Current status (v1.0.11)
 
 | Check | Result |
 | --- | --- |
 | `npm run lint` | ✅ 0 problems |
 | `npm run typecheck` | ✅ strict, 0 errors |
-| `npm test` | ✅ 75 / 75 |
-| `npm run test:e2e` | ✅ 10 / 10 (acceptance, recovery, backups/missing assets, templates/flow/package, Thai language, fonts, 2 000-asset gallery, packaged editor, Game UI editor, exported themed game) |
-| `npm run build` / `npm run dist` | ✅ |
+| `npm test` | ✅ 100 / 100 (15 files) |
+| `npm run test:e2e` | ✅ 19 / 19 (incl. lifecycle New→Edit→Save→Close→Reopen→Preview→Export, packaged app) |
+| `npm run dist` | ✅ `TSTVN-Setup-1.0.11.exe` |
+| `scripts/test-installer.ps1` | ✅ 17 / 17 (real installer window, shortcuts, uninstall, upgrade from 1.0.3) |
 
 ## Next steps
 
 - Native Android/iOS packaging (wrap the Web export with Capacitor; requires Android Studio / Xcode).
 - Backlog/history screen and rollback in the runtime.
 - Localization (multiple languages per project).
-- Git repository (Git is now installed on this PC).
