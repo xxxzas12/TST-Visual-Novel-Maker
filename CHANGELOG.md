@@ -2,6 +2,21 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.4
+### Changed
+- New two-step installer: **TSTVN — Install TSTVN** with [x] Create Desktop shortcut, [x] Create Start Menu
+  icon and an Install button, then **TSTVN — ✓ Installed successfully** with Launch TSTVN and Close
+  (English/Thai). Always per-user into `%LOCALAPPDATA%ProgramsTSTVN`; the "all users / only me" and
+  folder pages are gone.
+
+### Added
+- `scripts/test-installer.ps1`: drives the real installer window and checks files, shortcuts,
+  registry, uninstall and upgrade.
+
+### Fixed
+- An installed-over (upgraded) copy could end up without shortcuts or an uninstall entry; upgrades from
+  v1.0.3 now keep both (tested silent and interactive).
+
 ## v1.0.3
 ### Fixed
 - Text inputs (Project name, Game title, Author and others next to a live game preview) lost focus after

@@ -1,7 +1,7 @@
 {
   "name": "tstvn",
   "productName": "TSTVN",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "TSTVN - TST Visual Novel Maker. Create visual novels without writing code.",
   "author": "TSTVN",
   "license": "MIT",
@@ -55,7 +55,7 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "TSTVN",
@@ -65,7 +65,8 @@
         "th_TH"
       ],
       "artifactName": "TSTVN-Setup-${version}.${ext}",
-      "uninstallDisplayName": "TSTVN Visual Novel Maker"
+      "uninstallDisplayName": "TSTVN Visual Novel Maker",
+      "include": "installer/installer.nsh"
     }
   },
   "devDependencies": {

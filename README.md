@@ -13,8 +13,10 @@ backgrounds, music, variables, animations), press **Play**, and export a real ga
 ## Install
 
 Run **`TSTVN-Setup-<version>.exe`** (built into `release/` by `npm run dist`) on any Windows 10/11 x64 PC.
-It installs for the current user (no admin needed), lets you pick the folder, and creates Desktop and
-Start Menu shortcuts. Uninstall from Windows Settings → Apps.
+The installer has two steps: **Install TSTVN** (tick *Create Desktop shortcut* / *Create Start Menu icon*)
+and **✓ Installed successfully** (*Launch TSTVN*). It installs for the current user (no admin needed) into
+`%LOCALAPPDATA%\Programs\TSTVN`, upgrades an existing installation in place, and can be removed from
+Windows Settings → Apps. Silent install: `TSTVN-Setup-<version>.exe /S` (creates both shortcuts).
 
 ## Language / ภาษา
 
