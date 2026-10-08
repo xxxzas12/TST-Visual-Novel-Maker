@@ -40,6 +40,7 @@ export function collectUsedAssetIds(p: Project, includeDisabled = false): Set<st
   }
   if (p.settings.titleBackgroundAssetId) used.add(p.settings.titleBackgroundAssetId);
   if (p.settings.titleMusicAssetId) used.add(p.settings.titleMusicAssetId);
+  if (p.settings.gameIconAssetId) used.add(p.settings.gameIconAssetId);
   for (const t of usedThemes(p)) themeAssetIds(t).forEach((id) => used.add(id));
   return used;
 }
@@ -75,6 +76,7 @@ export function findAssetUsages(p: Project, assetId: string): AssetUsage[] {
   }
   if (p.settings.titleBackgroundAssetId === assetId) out.push({ where: 'settings', label: t('Title screen background') });
   if (p.settings.titleMusicAssetId === assetId) out.push({ where: 'settings', label: t('Title screen music') });
+  if (p.settings.gameIconAssetId === assetId) out.push({ where: 'settings', label: t('Game icon') });
   for (const th of p.themes) {
     if (themeAssetIds(th).includes(assetId)) out.push({ where: 'theme', label: t('Theme “{name}”', { name: th.name }) });
   }
@@ -104,6 +106,7 @@ export function replaceAssetReferences(p: Project, fromId: string, toId: string)
   }
   if (p.settings.titleBackgroundAssetId === fromId) p.settings.titleBackgroundAssetId = toId;
   if (p.settings.titleMusicAssetId === fromId) p.settings.titleMusicAssetId = toId;
+  if (p.settings.gameIconAssetId === fromId) p.settings.gameIconAssetId = toId;
   for (const th of p.themes) {
     forEachThemeImage(th, (s) => {
       if (s.image === fromId) {
@@ -138,6 +141,7 @@ export function removeAssetReferences(p: Project, assetId: string): number {
   }
   if (p.settings.titleBackgroundAssetId === assetId) p.settings.titleBackgroundAssetId = undefined;
   if (p.settings.titleMusicAssetId === assetId) p.settings.titleMusicAssetId = undefined;
+  if (p.settings.gameIconAssetId === assetId) p.settings.gameIconAssetId = undefined;
   for (const th of p.themes) {
     forEachThemeImage(th, (s) => {
       if (s.image === assetId) {

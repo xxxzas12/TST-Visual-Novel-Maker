@@ -82,6 +82,7 @@ export function buildGameData(p: Project): GameData {
     textSpeed: p.settings.textSpeed,
     titleBackgroundAssetId: p.settings.titleBackgroundAssetId,
     titleMusicAssetId: p.settings.titleMusicAssetId,
+    iconAssetId: p.settings.gameIconAssetId,
     displayMode: p.settings.displayMode,
     language: p.settings.language,
   };

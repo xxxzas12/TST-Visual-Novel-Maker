@@ -389,6 +389,8 @@ export interface ProjectSettings {
   themeId: string;
   titleBackgroundAssetId?: string;
   titleMusicAssetId?: string;
+  /** Game icon (image asset): window/taskbar icon of the exported Windows game and Web favicon. Not the TSTVN logo. */
+  gameIconAssetId?: string;
   displayMode: 'windowed' | 'fullscreen' | 'borderless';
   /** Language of the game's own menus (Start, Save, Load…). */
   language: 'en' | 'th';
@@ -457,6 +459,8 @@ export interface GameData {
   textSpeed: number;
   titleBackgroundAssetId?: string;
   titleMusicAssetId?: string;
+  /** Project game icon (window/taskbar of the Windows game, browser tab of the Web game). */
+  iconAssetId?: string;
   displayMode: 'windowed' | 'fullscreen' | 'borderless';
   language?: 'en' | 'th';
   /** Embedded font files to load with @font-face (project-relative paths). */

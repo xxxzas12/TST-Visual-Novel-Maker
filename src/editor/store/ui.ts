@@ -5,7 +5,7 @@ import type { ImportPlan, ImportReport } from '../../shared/api';
 import { getLanguage, setLanguage, type Lang } from '../../shared/i18n';
 import { DEFAULT_UI_FONT_SIZE, type Appearance } from '../appearance';
 
-export type AppSettingsSection = 'general' | 'interface' | 'autosave' | 'about';
+export type AppSettingsSection = 'general' | 'interface' | 'logo' | 'autosave' | 'about';
 
 export type View = 'assets' | 'scenes' | 'flow' | 'characters' | 'variables' | 'themes' | 'settings' | 'export' | 'backups';
 
@@ -81,6 +81,8 @@ export interface UiState {
   language: Lang;
   /** Open Application Settings section (null = closed). */
   appSettings: AppSettingsSection | null;
+  /** Custom application logo (data URL), null = default. */
+  appLogo: string | null;
   openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
@@ -126,6 +128,7 @@ export const useUi = create<UiState>((set, get) => ({
   appearance: 'dark',
   language: getLanguage(),
   appSettings: null,
+  appLogo: null,
   openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),

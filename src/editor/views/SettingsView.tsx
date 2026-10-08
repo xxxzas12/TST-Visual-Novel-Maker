@@ -7,6 +7,7 @@ import { useUi, promptDialog, toast } from '../store/ui';
 import { api } from '../api';
 import { SceneSelect, NumberInput } from './scenes/fields';
 import { AssetPicker } from '../components/AssetPicker';
+import { AssetThumb } from '../components/AssetThumb';
 import { run } from '../ops';
 import { GameFontSettings } from './FontSettings';
 
@@ -22,7 +23,8 @@ export function SettingsView() {
   const project = useProject((s) => s.project)!;
   const dir = useProject((s) => s.dir)!;
   const s = project.settings;
-  const [pick, setPick] = useState<null | 'bg' | 'music'>(null);
+  const [pick, setPick] = useState<null | 'bg' | 'music' | 'icon'>(null);
+  const icon = project.assets.find((a) => a.id === s.gameIconAssetId);
   const assetName = (id?: string) => (id ? (project.assets.find((a) => a.id === id)?.name ?? '⚠ missing') : 'None');
 
   const set = (patch: Partial<ProjectSettings>, key?: string) => useProject.getState().update((p) => void Object.assign(p.settings, patch), key);
@@ -96,6 +98,26 @@ export function SettingsView() {
                 <option value="borderless">{tr("Borderless (frameless, covers the screen)")}</option>
               </select>
             </div>
+            <div className="field" data-testid="game-icon-field">
+              <span className="field-label">{tr("Game icon (window and taskbar of the Windows game, browser tab of the Web game)")}</span>
+              <div className="row">
+                <div className="mini" style={{ width: 40, height: 40 }}>
+                  {icon ? <AssetThumb asset={icon} /> : s.gameIconAssetId ? '⚠️' : '🎮'}
+                </div>
+                <span className="grow ellipsis" data-testid="game-icon-name">
+                  {icon ? icon.name : s.gameIconAssetId ? tr("Missing asset") : tr("None (default)")}
+                </span>
+                <button className="btn sm" onClick={() => setPick('icon')} data-testid="choose-game-icon">
+                  {tr("Choose…")}
+                </button>
+                {s.gameIconAssetId && (
+                  <button className="btn sm ghost" onClick={() => set({ gameIconAssetId: undefined })} title={tr("Clear")} aria-label={tr("Clear")}>
+                    ✕
+                  </button>
+                )}
+              </div>
+              <span className="small faint">{tr("Only for this game. TSTVN’s own logo is set in Application Settings.")}</span>
+            </div>
           </div>
 
           <div className="sub-card">
@@ -159,12 +181,12 @@ export function SettingsView() {
       </div>
       {pick && (
         <AssetPicker
-          media={pick === 'bg' ? 'image' : 'audio'}
-          types={pick === 'bg' ? ['background', 'cg'] : ['music']}
-          title={pick === 'bg' ? tr("Title screen background") : tr("Title screen music")}
+          media={pick === 'music' ? 'audio' : 'image'}
+          types={pick === 'bg' ? ['background', 'cg'] : pick === 'icon' ? ['ui', 'unknown', 'portrait', 'character', 'cg', 'background'] : ['music']}
+          title={pick === 'bg' ? tr("Title screen background") : pick === 'icon' ? tr("Game icon") : tr("Title screen music")}
           onClose={() => setPick(null)}
           onPick={(a) => {
-            set(pick === 'bg' ? { titleBackgroundAssetId: a.id } : { titleMusicAssetId: a.id });
+            set(pick === 'bg' ? { titleBackgroundAssetId: a.id } : pick === 'icon' ? { gameIconAssetId: a.id } : { titleMusicAssetId: a.id });
             setPick(null);
           }}
         />

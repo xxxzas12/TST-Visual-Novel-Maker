@@ -27,6 +27,7 @@ export function App() {
     window.addEventListener('dragover', stop);
     window.addEventListener('drop', stop);
     void api.fonts.custom().then(registerCustomFonts).catch(() => undefined);
+    void api.app.logo().then((appLogo) => useUi.setState({ appLogo })).catch(() => undefined);
     void api.app.getSettings().then((s) => {
       useUi.setState({
         uiFont: s.uiFont ?? '',

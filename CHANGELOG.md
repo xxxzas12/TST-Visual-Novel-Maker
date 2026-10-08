@@ -2,6 +2,13 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.5
+### Added
+- Application Settings → **Application logo**: Choose Image, Preview, Reset. Shown on the Welcome screen,
+  the top bar and as TSTVN's window/taskbar icon; stored in the app's user data.
+- Project Settings → **Game icon** (per project): window/taskbar icon of the exported Windows game and
+  favicon of the Web game. Independent of the application logo.
+
 ## v1.0.4
 ### Changed
 - New two-step installer: **TSTVN — Install TSTVN** with [x] Create Desktop shortcut, [x] Create Start Menu

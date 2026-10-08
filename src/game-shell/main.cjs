@@ -37,6 +37,8 @@ function createWindow() {
     frame: !borderless,
     fullscreen: config.displayMode === 'fullscreen',
     title: config.title,
+    // The game's own icon (Project Settings → Game icon), if the project set one.
+    icon: config.icon ? path.join(__dirname, config.icon) : undefined,
     backgroundColor: '#000000',
     autoHideMenuBar: true,
     show: false,

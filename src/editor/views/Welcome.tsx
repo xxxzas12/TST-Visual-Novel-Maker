@@ -7,6 +7,7 @@ import { api } from '../api';
 import { loadProjectResult, openProjectDir, run } from '../ops';
 import { confirmDialog, toast } from '../store/ui';
 import { AppSettingsButton } from './AppSettings';
+import { AppBrand } from '../components/AppBrand';
 
 export function Welcome() {
   const [info, setInfo] = useState<AppInfo | null>(null);
@@ -70,8 +71,8 @@ export function Welcome() {
       <div className="welcome-inner">
         <div className="hero">
           <div className="row">
-            <div className="brand grow" style={{ fontSize: '1.4rem' }}>
-              TSTVN
+            <div className="grow">
+              <AppBrand size={1.4} testId="welcome-brand" />
             </div>
             <LanguageSelect />
             <AppSettingsButton />

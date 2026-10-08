@@ -10,6 +10,49 @@ import { Modal } from '../components/Modal';
 import { useUi, type AppSettingsSection } from '../store/ui';
 import { NumberInput } from './scenes/fields';
 import { UiFontSettings } from './FontSettings';
+import { AppBrand } from '../components/AppBrand';
+import { run } from '../ops';
+import { toast } from '../store/ui';
+
+/** Custom application logo: TSTVN's own logo and window icon. Games use their own Game icon. */
+function LogoSettings() {
+  const logo = useUi((s) => s.appLogo);
+  const choose = async () => {
+    const files = await api.dialog.pickFiles(tr('Choose a logo image'), [{ name: tr('Images'), extensions: ['png', 'jpg', 'jpeg', 'ico'] }], false);
+    if (!files[0]) return;
+    const url = await run(() => api.app.setLogo(files[0]), tr('Could not use this image'));
+    if (!url) return;
+    useUi.setState({ appLogo: url });
+    toast(tr('Application logo changed'), 'success');
+  };
+  const reset = async () => {
+    await run(() => api.app.resetLogo(), tr('Could not reset the logo'));
+    useUi.setState({ appLogo: null });
+    toast(tr('Default logo restored'), 'success');
+  };
+  return (
+    <div className="col" data-testid="logo-settings">
+      <div className="section-title">{tr('Application logo')}</div>
+      <div className="small muted">{tr('Shown on the start screen, in the top bar and as the TSTVN window icon. It does not change your games — each game has its own icon in Project Settings → Game icon.')}</div>
+      <div className="logo-preview" data-testid="logo-preview">
+        <div className="logo-box">{logo ? <img src={logo} alt={tr('Application logo')} data-testid="logo-preview-img" /> : <span className="faint small">{tr('Default')}</span>}</div>
+        <div className="col" style={{ gap: '0.4rem' }}>
+          <span className="small faint">{tr('Preview')}</span>
+          <AppBrand size={1.4} />
+        </div>
+      </div>
+      <div className="row">
+        <button className="btn primary" onClick={() => void choose()} data-testid="logo-choose">
+          {tr('Choose Image…')}
+        </button>
+        <button className="btn" onClick={() => void reset()} disabled={!logo} data-testid="logo-reset">
+          {tr('Reset')}
+        </button>
+        <span className="small faint">{tr('PNG, JPG or ICO; square images look best.')}</span>
+      </div>
+    </div>
+  );
+}
 
 export function AppSettingsButton({ compact }: { compact?: boolean }) {
   return (
@@ -22,6 +65,7 @@ export function AppSettingsButton({ compact }: { compact?: boolean }) {
 const SECTIONS: { id: AppSettingsSection; icon: string; label: string }[] = [
   { id: 'general', icon: '🌐', label: 'General' },
   { id: 'interface', icon: '🔤', label: 'Interface & fonts' },
+  { id: 'logo', icon: '🖼️', label: 'Application logo' },
   { id: 'autosave', icon: '💾', label: 'Autosave & recovery' },
   { id: 'about', icon: 'ℹ️', label: 'About' },
 ];
@@ -85,6 +129,7 @@ export function AppSettingsDialog() {
             </div>
           )}
           {section === 'interface' && <UiFontSettings />}
+          {section === 'logo' && <LogoSettings />}
           {section === 'autosave' && app && (
             <div className="col">
               <div className="section-title">{tr('Autosave & recovery')}</div>

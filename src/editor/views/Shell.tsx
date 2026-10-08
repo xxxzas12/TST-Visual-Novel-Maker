@@ -16,6 +16,7 @@ import { ExportView } from './ExportView';
 import { BackupsView } from './BackupsView';
 import { Onboarding } from './Onboarding';
 import { AppSettingsButton } from './AppSettings';
+import { AppBrand } from '../components/AppBrand';
 
 const NAV: { view: View; icon: string; label: string; tip: string }[] = [
   { view: 'scenes', icon: '🎬', label: 'Scenes', tip: 'Scene editor (Ctrl+1)' },
@@ -135,7 +136,7 @@ export function Shell() {
   return (
     <div className="shell">
       <header className="topbar">
-        <span className="brand">{tr("TSTVN")}</span>
+        <AppBrand />
         <span className="project-name ellipsis" title={project.name} data-testid="project-name">
           {project.name}
         </span>

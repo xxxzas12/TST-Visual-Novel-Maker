@@ -1915,3 +1915,40 @@ h3 {
 .app-settings-body {
   min-width: 0;
 }
+
+/* ---------- application logo ---------- */
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  min-width: 0;
+}
+.app-logo {
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg2);
+}
+.logo-box {
+  width: 6rem;
+  height: 6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 50% / 16px 16px;
+}
+.logo-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}

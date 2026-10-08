@@ -30,8 +30,10 @@ export interface ExportOptions {
   onProgress?: (p: ExportProgress) => void;
 }
 
-export function gameIndexHtml(title: string): string {
-  const esc = title.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+export function gameIndexHtml(title: string, iconPath?: string): string {
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const icon = iconPath ? `<link rel="icon" href="${esc(iconPath.split('/').map(encodeURIComponent).join('/'))}">
+` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -40,8 +42,8 @@ export function gameIndexHtml(title: string): string {
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
-<title>${esc}</title>
-<link rel="stylesheet" href="runtime.css">
+<title>${esc(title)}</title>
+${icon}<link rel="stylesheet" href="runtime.css">
 <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#tstvn-game{position:fixed;inset:0}</style>
 </head>
 <body>
@@ -64,10 +66,15 @@ export function parseGameJs(text: string): GameData {
   return JSON.parse(m[1]) as GameData;
 }
 
+/** Project-relative path of the game icon, if the game has one. */
+function gameIconPath(data: GameData): string | undefined {
+  return data.iconAssetId ? data.assets[data.iconAssetId]?.path : undefined;
+}
+
 /** Writes the platform-independent web game (index.html, runtime, game data, assets) into wwwDir. */
 async function writeWebGame(dir: string, data: GameData, wwwDir: string, env: ExportEnv, progress: (step: string, pct: number) => void) {
   await fs.mkdir(wwwDir, { recursive: true });
-  await fs.writeFile(path.join(wwwDir, 'index.html'), gameIndexHtml(data.title));
+  await fs.writeFile(path.join(wwwDir, 'index.html'), gameIndexHtml(data.title, gameIconPath(data)));
   await fs.copyFile(path.join(env.runtimeDir, 'runtime.js'), path.join(wwwDir, 'runtime.js'));
   await fs.copyFile(path.join(env.runtimeDir, 'runtime.css'), path.join(wwwDir, 'runtime.css'));
   await fs.writeFile(path.join(wwwDir, 'game.js'), gameJs(data));
@@ -208,7 +215,18 @@ export async function exportGame(opts: ExportOptions): Promise<ExportGameResult>
       await fs.copyFile(path.join(env.shellDir, 'preload.cjs'), path.join(appDir, 'preload.cjs'));
       await fs.writeFile(
         path.join(appDir, 'game-config.json'),
-        JSON.stringify({ title: data.title, displayMode: data.displayMode, width: data.resolution.width, height: data.resolution.height }, null, 1),
+        JSON.stringify(
+          {
+            title: data.title,
+            displayMode: data.displayMode,
+            width: data.resolution.width,
+            height: data.resolution.height,
+            // Window/taskbar icon: the project's game icon (inside www/), never the TSTVN logo.
+            ...(gameIconPath(data) ? { icon: `www/${gameIconPath(data)}` } : {}),
+          },
+          null,
+          1,
+        ),
       );
       wwwDir = path.join(appDir, 'www');
       launchRel = exeName;

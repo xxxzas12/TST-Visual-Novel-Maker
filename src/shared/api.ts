@@ -152,6 +152,10 @@ export interface TstvnApi {
     info(): Promise<AppInfo>;
     getSettings(): Promise<AppSettings>;
     setSettings(patch: Partial<AppSettings>): Promise<AppSettings>;
+    /** Custom application logo as a data URL (null = default TSTVN logo). Not used by games. */
+    logo(): Promise<string | null>;
+    setLogo(file: string): Promise<string>;
+    resetLogo(): Promise<void>;
     recent(): Promise<RecentProject[]>;
     removeRecent(path: string): Promise<RecentProject[]>;
     setTitle(title: string): Promise<void>;

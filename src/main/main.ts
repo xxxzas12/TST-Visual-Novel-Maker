@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { existsSync, statSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, net, protocol, shell } from 'electron';
 import type { Asset, Project, Theme } from '../shared/types';
 import type { AppSettings, DuplicateDecision, ExportGameRequest, FileFilter, ImportPlan } from '../shared/api';
 import { validateProject } from '../shared/validate';
@@ -20,6 +20,7 @@ import { electronThumbnailer } from './thumbnails';
 import { FontStore, listSystemFonts } from './fonts';
 import { readImageSize } from './imageSize';
 import { exportThemeFile, importThemeFile } from './themeIO';
+import { LogoStore, type ImageLoader } from './branding';
 import { extOf } from '../shared/classify';
 import { getLanguage, setLanguage } from '../shared/i18n';
 
@@ -36,6 +37,25 @@ let mainWindow: BrowserWindow | null = null;
 let currentProjectDir: string | null = null;
 const store = new UserStore(app.getPath('userData'));
 const fontStore = new FontStore(path.join(app.getPath('userData'), 'fonts'));
+
+/** Decodes an image with Electron (PNG/JPG/ICO) into a PNG data URL no larger than `max` px. */
+const loadImage: ImageLoader = async (file, max) => {
+  const img = nativeImage.createFromPath(file);
+  if (img.isEmpty()) return null;
+  const { width, height } = img.getSize();
+  const k = Math.min(1, max / Math.max(width, height));
+  return (k < 1 ? img.resize({ width: Math.round(width * k), height: Math.round(height * k), quality: 'best' }) : img).toDataURL();
+};
+const logoStore = new LogoStore(path.join(app.getPath('userData'), 'branding'), loadImage);
+
+/** TSTVN's own window/taskbar icon: the custom application logo, or the default icon. */
+async function applyWindowIcon() {
+  if (!mainWindow) return;
+  const file = await logoStore.file();
+  const img = file ? nativeImage.createFromPath(file) : null;
+  if (img && !img.isEmpty()) mainWindow.setIcon(img);
+  else mainWindow.setIcon(await app.getFileIcon(process.execPath, { size: 'large' }));
+}
 
 const DEFAULT_SETTINGS: AppSettings = { onboardingDone: false, autosaveMinutes: 2 };
 
@@ -74,7 +94,12 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
-  mainWindow.once('ready-to-show', () => mainWindow?.show());
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+    void logoStore.file().then((f) => {
+      if (f) void applyWindowIcon();
+    });
+  });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.webContents.on('will-navigate', (e, url) => {
     const allowed = process.env.TSTVN_DEV_URL ? url.startsWith(process.env.TSTVN_DEV_URL) : url.startsWith('file:');
@@ -138,6 +163,16 @@ function registerIpc() {
     });
     settingsQueue = job.catch(() => undefined);
     return job;
+  });
+  handle('app:logo', () => logoStore.get());
+  handle('app:setLogo', async (_e, file: string) => {
+    const url = await logoStore.set(file);
+    await applyWindowIcon();
+    return url;
+  });
+  handle('app:resetLogo', async () => {
+    await logoStore.reset();
+    await applyWindowIcon();
   });
   handle('app:recent', () => store.recent());
   handle('app:removeRecent', (_e, p: string) => store.removeRecent(p));
