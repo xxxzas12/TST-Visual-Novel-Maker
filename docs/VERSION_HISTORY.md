@@ -33,7 +33,7 @@ raised once per feature or fix. Nothing has been published as a GitHub Release y
 - **v1.0.14–v1.0.17:** the follow-up commit recording that version's full test-gate result. For v1.0.14
   this is a test-only fix, saving before closing in the textbox specs. Each of these sits directly
   after its feature commit, and the app code is identical.
-- **v1.0.0:** has no tag; it is the repository's initial commit.
+- **v1.0.0:** the repository's initial commit (980e0a1) has no lowercase tag. The GitHub repository has a tag **V1.0.0** (capital V), made on GitHub, which points to a README edit (9760a03) made on GitHub on 2026-10-07 before this history was merged in. It is kept unchanged.
 
 ## Installers
 

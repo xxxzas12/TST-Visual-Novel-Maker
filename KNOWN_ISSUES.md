@@ -4,6 +4,8 @@ None of these block normal use. Each was recorded when the related feature was b
 [docs/updates](docs/updates/).
 
 ## Installer & environment
+- **Not code-signed:** the installer and TSTVN.exe have no digital signature yet, so Windows SmartScreen may show
+  "Windows protected your PC" on first run (More info → Run anyway). Fixing it needs a code-signing certificate.
 - **Clean-machine test:** the installer was tested by fully uninstalling first, not on a fresh VM or in
   Windows Sandbox (not available on the test PC, which runs Windows 11 Home).
 - **`ELECTRON_RUN_AS_NODE`:** in a terminal that sets `ELECTRON_RUN_AS_NODE=1` (for example VS Code's),
