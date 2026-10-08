@@ -134,6 +134,8 @@ function modern(): Theme {
     menu: { background: '#0b0e18', color: '#ffffff', accent: '#4f6bff', opacity: 0.94 },
     animation: 'fade',
     anim: defaultAnimations(),
+    textboxStyleId: null,
+    choiceStyleId: null,
     accessibility: { minFontSize: 14, minTouchTarget: 44, highContrast: false },
   };
 }
@@ -159,7 +161,7 @@ export function merge<T>(base: T, over: unknown): T {
     else if (Array.isArray(b)) out[k] = Array.isArray(v) ? v : b;
     else if (isPlain(b)) out[k] = isPlain(v) ? merge(b, v) : b;
     else if (typeof v === typeof b) out[k] = typeof v === 'number' && !Number.isFinite(v) ? b : v;
-    else if (v === null && (k === 'image' || k === 'texture' || k === 'frameImage' || k === 'font' || k === 'fontFace' || k === 'textSpeed' || k === 'preset')) out[k] = null;
+    else if (v === null && (k === 'image' || k === 'texture' || k === 'frameImage' || k === 'font' || k === 'fontFace' || k === 'textSpeed' || k === 'preset' || k === 'textboxStyleId' || k === 'choiceStyleId')) out[k] = null;
   }
   return out as T;
 }

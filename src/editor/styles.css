@@ -2467,3 +2467,16 @@ body.resizing-y * {
   padding: 0.5rem 0 0.1rem 0.7rem;
   border-left: 2px solid var(--line2);
 }
+
+/* ---------- Style Library ---------- */
+.style-lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.6rem;
+}
+.style-lib-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+}

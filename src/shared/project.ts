@@ -2,6 +2,7 @@ import type { Action, ActionType, Chapter, Project, Scene, Variable } from './ty
 import { createAction } from './actions';
 import { newId } from './ids';
 import { THEME_PRESETS, normalizeTheme } from './themes';
+import { normalizeStyles } from './uistyles';
 import { getLanguage, t } from './i18n';
 
 export const PROJECT_FILE = 'project.json';
@@ -251,6 +252,7 @@ export function normalizeProject(raw: any): Project {
     scenes: Array.isArray(raw.scenes) ? raw.scenes.map((s: any) => ({ tags: [], actions: [], ...s })) : base.scenes,
     variables: Array.isArray(raw.variables) ? raw.variables : [],
     themes: Array.isArray(raw.themes) ? raw.themes.map(normalizeTheme) : [],
+    uiStyles: normalizeStyles(raw.uiStyles),
     actionTemplates: Array.isArray(raw.actionTemplates) ? raw.actionTemplates : [],
     collections: Array.isArray(raw.collections) ? raw.collections : [],
   };

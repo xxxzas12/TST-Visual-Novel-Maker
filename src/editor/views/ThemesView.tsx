@@ -8,7 +8,7 @@ import { newId, deepClone } from '../../shared/ids';
 import { makeContext } from '../../shared/uilayout';
 import { DEVICES, alignElement, canAlign, checkAllDevices, deleteMenuButton, duplicateMenuButton, moveElement, positioned, type AlignEdge, type UiElementId } from '../../shared/uicheck';
 import { useProject, getDir } from '../store/project';
-import { confirmDialog, setThemeEditorAdvanced, toast, useUi } from '../store/ui';
+import { confirmDialog, promptDialog, setThemeEditorAdvanced, toast, useUi } from '../store/ui';
 import { api } from '../api';
 import { run } from '../ops';
 import { Modal } from '../components/Modal';
@@ -18,6 +18,8 @@ import { TextboxPresets } from './themes/TextboxPresets';
 import { applyTextboxPreset, getTextboxPreset } from '../../shared/textbox';
 import { ChoicePresets } from './themes/ChoicePresets';
 import { applyChoicePreset, getChoicePreset } from '../../shared/choicestyle';
+import { applyStyles, detachStyle, storeEditedTheme, styleFromTheme, type UiStyle, type UiStyleKind } from '../../shared/uistyles';
+import { MyStyles, StyleLibraryDialog } from './themes/StyleLibrary';
 
 function Swatches({ t }: { t: Theme }) {
   return (
@@ -136,6 +138,9 @@ export function ThemesView() {
   const pluginTheme = pluginThemes.find((t) => t.id === selId);
   const sel: Theme = pluginTheme ?? resolveTheme(selId, project.themes);
   const isCustom = project.themes.some((t) => t.id === selId);
+  /** The selected theme as players see it: with its linked Style Library styles. */
+  const selResolved = useMemo(() => applyStyles(deepClone(sel), project.uiStyles), [sel, project.uiStyles]);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   // Plugin themes are previewed as if they were in the project (they are copied in when used).
   const live = useMemo(() => gameTheme(pluginTheme ? { ...project, themes: [...project.themes, pluginTheme] } : project, sel.id), [project, sel.id, pluginTheme]);
   const sceneUses = project.scenes.filter((s) => s.themeId === selId).length;
@@ -173,20 +178,64 @@ export function ThemesView() {
 
   const readOnly = () => toast(tr('Presets can’t be edited directly — click “Edit a copy” to make your own version.'), 'info');
 
+  // Edits are made on the theme as players see it; parts that come from a linked style are stored in the
+  // style (so every theme using it updates), the rest in the theme.
   const edit = (fn: (t: Theme) => void, key: string) => {
     if (!isCustom) return readOnly();
+    const p0 = useProject.getState().project!;
+    const t0 = p0.themes.find((x) => x.id === selId);
+    if (!t0) return;
+    const edited = applyStyles(deepClone(t0), p0.uiStyles);
+    fn(edited);
     useProject.getState().update((p) => {
       const t = p.themes.find((x) => x.id === selId);
-      if (t) fn(t);
+      if (t) storeEditedTheme(t, edited, p.uiStyles);
     }, `theme:${selId}:${key}`);
   };
 
   const replaceTheme = (next: Theme, key: string) => {
     if (!isCustom) return readOnly();
     useProject.getState().update((p) => {
-      const i = p.themes.findIndex((x) => x.id === selId);
-      if (i >= 0) p.themes[i] = { ...next, id: selId, name: p.themes[i].name };
+      const t = p.themes.find((x) => x.id === selId);
+      if (t) storeEditedTheme(t, { ...next, id: selId, name: t.name }, p.uiStyles);
     }, `theme:${selId}:${key}`);
+  };
+
+  /** Links the selected theme to a library style (a preset theme is copied first). */
+  const linkStyle = (style: Pick<UiStyle, 'id' | 'kind'>) => {
+    const link = (t: Theme) => void (style.kind === 'textbox' ? (t.textboxStyleId = style.id) : (t.choiceStyleId = style.id));
+    if (!isCustom) {
+      const copy = copyOf(selId === activeId, undefined, link);
+      return toast(tr('“{0}” was created from the preset so it can be changed', { 0: copy.name }), 'success');
+    }
+    useProject.getState().update((p) => {
+      const t = p.themes.find((x) => x.id === selId);
+      if (t) link(t);
+    }, `theme:${selId}:style:${Date.now()}`);
+  };
+
+  /** Saves the selected theme's textbox or choices as a library style and links the theme to it. */
+  const saveStyle = async (kind: UiStyleKind) => {
+    const name = await promptDialog({
+      title: kind === 'textbox' ? tr('Save textbox style') : tr('Save choice style'),
+      label: tr('Style name'),
+      value: kind === 'textbox' ? tr('My dialogue style') : tr('My choice style'),
+      confirmLabel: tr('Save'),
+    });
+    if (!name?.trim()) return;
+    const style = styleFromTheme(selResolved, kind, name.trim());
+    useProject.getState().update((p) => void (p.uiStyles = [...(p.uiStyles ?? []), style]));
+    linkStyle(style);
+    toast(tr('Style “{0}” saved to the Style Library', { 0: style.name }), 'success');
+  };
+
+  /** "Edit only here": this theme gets its own copy of the style (local override). */
+  const detach = (kind: UiStyleKind) => {
+    if (!isCustom) return readOnly();
+    useProject.getState().update((p) => {
+      const t = p.themes.find((x) => x.id === selId);
+      if (t) detachStyle(t, kind, p.uiStyles);
+    }, `theme:${selId}:detach:${Date.now()}`);
   };
 
   const copyOf = (apply: boolean, name?: string, mutate?: (t: Theme) => void) => {
@@ -256,7 +305,9 @@ export function ThemesView() {
   const exportTheme = async () => {
     const file = await api.dialog.saveFile(tr('Export theme'), `${getDir()}\\${sel.name.replace(/[\\/:*?"<>|]+/g, '_')}.tsttheme`, [{ name: tr('TSTVN theme'), extensions: ['tsttheme'] }]);
     if (!file) return;
-    const r = await run(() => api.themes.exportFile(getDir(), sel, project.assets, file), tr('Theme export failed'));
+    // The file is self-contained: linked Style Library styles are written into the theme.
+    const self = { ...selResolved, textboxStyleId: null, choiceStyleId: null };
+    const r = await run(() => api.themes.exportFile(getDir(), self, project.assets, file), tr('Theme export failed'));
     if (r) toast(tr('Theme exported ({0} files)', { 0: r.files }), 'success');
   };
 
@@ -337,6 +388,9 @@ export function ThemesView() {
         <h2>{tr('Game UI & Themes')}</h2>
         <span className="muted small">{tr('Design the dialogue box, name box, choices and menu buttons players see.')}</span>
         <span className="grow" />
+        <button className="btn sm" onClick={() => setLibraryOpen(true)} title={tr('Reusable textbox and choice styles of this project')} data-testid="open-style-library">
+          {tr('📚 Style Library')}
+        </button>
         <button className="btn sm" onClick={() => void importTheme()} data-testid="import-theme">
           {tr('⬆ Import Theme')}
         </button>
@@ -570,10 +624,10 @@ export function ThemesView() {
           {(el === 'dialog' || el === 'name') && (
             <div className="ui-props-body" style={{ paddingBottom: 0 }} data-testid="textbox-style">
               <div className="section-title">{tr('Textbox style')}</div>
-              <TextboxPresets current={sel.dialog.preset} onPreview={setPreviewPreset} onPick={pickTextbox} />
-              {isCustom && sel.dialog.preset && getTextboxPreset(sel.dialog.preset) && (
-                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickTextbox(sel.dialog.preset!)} title={tr('Undo your changes to the dialogue box and name box')} data-testid="textbox-reset">
-                  {tr('⟲ Reset to “{0}”', { 0: tr(getTextboxPreset(sel.dialog.preset)!.name) })}
+              <TextboxPresets current={selResolved.dialog.preset} onPreview={setPreviewPreset} onPick={pickTextbox} />
+              {isCustom && selResolved.dialog.preset && getTextboxPreset(selResolved.dialog.preset) && (
+                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickTextbox(selResolved.dialog.preset!)} title={tr('Undo your changes to the dialogue box and name box')} data-testid="textbox-reset">
+                  {tr('⟲ Reset to “{0}”', { 0: tr(getTextboxPreset(selResolved.dialog.preset)!.name) })}
                 </button>
               )}
               <div className="small faint" style={{ marginTop: '0.4rem' }}>
@@ -581,15 +635,16 @@ export function ThemesView() {
                   ? tr('Previewing “{0}” — click to use it', { 0: tr(getTextboxPreset(previewPreset)!.name) })
                   : tr('Point at a style to preview it, click to use it. Changes the dialogue box and name box only.')}
               </div>
+              {!pluginTheme && <MyStyles kind="textbox" theme={sel} onUse={(id) => linkStyle({ id, kind: 'textbox' })} onSave={() => void saveStyle('textbox')} onDetach={() => detach('textbox')} />}
             </div>
           )}
           {el === 'choices' && (
             <div className="ui-props-body" style={{ paddingBottom: 0 }} data-testid="choice-style">
               <div className="section-title">{tr('Choice style')}</div>
-              <ChoicePresets current={sel.choice.preset} onPreview={setPreviewChoice} onPick={pickChoice} />
-              {isCustom && sel.choice.preset && getChoicePreset(sel.choice.preset) && (
-                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickChoice(sel.choice.preset!)} title={tr('Undo your changes to the choice buttons')} data-testid="choice-reset">
-                  {tr('⟲ Reset to “{0}”', { 0: tr(getChoicePreset(sel.choice.preset)!.name) })}
+              <ChoicePresets current={selResolved.choice.preset} onPreview={setPreviewChoice} onPick={pickChoice} />
+              {isCustom && selResolved.choice.preset && getChoicePreset(selResolved.choice.preset) && (
+                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickChoice(selResolved.choice.preset!)} title={tr('Undo your changes to the choice buttons')} data-testid="choice-reset">
+                  {tr('⟲ Reset to “{0}”', { 0: tr(getChoicePreset(selResolved.choice.preset)!.name) })}
                 </button>
               )}
               <div className="small faint" style={{ marginTop: '0.4rem' }}>
@@ -597,10 +652,11 @@ export function ThemesView() {
                   ? tr('Previewing “{0}” — click to use it', { 0: tr(getChoicePreset(previewChoice)!.name) })
                   : tr('Point at a style to preview it, click to use it. Changes the choice buttons only.')}
               </div>
+              {!pluginTheme && <MyStyles kind="choice" theme={sel} onUse={(id) => linkStyle({ id, kind: 'choice' })} onSave={() => void saveStyle('choice')} onDetach={() => detach('choice')} />}
             </div>
           )}
           <fieldset disabled={!isCustom} className="ui-props-body">
-            <ThemeProps theme={isCustom ? sel : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} advanced={advanced} onReplay={onReplay} />
+            <ThemeProps theme={isCustom ? selResolved : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} advanced={advanced} onReplay={onReplay} />
             {!advanced && (
               <div className="small faint" style={{ paddingTop: '0.4rem' }}>
                 {tr('More settings (borders, shadows, glow, gradients, textures, frame images, spacing) are in Advanced.')}
@@ -609,6 +665,17 @@ export function ThemesView() {
           </fieldset>
         </aside>
       </div>
+      {libraryOpen && (
+        <StyleLibraryDialog
+          canApply={!pluginTheme}
+          onClose={() => setLibraryOpen(false)}
+          onApply={(st) => {
+            linkStyle(st);
+            setEl(st.kind === 'textbox' ? 'dialog' : 'choices');
+            toast(tr('“{0}” is now used by “{1}”', { 0: st.name, 1: tr(sel.name) }), 'success');
+          }}
+        />
+      )}
       {scenesOpen && <SceneThemes themeId={selId} themeName={tr(sel.name)} onClose={() => setScenesOpen(false)} />}
     </>
   );

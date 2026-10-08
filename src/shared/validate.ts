@@ -1,6 +1,7 @@
 import type { Action, ChoiceEffect, ChoiceOption, Condition, Hotspot, JumpTarget, Project, Theme, Variable } from './types';
 import { getActionDef, isKnownActionType } from './actions';
 import { t } from './i18n';
+import { applyStyles, mapStyleImages, styleAssetIds } from './uistyles';
 import { mapThemeImages, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
 
 export const ASSET_PARAM_KEYS = ['assetId', 'voice', 'sfx'] as const;
@@ -61,7 +62,7 @@ export function collectUsedAssetIds(p: Project, includeDisabled = false): Set<st
 /** Themes the game uses: the project theme and scene overrides. */
 export function usedThemes(p: Project): Theme[] {
   const ids = new Set([p.settings.themeId, ...p.scenes.map((s) => s.themeId).filter((x): x is string => !!x)]);
-  return [...ids].filter((id) => themeExists(id, p.themes)).map((id) => resolveTheme(id, p.themes));
+  return [...ids].filter((id) => themeExists(id, p.themes)).map((id) => applyStyles(JSON.parse(JSON.stringify(resolveTheme(id, p.themes))) as Theme, p.uiStyles));
 }
 
 export interface AssetUsage {
@@ -92,6 +93,9 @@ export function findAssetUsages(p: Project, assetId: string): AssetUsage[] {
   if (p.settings.gameIconAssetId === assetId) out.push({ where: 'settings', label: t('Game icon') });
   for (const th of p.themes) {
     if (themeAssetIds(th).includes(assetId)) out.push({ where: 'theme', label: t('Theme “{name}”', { name: th.name }) });
+  }
+  for (const st of p.uiStyles ?? []) {
+    if (styleAssetIds(st).includes(assetId)) out.push({ where: 'theme', label: t('Style “{name}”', { name: st.name }) });
   }
   return out;
 }
@@ -135,6 +139,7 @@ export function replaceAssetReferences(p: Project, fromId: string, toId: string)
   for (const th of p.themes) {
     mapThemeImages(th, (id) => (id === fromId ? (n++, toId) : id));
   }
+  n += mapStyleImages(p.uiStyles, (id) => (id === fromId ? toId : id));
   return n;
 }
 
@@ -177,6 +182,7 @@ export function removeAssetReferences(p: Project, assetId: string): number {
   for (const th of p.themes) {
     mapThemeImages(th, (id) => (id === assetId ? (n++, null) : id));
   }
+  n += mapStyleImages(p.uiStyles, (id) => (id === assetId ? null : id));
   return n;
 }
 

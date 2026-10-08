@@ -2,6 +2,7 @@ import type { GameAsset, GameData, Project, Theme } from './types';
 import { collectUsedAssetIds } from './validate';
 import { orderedSceneIds } from './project';
 import { normalizeTheme, resolveTheme, themeExists, themeFontRefs } from './themes';
+import { applyStyles } from './uistyles';
 import { buildGallery } from './gallery';
 
 export { cssFamily } from './themes';
@@ -12,7 +13,8 @@ export { cssFamily } from './themes';
  */
 export function gameTheme(p: Project, themeId: string | null | undefined): Theme {
   // Copy: custom themes are (frozen) project state.
-  const theme = normalizeTheme(JSON.parse(JSON.stringify(resolveTheme(themeId, p.themes))));
+  // Linked Style Library styles replace the theme's own dialogue box / choices.
+  const theme = applyStyles(normalizeTheme(JSON.parse(JSON.stringify(resolveTheme(themeId, p.themes)))), p.uiStyles);
   const df = p.settings.dialogueFont;
   if (df?.family) theme.fontFace = df.file ? { family: df.family, file: df.file } : { family: df.family };
   const size = p.settings.dialogueFontSize;

@@ -1,11 +1,12 @@
 // Textbox style picker: one card per textbox preset with a small drawing of its shape.
 // Hovering (or focusing) a card previews it in the live canvas; clicking applies it.
 import { t as tr } from '../../../shared/i18n';
-import { TEXTBOX_PRESETS, textboxParts, type TextboxPreset } from '../../../shared/textbox';
+import { TEXTBOX_PRESETS, textboxParts } from '../../../shared/textbox';
+import type { ThemeDialogBox, ThemeNameBox } from '../../../shared/types';
 import { withAlpha } from '../../../shared/themes';
 
-function Thumb({ p }: { p: TextboxPreset }) {
-  const { dialog: d, nameBox: n } = textboxParts(p);
+/** Small drawing of a dialogue box + name box (presets and saved styles). */
+export function TextboxThumb({ dialog: d, nameBox: n }: { dialog: ThemeDialogBox; nameBox: ThemeNameBox }) {
   const vars = {
     '--tb-bg': withAlpha(d.surface.background, Math.max(0.55, d.surface.opacity)),
     '--tb-bc': d.surface.borderColor,
@@ -52,7 +53,7 @@ export function TextboxPresets({ current, onPreview, onPick }: Props) {
           onClick={() => onPick(p.id)}
           data-testid={`textbox-preset-${p.id}`}
         >
-          <Thumb p={p} />
+          <TextboxThumb {...textboxParts(p)} />
           <span className="tb-label">{tr(p.name)}</span>
         </button>
       ))}

@@ -2,6 +2,15 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.18
+### Added
+- Style Library (UI/UX Phase 7): save a textbox or choice style once and reuse it in any theme; editing it
+  updates every theme and scene that uses it; "Edit only here" for a local change; a library window to apply,
+  rename, duplicate and delete styles.
+
+### Fixed
+- Themes view could stay blank (endless re-render) — found and fixed before release.
+
 ## v1.0.17
 ### Added
 - Advanced animation controls (UI/UX Phase 6, Advanced mode): delay, direction, distance, start size, start

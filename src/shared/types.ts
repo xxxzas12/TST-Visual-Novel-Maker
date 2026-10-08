@@ -1,5 +1,6 @@
 // Core TSTVN project data model.
 import type { ThemeAnimations } from './uianim';
+import type { UiStyle } from './uistyles';
 // The Editor edits a Project; the Runtime plays GameData built from a Project.
 
 export type AssetType =
@@ -454,6 +455,10 @@ export interface Theme {
   animation: 'fade' | 'slide' | 'none';
   /** Entrance/exit animations of the dialogue box, text reveal and choice buttons. */
   anim: ThemeAnimations;
+  /** Style Library: linked Textbox style (replaces dialog + nameBox when it exists); null = the theme's own. */
+  textboxStyleId: string | null;
+  /** Style Library: linked Choice style (replaces choice when it exists); null = the theme's own. */
+  choiceStyleId: string | null;
   accessibility: ThemeAccessibility;
 }
 
@@ -528,6 +533,8 @@ export interface Project {
   scenes: Scene[];
   variables: Variable[];
   themes: Theme[];
+  /** Style Library: reusable textbox and choice styles (absent in older projects). */
+  uiStyles?: UiStyle[];
   actionTemplates: ActionTemplate[];
   collections: AssetCollection[];
 }

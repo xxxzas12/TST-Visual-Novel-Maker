@@ -1,11 +1,12 @@
 // Choice style picker: one card per choice preset with a small drawing of two buttons (normal and hover).
 // Hovering (or focusing) a card previews it in the live canvas; clicking applies it.
 import { t as tr } from '../../../shared/i18n';
-import { CHOICE_PRESETS, choiceParts, type ChoicePreset } from '../../../shared/choicestyle';
+import { CHOICE_PRESETS, choiceParts } from '../../../shared/choicestyle';
+import type { ThemeChoices } from '../../../shared/types';
 import { withAlpha } from '../../../shared/themes';
 
-function Thumb({ p }: { p: ChoicePreset }) {
-  const c = choiceParts(p);
+/** Small drawing of two choice buttons (normal and hover), for presets and saved styles. */
+export function ChoiceThumb({ choice: c }: { choice: ThemeChoices }) {
   const btn = (state: 'normal' | 'hover') => {
     const s = c.states[state];
     return {
@@ -51,7 +52,7 @@ export function ChoicePresets({ current, onPreview, onPick }: Props) {
           onClick={() => onPick(p.id)}
           data-testid={`choice-preset-${p.id}`}
         >
-          <Thumb p={p} />
+          <ChoiceThumb choice={choiceParts(p)} />
           <span className="tb-label">{tr(p.name)}</span>
         </button>
       ))}
