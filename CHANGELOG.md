@@ -2,6 +2,16 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.1.0
+First public release under the new version line. The app is the same as v1.0.20; the minor version marks
+the UI/UX and Game UI customization work released in v1.0.12–v1.0.20:
+- Workspace: resizable, foldable, swappable panels with presets and saved layouts.
+- Textbox styles with real shapes, Basic/Advanced settings, advanced textbox looks.
+- Choice styles, button pictures and "when chosen" actions.
+- Game UI animations with presets, preview and advanced timing.
+- Style Library for reusable textbox and choice styles.
+- UI polish pass and release-candidate fixes.
+
 ## v1.0.20
 ### Fixed
 - Editor preferences changed right after launch (panel sizes, workspace, Basic/Advanced) could be put back by the

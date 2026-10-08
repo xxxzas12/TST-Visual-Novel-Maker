@@ -26,11 +26,12 @@ raised once per feature or fix. Nothing has been published as a GitHub Release y
 | 1.0.17 | 5af9d23 | 2026-10-08 | Advanced animation controls | [v1.0.17](updates/v1.0.17.md) |
 | 1.0.18 | bc86063 | 2026-10-08 | Style Library (reusable textbox and choice styles) | [v1.0.18](updates/v1.0.18.md) |
 | 1.0.19 | f2095da | 2026-10-08 | UI polish pass | [v1.0.19](updates/v1.0.19.md) |
-| 1.0.20 | (this commit) | 2026-10-08 | RC fix: startup settings no longer undo early preference changes; GitHub README/LICENSE merged | [v1.0.20](updates/v1.0.20.md) |
+| 1.0.20 | eeb6c2b | 2026-10-08 | RC fix: startup settings no longer undo early preference changes; GitHub README/LICENSE merged | [v1.0.20](updates/v1.0.20.md) |
+| **1.1.0** | (this commit) | 2026-10-09 | First public release of the new version line; same app as 1.0.20 | [v1.1.0](updates/v1.1.0.md) |
 
 ## Where tags point
 
-- **v1.0.1–v1.0.13, v1.0.18–v1.0.20:** the feature or fix commit itself.
+- **v1.0.1–v1.0.13, v1.0.18–v1.0.20, v1.1.0:** the feature, fix or release commit itself.
 - **v1.0.14–v1.0.17:** the follow-up commit recording that version's full test-gate result. For v1.0.14
   this is a test-only fix, saving before closing in the textbox specs. Each of these sits directly
   after its feature commit, and the app code is identical.
