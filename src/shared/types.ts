@@ -264,7 +264,20 @@ export interface UiPadding {
   y: number;
 }
 
+/**
+ * Shape of the dialogue box: box = plain rectangle; bubble = speech bubble pointing at the speaker;
+ * band = soft bar fading into the scene; ornate = double border with corner studs; tech = cut corners
+ * and scan lines; torn = ragged edges; window = RPG window with an inner frame line; pixel = stepped
+ * pixel-art border.
+ */
+export type DialogFrame = 'box' | 'bubble' | 'band' | 'ornate' | 'tech' | 'torn' | 'window' | 'pixel';
+/** Shape of the name box: box, tab (joined to the dialogue box), ribbon (notched ends), plain text, slanted, pixel. */
+export type NameShape = 'box' | 'tab' | 'ribbon' | 'plain' | 'slant' | 'pixel';
+
 export interface ThemeDialogBox {
+  /** Textbox preset last applied (shown as selected in the editor); null = none. */
+  preset: string | null;
+  frame: DialogFrame;
   anchor: UiAnchor;
   x: UiLength;
   y: UiLength;
@@ -280,6 +293,7 @@ export interface ThemeDialogBox {
 
 export interface ThemeNameBox {
   enabled: boolean;
+  shape: NameShape;
   /** inside = top of the dialogue box, outside = sitting on the box's top edge. */
   attach: 'inside' | 'outside';
   align: 'left' | 'center' | 'right';

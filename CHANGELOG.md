@@ -2,6 +2,17 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.13
+### Added
+- Textbox style presets (UI/UX Phase 2) with their own shapes: Classic VN, Modern, Speech Bubble (tail points
+  at the speaking character), Minimal (shadow band), Fantasy (double border, corner gems, ribbon name), Sci-Fi
+  (cut corners, scan lines), Horror (torn edges), RPG (game window), Retro (pixel art).
+- Point at a textbox style to preview it in the live canvas before applying; "Shape" settings for the dialogue
+  box and name box.
+
+### Fixed
+- Consecutive textbox preset picks are separate undo steps.
+
 ## v1.0.12
 ### Added
 - Editor workspace (UI/UX Phase 1): drag the dividers to resize the scene list, the properties panel and

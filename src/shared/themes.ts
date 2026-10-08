@@ -1,5 +1,5 @@
 // Game UI themes: presets, migration of older theme files, and helpers shared by editor and runtime.
-import type { ChoiceStateStyle, FontRef, MenuAction, MenuButtonDef, Theme, UiAnchor, UiLength, UiShadow, UiSurface, UiText } from './types';
+import type { ChoiceStateStyle, DialogFrame, NameShape, FontRef, MenuAction, MenuButtonDef, Theme, UiAnchor, UiLength, UiShadow, UiSurface, UiText } from './types';
 
 export const SANS = '"Segoe UI", "Leelawadee UI", "Noto Sans Thai", "Noto Sans", system-ui, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", "Noto Serif Thai", serif';
@@ -8,6 +8,8 @@ const ROUNDED = '"Trebuchet MS", "Segoe UI", "Leelawadee UI", "Noto Sans Thai", 
 const MONO = '"Courier New", Consolas, "Leelawadee UI", monospace';
 
 export const MENU_ACTIONS: MenuAction[] = ['auto', 'skip', 'save', 'load', 'settings', 'hide', 'menu'];
+export const DIALOG_FRAMES: DialogFrame[] = ['box', 'bubble', 'band', 'ornate', 'tech', 'torn', 'window', 'pixel'];
+export const NAME_SHAPES: NameShape[] = ['box', 'tab', 'ribbon', 'plain', 'slant', 'pixel'];
 export const UI_ANCHORS: UiAnchor[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
 export const px = (value: number): UiLength => ({ value, unit: 'px' });
@@ -45,6 +47,8 @@ function modern(): Theme {
     font: SANS,
     fontFace: null,
     dialog: {
+      preset: null,
+      frame: 'box',
       anchor: 'bottom',
       x: px(0),
       y: px(24),
@@ -57,6 +61,7 @@ function modern(): Theme {
     },
     nameBox: {
       enabled: true,
+      shape: 'box',
       attach: 'inside',
       align: 'left',
       x: 0,
@@ -110,7 +115,7 @@ function modern(): Theme {
   };
 }
 
-type DeepPartial<T> = { [K in keyof T]?: T[K] extends (infer U)[] ? U[] : T[K] extends object ? DeepPartial<T[K]> : T[K] };
+export type DeepPartial<T> = { [K in keyof T]?: T[K] extends (infer U)[] ? U[] : T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
 function isPlain(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
@@ -120,7 +125,7 @@ function isPlain(v: unknown): v is Record<string, unknown> {
  * Deep-merges `over` into `base`, keeping only values whose type matches the base
  * (protects the runtime from damaged or hand-edited theme files).
  */
-function merge<T>(base: T, over: unknown): T {
+export function merge<T>(base: T, over: unknown): T {
   if (!isPlain(base) || !isPlain(over)) return base;
   const out: Record<string, unknown> = { ...base };
   for (const [k, v] of Object.entries(over)) {
@@ -131,7 +136,7 @@ function merge<T>(base: T, over: unknown): T {
     else if (Array.isArray(b)) out[k] = Array.isArray(v) ? v : b;
     else if (isPlain(b)) out[k] = isPlain(v) ? merge(b, v) : b;
     else if (typeof v === typeof b) out[k] = typeof v === 'number' && !Number.isFinite(v) ? b : v;
-    else if (v === null && (k === 'image' || k === 'font' || k === 'fontFace' || k === 'textSpeed')) out[k] = null;
+    else if (v === null && (k === 'image' || k === 'font' || k === 'fontFace' || k === 'textSpeed' || k === 'preset')) out[k] = null;
   }
   return out as T;
 }
@@ -408,6 +413,8 @@ export function normalizeTheme(raw: unknown): Theme {
     .filter((b) => isPlain(b) && MENU_ACTIONS.includes(b.action as MenuAction))
     .map((b, i) => ({ id: typeof b.id === 'string' && b.id ? b.id : `mb-${i}`, action: b.action, label: typeof b.label === 'string' ? b.label : '', hideOnMobile: !!b.hideOnMobile }));
   if (!UI_ANCHORS.includes(t.dialog.anchor)) t.dialog.anchor = 'bottom';
+  if (!DIALOG_FRAMES.includes(t.dialog.frame)) t.dialog.frame = 'box';
+  if (!NAME_SHAPES.includes(t.nameBox.shape)) t.nameBox.shape = 'box';
   if (!UI_ANCHORS.includes(t.choice.anchor)) t.choice.anchor = 'center';
   if (!UI_ANCHORS.includes(t.menuBar.anchor)) t.menuBar.anchor = 'top-right';
   return t;

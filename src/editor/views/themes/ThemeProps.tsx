@@ -1,7 +1,7 @@
 // Properties panel of the Game UI editor: shows the settings of the selected element.
 import { t as tr } from '../../../shared/i18n';
-import type { ChoiceState, MenuAction, Theme, UiSurface, UiText } from '../../../shared/types';
-import { MENU_ACTIONS, SANS } from '../../../shared/themes';
+import type { ChoiceState, DialogFrame, MenuAction, NameShape, Theme, UiSurface, UiText } from '../../../shared/types';
+import { DIALOG_FRAMES, MENU_ACTIONS, NAME_SHAPES, SANS } from '../../../shared/themes';
 import { deleteMenuButton, duplicateMenuButton, moveMenuButton, type UiElementId } from '../../../shared/uicheck';
 import { newId } from '../../../shared/ids';
 import { AnchorPicker, ColorField, Field, FontField, LengthInput, Section, Slider, SurfaceEditor, TextEditor, type Edit } from './controls';
@@ -33,6 +33,23 @@ export function menuActionLabel(a: MenuAction): string {
     default:
       return tr('Menu');
   }
+}
+
+export function frameLabel(f: DialogFrame): string {
+  return {
+    box: tr('Box'),
+    bubble: tr('Speech bubble (tail points at the speaker)'),
+    band: tr('Shadow band (no box)'),
+    ornate: tr('Ornate (double border, corner gems)'),
+    tech: tr('Tech (cut corners, scan lines)'),
+    torn: tr('Torn (ragged edges)'),
+    window: tr('Game window (double frame)'),
+    pixel: tr('Pixel art'),
+  }[f];
+}
+
+export function shapeLabel(x: NameShape): string {
+  return { box: tr('Box'), tab: tr('Tab joined to the box'), ribbon: tr('Ribbon'), plain: tr('Text only'), slant: tr('Slanted'), pixel: tr('Pixel art') }[x];
 }
 
 export function elementLabel(el: UiElementId | null, theme: Theme): string {
@@ -80,6 +97,15 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
           <div className="small faint">{tr('px = pixels on a 1920×1080 screen, scaled to every screen size. % = share of the screen. The box never leaves the screen and grows (then scrolls) for long text.')}</div>
         </Section>
         <Section title={tr('Box style')}>
+          <Field label={tr('Shape')}>
+            <select className="select" value={d.frame} onChange={(e) => edit((t) => void (t.dialog.frame = e.target.value as DialogFrame), 'd:frame')} data-testid="dialog-frame">
+              {DIALOG_FRAMES.map((f) => (
+                <option key={f} value={f}>
+                  {frameLabel(f)}
+                </option>
+              ))}
+            </select>
+          </Field>
           <SurfaceEditor s={d.surface} set={surf((t) => t.dialog.surface, 'd')} prefix="dialog" />
         </Section>
         <Section title={tr('Text')}>
@@ -132,6 +158,15 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
           </label>
         </Section>
         <Section title={tr('Box style')}>
+          <Field label={tr('Shape')}>
+            <select className="select" value={n.shape} onChange={(e) => edit((t) => void (t.nameBox.shape = e.target.value as NameShape), 'n:shape')} data-testid="name-shape">
+              {NAME_SHAPES.map((x) => (
+                <option key={x} value={x}>
+                  {shapeLabel(x)}
+                </option>
+              ))}
+            </select>
+          </Field>
           <SurfaceEditor s={n.surface} set={surf((t) => t.nameBox.surface, 'n')} prefix="name" />
         </Section>
         <Section title={tr('Text')}>

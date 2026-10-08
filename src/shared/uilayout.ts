@@ -236,6 +236,7 @@ export function themeVars(t: Theme, c: UiContext, img: (assetId: string) => stri
     ...surfaceVars('n', t.nameBox.surface, c, img),
     ...textVars('n', t, t.nameBox.text, c),
     '--tvn-n-pad': pad(t.nameBox.padding, c),
+    '--tvn-n-padx': n(t.nameBox.padding.x * c.s),
     '--tvn-n-minw': n(t.nameBox.width * c.s),
     '--tvn-n-minh': n(t.nameBox.height * c.s),
     '--tvn-n-x': n(t.nameBox.x * c.s),

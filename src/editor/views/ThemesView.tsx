@@ -14,6 +14,8 @@ import { run } from '../ops';
 import { Modal } from '../components/Modal';
 import { UiCanvas } from './themes/UiCanvas';
 import { ThemeProps, elementLabel, menuActionLabel } from './themes/ThemeProps';
+import { TextboxPresets } from './themes/TextboxPresets';
+import { applyTextboxPreset, getTextboxPreset } from '../../shared/textbox';
 
 function Swatches({ t }: { t: Theme }) {
   return (
@@ -119,6 +121,8 @@ export function ThemesView() {
   const [mode, setMode] = useState<'design' | 'play'>('design');
   const [scenesOpen, setScenesOpen] = useState(false);
   const [showChecks, setShowChecks] = useState(true);
+  /** Textbox preset shown in the canvas while the pointer is over its card (not applied yet). */
+  const [previewPreset, setPreviewPreset] = useState<string | null>(null);
   const device = DEVICES.find((d) => d.id === deviceId) ?? DEVICES[0];
   const pluginThemes = useUi((s) => s.plugins.themes);
   const pluginTheme = pluginThemes.find((t) => t.id === selId);
@@ -127,6 +131,12 @@ export function ThemesView() {
   // Plugin themes are previewed as if they were in the project (they are copied in when used).
   const live = useMemo(() => gameTheme(pluginTheme ? { ...project, themes: [...project.themes, pluginTheme] } : project, sel.id), [project, sel.id, pluginTheme]);
   const sceneUses = project.scenes.filter((s) => s.themeId === selId).length;
+  const shown = useMemo(() => {
+    if (!previewPreset) return live;
+    const t = deepClone(live);
+    applyTextboxPreset(t, previewPreset);
+    return t;
+  }, [live, previewPreset]);
 
   // The demo game only restarts when its content changes (fonts, assets, characters), not on every style edit.
   const liveRef = useRef(live);
@@ -170,13 +180,14 @@ export function ThemesView() {
     }, `theme:${selId}:${key}`);
   };
 
-  const copyOf = (apply: boolean, name?: string) => {
+  const copyOf = (apply: boolean, name?: string, mutate?: (t: Theme) => void) => {
     const { pluginName: _source, ...theme } = sel as Theme & { pluginName?: string };
     void _source;
     const copy = deepClone(theme);
     copy.id = newId('th');
     copy.name = name ?? `${tr(sel.name)} (${tr('custom')})`;
     copy.preset = undefined;
+    mutate?.(copy);
     useProject.getState().update((p) => {
       p.themes.push(copy);
       if (apply) p.settings.themeId = copy.id;
@@ -193,6 +204,15 @@ export function ThemesView() {
   const saveAsPreset = () => {
     const copy = copyOf(false, tr('{0} copy', { 0: tr(sel.name) }));
     toast(tr('Saved as custom preset “{0}”', { 0: copy.name }), 'success');
+  };
+
+  /** Applies a textbox preset; a preset theme is copied first (presets stay unchanged). */
+  const pickTextbox = (id: string) => {
+    setPreviewPreset(null);
+    // Each pick is its own undo step (a shared key would merge consecutive picks).
+    if (isCustom) return edit((t) => void applyTextboxPreset(t, id), `textbox-preset:${Date.now()}`);
+    const copy = copyOf(selId === activeId, undefined, (t) => void applyTextboxPreset(t, id));
+    toast(tr('“{0}” was created from the preset so it can be changed', { 0: copy.name }), 'success');
   };
 
   const removeCustom = async () => {
@@ -465,7 +485,7 @@ export function ThemesView() {
               key={mode}
               play={mode === 'play'}
               game={game}
-              theme={live}
+              theme={shown}
               device={device}
               sample={sample}
               selected={el}
@@ -519,6 +539,17 @@ export function ThemesView() {
               <button className="btn sm primary" onClick={() => copyOf(false)}>
                 {tr('✏️ Edit a copy')}
               </button>
+            </div>
+          )}
+          {(el === 'dialog' || el === 'name') && (
+            <div className="ui-props-body" style={{ paddingBottom: 0 }} data-testid="textbox-style">
+              <div className="section-title">{tr('Textbox style')}</div>
+              <TextboxPresets current={sel.dialog.preset} onPreview={setPreviewPreset} onPick={pickTextbox} />
+              <div className="small faint" style={{ marginTop: '0.4rem' }}>
+                {previewPreset
+                  ? tr('Previewing “{0}” — click to use it', { 0: tr(getTextboxPreset(previewPreset)!.name) })
+                  : tr('Point at a style to preview it, click to use it. Changes the dialogue box and name box only.')}
+              </div>
             </div>
           )}
           <fieldset disabled={!isCustom} className="ui-props-body">

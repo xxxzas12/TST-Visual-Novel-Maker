@@ -219,6 +219,8 @@ export class Player implements RuntimeHost {
     r.speakerColor = String(theme.nameBox.speakerColor);
     r.menuDir = theme.menuBar.direction;
     r.hoverAnim = theme.choice.hoverAnimation;
+    r.dFrame = theme.dialog.frame;
+    r.nShape = theme.nameBox.shape;
     this.applyContrast();
     if (theme.nameBox.attach === 'outside') this.dialog.insertBefore(this.nameRow, this.dialogBody);
     else this.dialogBody.insertBefore(this.nameRow, this.textEl);
@@ -320,8 +322,36 @@ export class Player implements RuntimeHost {
     const mb = placeBox(bar.anchor, lengthPx(bar.x, 'x', c), lengthPx(bar.y, 'y', c), bw, bh, c.areaW, c.areaH);
     applyStyle(this.quick, { left: `${mb.left}px`, top: `${mb.top}px` });
 
+    this.placeTail();
     if (!this.choicesEl.classList.contains('tvn-hidden')) this.fitChoices();
     if (this.opts.design) this.reportLayout();
+  }
+
+  /** Speaker of the line on screen (points the speech-bubble tail). */
+  private tailSpeaker: string | null = null;
+
+  /**
+   * Speech-bubble frame: points the tail at the speaking character (or near the left edge when the
+   * speaker is not on stage) and puts it on the side facing the stage. Narration has no tail.
+   */
+  private placeTail() {
+    const dlg = this.dialog;
+    if (this.theme?.dialog.frame !== 'bubble' || dlg.classList.contains('tvn-hidden')) return;
+    if (dlg.classList.contains('tvn-narration') || this.tailSpeaker === null) {
+      dlg.dataset.tail = 'none';
+      return;
+    }
+    const d = dlg.getBoundingClientRect();
+    const root = this.root.getBoundingClientRect();
+    const char = this.tailSpeaker ? this.charEls.get(this.tailSpeaker) : undefined;
+    let x = d.width * 0.18;
+    if (char) {
+      const st = this.stage.getBoundingClientRect();
+      x = st.left + (st.width * parseFloat(char.style.left || '50')) / 100 - d.left;
+    }
+    const edge = Math.min(d.width / 2, 70 * (this.ctx?.s ?? 1));
+    dlg.style.setProperty('--tvn-tail-x', `${Math.round(Math.min(d.width - edge, Math.max(edge, x)))}px`);
+    dlg.dataset.tail = d.top + d.height / 2 > root.top + root.height / 2 ? 'top' : 'bottom';
   }
 
   /** Places the choice buttons in the free space next to the dialogue box (never overlapping it). */
@@ -391,6 +421,8 @@ export class Player implements RuntimeHost {
     const ch = this.game.characters[0];
     if (ch?.color) this.nameEl.style.setProperty('--tvn-speaker', ch.color);
     this.textEl.textContent = sample.text;
+    this.tailSpeaker = ch?.id ?? '';
+    this.placeTail();
     this.indicator.classList.add('tvn-show');
     const states = ['normal', 'hover', 'pressed', 'disabled'];
     const buttons = sample.choices.map((text, i) =>
@@ -1030,6 +1062,8 @@ export class Player implements RuntimeHost {
     this.nameEl.classList.toggle('tvn-hidden', !d.speakerName || !this.theme.nameBox.enabled);
     if (d.speakerColor) this.nameEl.style.setProperty('--tvn-speaker', d.speakerColor);
     else this.nameEl.style.removeProperty('--tvn-speaker');
+    this.tailSpeaker = d.speakerId;
+    this.placeTail();
 
     const st = d.style ?? {};
     applyStyle(this.textEl, {
@@ -1106,6 +1140,8 @@ export class Player implements RuntimeHost {
       this.dialog.classList.remove('tvn-hidden');
       this.nameEl.classList.add('tvn-hidden');
       this.textEl.textContent = c.question;
+      this.tailSpeaker = null;
+      this.placeTail();
       this.indicator.classList.remove('tvn-show');
     } else this.dialog.classList.add('tvn-hidden');
     this.emit('choice', c);

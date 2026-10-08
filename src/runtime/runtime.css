@@ -892,3 +892,163 @@ button.tvn-gallery-item:focus-visible {
   pointer-events: none;
   text-align: center;
 }
+
+/* ---------- textbox frames (data-d-frame) and name box shapes (data-n-shape) ----------
+   Every frame keeps using the theme's colours, border and text variables, so a preset can be
+   recoloured without losing its shape. */
+
+/* Speech bubble: a tail in the box colours, pointing at the speaking character. */
+.tvn-root[data-d-frame='bubble'] .tvn-dialog::after {
+  content: '';
+  position: absolute;
+  left: var(--tvn-tail-x, 18%);
+  width: calc(var(--tvn-d-size) * 1.4);
+  height: calc(var(--tvn-d-size) * 1.4);
+  background: var(--tvn-d-bg);
+  border: var(--tvn-d-bw) solid var(--tvn-d-bc);
+  pointer-events: none;
+}
+.tvn-root[data-d-frame='bubble'] .tvn-dialog[data-tail='top']::after {
+  top: 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.tvn-root[data-d-frame='bubble'] .tvn-dialog[data-tail='bottom']::after {
+  bottom: 0;
+  transform: translate(-50%, 50%) rotate(45deg);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.tvn-root[data-d-frame='bubble'] .tvn-dialog[data-tail='none']::after {
+  display: none;
+}
+
+/* Band: no box, a shadow that fades into the scene. */
+.tvn-root[data-d-frame='band'] .tvn-dialog {
+  background: linear-gradient(to bottom, transparent, var(--tvn-d-bg) 42%);
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Ornate: double border with a gem on each corner. */
+.tvn-root[data-d-frame='ornate'] .tvn-dialog {
+  border-style: double;
+  border-width: max(4px, var(--tvn-d-bw));
+}
+.tvn-root[data-d-frame='ornate'] .tvn-dialog::after {
+  content: '';
+  --gem: radial-gradient(circle, var(--tvn-d-bc) 0 30%, transparent 34%, transparent 46%, var(--tvn-d-bc) 50% 56%, transparent 60%);
+  position: absolute;
+  inset: calc(-0.42em - max(4px, var(--tvn-d-bw)) / 2);
+  background:
+    var(--gem) left top / 0.84em 0.84em no-repeat,
+    var(--gem) right top / 0.84em 0.84em no-repeat,
+    var(--gem) left bottom / 0.84em 0.84em no-repeat,
+    var(--gem) right bottom / 0.84em 0.84em no-repeat;
+  pointer-events: none;
+}
+
+/* Tech and Torn: the shape is cut on background layers (::before image, ::after colour), never on the box
+   itself, so a name box sitting on top of the dialogue box is not cut off. */
+.tvn-root[data-d-frame='tech'] .tvn-dialog,
+.tvn-root[data-d-frame='torn'] .tvn-dialog {
+  background-color: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog::after,
+.tvn-root[data-d-frame='torn'] .tvn-dialog::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--tvn-d-bw) * -1);
+  z-index: -2;
+  pointer-events: none;
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog {
+  --cut: calc(var(--tvn-d-size) * 0.9);
+  --tech-shape: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog::before,
+.tvn-root[data-d-frame='tech'] .tvn-dialog::after {
+  clip-path: var(--tech-shape);
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog::after {
+  background: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--tvn-d-bc) 9%, transparent) 0 1px, transparent 1px 4px), var(--tvn-d-bg);
+  border: var(--tvn-d-bw) solid var(--tvn-d-bc);
+  border-left-width: calc(var(--tvn-d-bw) * 3 + 3px);
+  box-shadow: inset 0 0 calc(var(--tvn-d-size) * 1.2) color-mix(in srgb, var(--tvn-d-bc) 30%, transparent);
+}
+.tvn-root[data-d-frame='torn'] .tvn-dialog::before,
+.tvn-root[data-d-frame='torn'] .tvn-dialog::after {
+  clip-path: polygon(0.00% 5px, 4.17% 0px, 8.33% 9px, 12.50% 3px, 16.67% 7px, 20.83% 1px, 25.00% 10px, 29.17% 4px, 33.33% 0px, 37.50% 8px, 41.67% 2px, 45.83% 6px, 50.00% 11px, 54.17% 3px, 58.33% 0px, 62.50% 7px, 66.67% 4px, 70.83% 9px, 75.00% 1px, 79.17% 6px, 83.33% 10px, 87.50% 2px, 91.67% 8px, 95.83% 0px, 100.00% 5px, 100.00% calc(100% - 2px), 95.83% calc(100% - 0px), 91.67% calc(100% - 1px), 87.50% calc(100% - 3px), 83.33% calc(100% - 4px), 79.17% calc(100% - 9px), 75.00% calc(100% - 7px), 70.83% calc(100% - 8px), 66.67% calc(100% - 6px), 62.50% calc(100% - 5px), 58.33% calc(100% - 0px), 54.17% calc(100% - 10px), 50.00% calc(100% - 0px), 45.83% calc(100% - 9px), 41.67% calc(100% - 3px), 37.50% calc(100% - 1px), 33.33% calc(100% - 0px), 29.17% calc(100% - 6px), 25.00% calc(100% - 4px), 20.83% calc(100% - 7px), 16.67% calc(100% - 5px), 12.50% calc(100% - 10px), 8.33% calc(100% - 8px), 4.17% calc(100% - 0px), 0.00% calc(100% - 2px));
+}
+.tvn-root[data-d-frame='torn'] .tvn-dialog::after {
+  background: var(--tvn-d-bg);
+  box-shadow: inset 0 0 calc(var(--tvn-d-size) * 1.6) color-mix(in srgb, var(--tvn-d-bc) 70%, transparent);
+}
+
+/* Window: classic RPG window — outer frame, dark gap, inner frame line, light-to-dark sheen. */
+.tvn-root[data-d-frame='window'] .tvn-dialog {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.22));
+  box-shadow:
+    inset 0 0 0 calc(var(--tvn-d-bw) * 0.9) rgba(0, 0, 0, 0.35),
+    inset 0 0 0 calc(var(--tvn-d-bw) * 1.4) var(--tvn-d-bc),
+    var(--tvn-d-shadow);
+}
+
+/* Pixel: stepped corners drawn with offset shadows (no smooth border). */
+.tvn-root[data-d-frame='pixel'] .tvn-dialog {
+  --p: max(3px, var(--tvn-d-bw));
+  border-color: transparent;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow:
+    0 calc(var(--p) * -1) 0 0 var(--tvn-d-bc),
+    0 var(--p) 0 0 var(--tvn-d-bc),
+    calc(var(--p) * -1) 0 0 0 var(--tvn-d-bc),
+    var(--p) 0 0 0 var(--tvn-d-bc);
+}
+.tvn-root[data-d-frame='pixel'] .tvn-indicator.tvn-show {
+  animation: tvn-pixel-blink 0.9s steps(1) infinite;
+}
+@keyframes tvn-pixel-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Name box shapes. */
+.tvn-root[data-n-shape='tab'] .tvn-name {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-width: 0;
+}
+.tvn-root[data-n-shape='ribbon'] .tvn-name {
+  padding-inline: max(1.1em, var(--tvn-n-padx));
+  border-radius: 0;
+  border-width: 0;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.6em) 50%, 100% 100%, 0 100%, 0.6em 50%);
+}
+.tvn-root[data-n-shape='plain'] .tvn-name {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.tvn-root[data-n-shape='slant'] .tvn-name {
+  padding-inline: max(0.9em, var(--tvn-n-padx));
+  border-radius: 0;
+  border-width: 0;
+  clip-path: polygon(0.55em 0, 100% 0, calc(100% - 0.55em) 100%, 0 100%);
+}
+.tvn-root[data-n-shape='pixel'] .tvn-name {
+  --p: max(3px, var(--tvn-n-bw));
+  border-width: 0;
+  border-radius: 0;
+  box-shadow:
+    0 calc(var(--p) * -1) 0 0 var(--tvn-n-bc),
+    0 var(--p) 0 0 var(--tvn-n-bc),
+    calc(var(--p) * -1) 0 0 0 var(--tvn-n-bc),
+    var(--p) 0 0 0 var(--tvn-n-bc);
+}
