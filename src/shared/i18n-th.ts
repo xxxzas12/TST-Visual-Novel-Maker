@@ -1222,4 +1222,10 @@ export const TH: Record<string, string> = {
   "{name}: the variable to set is missing.": "{name}: ไม่พบตัวแปรที่จะตั้งค่า",
   "＋ Add clickable object": "＋ เพิ่มวัตถุที่คลิกได้",
   "＋ Also set a variable…": "＋ ตั้งค่าตัวแปรด้วย…",
+  "{action}: “{var}” is a {type} variable but would be set to “{value}”.": "{action}: “{var}” เป็นตัวแปรแบบ{type} แต่จะถูกตั้งเป็น “{value}”",
+  "{action}: “{var}” is a {type} variable — only Number variables can be added to or subtracted from.": "{action}: “{var}” เป็นตัวแปรแบบ{type} — บวก/ลบค่าได้เฉพาะตัวแปรตัวเลข",
+  "{action}: “{{0}}” in the text is not a variable name.": "{action}: “{{0}}” ในข้อความไม่ใช่ชื่อตัวแปร",
+  "{name}: “{var}” is a {type} variable but would be set to “{value}”.": "{name}: “{var}” เป็นตัวแปรแบบ{type} แต่จะถูกตั้งเป็น “{value}”",
+  "“{name}” is True / False — compare it with “equals” or “is not”.": "“{name}” เป็นตัวแปรจริง/เท็จ — เปรียบเทียบได้ด้วย “เท่ากับ” หรือ “ไม่เท่ากับ”",
+  "“{name}” is a {type} variable but is compared with “{value}”.": "“{name}” เป็นตัวแปรแบบ{type} แต่ถูกเปรียบเทียบกับ “{value}”",
 };

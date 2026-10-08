@@ -2,6 +2,16 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.9
+### Added
+- Validation before export now also catches variables used with the wrong type: True/False variables
+  compared with >, <, …; conditions comparing a variable with a value of another type (choices,
+  conditional branches, check variable, point & click); Set Variable with a value that doesn't fit;
+  Add/Subtract on non-number variables; `{Name}` in text that is not a variable (warning).
+
+### Changed
+- Audit corrected: export issues were already clickable and missing files already had Locate/Replace/Remove.
+
 ## v1.0.8
 ### Added
 - Optional **Point & Click** action (👆): clickable objects on the stage (area in %, optional image, name

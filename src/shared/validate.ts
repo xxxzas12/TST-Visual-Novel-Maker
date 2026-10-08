@@ -1,4 +1,4 @@
-import type { Action, Hotspot, JumpTarget, Project, Theme } from './types';
+import type { Action, Condition, Hotspot, JumpTarget, Project, Theme, Variable } from './types';
 import { getActionDef, isKnownActionType } from './actions';
 import { t } from './i18n';
 import { forEachThemeImage, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
@@ -171,6 +171,22 @@ export function removeAssetReferences(p: Project, assetId: string): number {
   return n;
 }
 
+const TYPE_NAME: Record<Variable['type'], string> = { number: 'Number', string: 'Text', boolean: 'True / False' };
+
+/** A value that fits a variable type (what the editor's inputs produce, or text that clearly means it). */
+export function valueFits(type: Variable['type'], value: unknown): boolean {
+  if (type === 'boolean') return typeof value === 'boolean' || value === 'true' || value === 'false';
+  if (type === 'number') return (typeof value === 'number' && Number.isFinite(value)) || (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)));
+  return value !== undefined && value !== null && typeof value !== 'object';
+}
+
+/** Problems with a condition whose variable exists: wrong comparison or a value of the wrong type. */
+export function conditionProblem(c: Condition, v: Variable): string | null {
+  if (v.type === 'boolean' && c.op !== '==' && c.op !== '!=') return t('“{name}” is True / False — compare it with “equals” or “is not”.', { name: v.name });
+  if (!valueFits(v.type, c.value)) return t('“{name}” is a {type} variable but is compared with “{value}”.', { name: v.name, type: t(TYPE_NAME[v.type]), value: String(c.value) });
+  return null;
+}
+
 function labelExists(p: Project, label: string | undefined): boolean {
   if (!label) return false;
   return p.scenes.some((s) => s.actions.some((a) => a.type === 'label' && !a.disabled && a.params.name === label));
@@ -203,6 +219,7 @@ export function validateProject(p: Project, fileExists?: (relPath: string) => bo
   const assetMap = new Map(p.assets.map((a) => [a.id, a]));
   const charMap = new Map(p.characters.map((c) => [c.id, c]));
   const varMap = new Map(p.variables.map((v) => [v.id, v]));
+  const varNames = new Set(p.variables.map((v) => v.name));
   const sceneIds = new Set(p.scenes.map((s) => s.id));
 
   if (p.scenes.length === 0) issues.push({ severity: 'error', message: t('The project has no scenes.') });
@@ -273,6 +290,8 @@ export function validateProject(p: Project, fileExists?: (relPath: string) => bo
           if (!String(o.text ?? '').trim()) push(t('Choice option {n} has no text.', { n: i + 1 }), 'warning');
           checkTarget(p, o.target, (m) => push(`${t('Choice option {n}', { n: i + 1 })}: ${m}`), true);
           if (o.condition && !varMap.has(o.condition.variableId)) push(t('Choice option {n}: condition variable is missing.', { n: i + 1 }));
+          const cp = o.condition && varMap.has(o.condition.variableId) ? conditionProblem(o.condition, varMap.get(o.condition.variableId)!) : null;
+          if (cp) push(`${t('Choice option {n}', { n: i + 1 })}: ${cp}`);
         });
       }
       if (a.type === 'pointAndClick') {
@@ -285,15 +304,45 @@ export function validateProject(p: Project, fileExists?: (relPath: string) => bo
           checkTarget(p, h.target, (m) => push(`${name}: ${m}`), true);
           if (h.condition && !varMap.has(h.condition.variableId)) push(t('{name}: condition variable is missing.', { name }));
           if (h.variableId && !varMap.has(h.variableId)) push(t('{name}: the variable to set is missing.', { name }));
+          const hc = h.condition && varMap.has(h.condition.variableId) ? conditionProblem(h.condition, varMap.get(h.condition.variableId)!) : null;
+          if (hc) push(`${name}: ${hc}`);
+          const hv = h.variableId ? varMap.get(h.variableId) : undefined;
+          if (hv && !valueFits(hv.type, h.value)) push(t('{name}: “{var}” is a {type} variable but would be set to “{value}”.', { name, var: hv.name, type: t(TYPE_NAME[hv.type]), value: String(h.value ?? '') }));
           if (h.assetId && !assetMap.has(h.assetId)) push(t('{name}: the image was removed.', { name }));
         });
       }
       if (a.type === 'conditional') {
         for (const c of (pr.conditions ?? []) as any[]) {
           if (!varMap.has(c.variableId)) push(t('Conditional Branch: a condition uses a missing variable.'));
+          else {
+            const cp = conditionProblem(c, varMap.get(c.variableId)!);
+            if (cp) push(`${label}: ${cp}`);
+          }
         }
       }
       if ((a.type === 'dialogue' || a.type === 'narration') && !String(pr.text ?? '').trim()) push(t('{action} has no text.', { action: label }), 'warning');
+      // Variable actions: the value must fit the variable's type.
+      const tv = typeof pr.variableId === 'string' ? varMap.get(pr.variableId) : undefined;
+      if (tv) {
+        if (a.type === 'checkVariable') {
+          const cp = conditionProblem({ variableId: tv.id, op: pr.op ?? '==', value: pr.value }, tv);
+          if (cp) push(`${label}: ${cp}`);
+        }
+        if (a.type === 'setVariable' && !valueFits(tv.type, pr.value)) {
+          push(t('{action}: “{var}” is a {type} variable but would be set to “{value}”.', { action: label, var: tv.name, type: t(TYPE_NAME[tv.type]), value: String(pr.value ?? '') }));
+        }
+        if ((a.type === 'addVariable' || a.type === 'subtractVariable') && tv.type !== 'number') {
+          push(t('{action}: “{var}” is a {type} variable — only Number variables can be added to or subtracted from.', { action: label, var: tv.name, type: t(TYPE_NAME[tv.type]) }));
+        }
+      }
+      // {Name} in text must name a variable (otherwise players see the braces).
+      for (const key of ['text', 'question', 'prompt', 'message'] as const) {
+        const txt = pr[key];
+        if (typeof txt !== 'string') continue;
+        for (const m of txt.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)) {
+          if (!varNames.has(m[1])) push(t('{action}: “{{0}}” in the text is not a variable name.', { action: label, 0: m[1] }), 'warning');
+        }
+      }
     }
   }
   return issues;
