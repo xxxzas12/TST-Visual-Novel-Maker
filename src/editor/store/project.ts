@@ -14,6 +14,10 @@ export interface ProjectState {
   future: Project[];
   dirty: boolean;
   savedAt: number | null;
+  /** Whether the last save was an autosave. */
+  savedByAutosave: boolean;
+  /** Time of the first change since the last save (null = nothing unsaved). */
+  dirtySince: number | null;
   /** Asset ids whose files are missing on disk. */
   missing: string[];
   lastKey: string | null;
@@ -28,7 +32,7 @@ export interface ProjectState {
   replace(project: Project): void;
   undo(): void;
   redo(): void;
-  markSaved(at: number): void;
+  markSaved(at: number, auto?: boolean): void;
   setMissing(ids: string[]): void;
 }
 
@@ -39,12 +43,14 @@ export const useProject = create<ProjectState>((set, get) => ({
   future: [],
   dirty: false,
   savedAt: null,
+  savedByAutosave: false,
+  dirtySince: null,
   missing: [],
   lastKey: null,
   lastTime: 0,
   load: (dir, project, dirty = false) =>
-    set({ dir, project: produce(project, () => undefined), past: [], future: [], dirty, savedAt: dirty ? null : Date.now(), missing: [], lastKey: null, lastTime: 0 }),
-  close: () => set({ dir: null, project: null, past: [], future: [], dirty: false, savedAt: null, missing: [], lastKey: null }),
+    set({ dir, project: produce(project, () => undefined), past: [], future: [], dirty, savedAt: dirty ? null : Date.now(), savedByAutosave: false, dirtySince: dirty ? Date.now() : null, missing: [], lastKey: null, lastTime: 0 }),
+  close: () => set({ dir: null, project: null, past: [], future: [], dirty: false, savedAt: null, savedByAutosave: false, dirtySince: null, missing: [], lastKey: null }),
   update: (recipe, coalesce) => {
     const { project, past, lastKey, lastTime } = get();
     if (!project) return;
@@ -57,25 +63,26 @@ export const useProject = create<ProjectState>((set, get) => ({
       past: merge ? past : [...past.slice(-HISTORY_LIMIT + 1), project],
       future: [],
       dirty: true,
+      dirtySince: get().dirtySince ?? now,
       lastKey: coalesce ?? null,
       lastTime: now,
     });
   },
   replace: (project) => {
     const { project: cur, past } = get();
-    set({ project: produce(project, () => undefined), past: cur ? [...past.slice(-HISTORY_LIMIT + 1), cur] : past, future: [], dirty: true, lastKey: null });
+    set({ project: produce(project, () => undefined), past: cur ? [...past.slice(-HISTORY_LIMIT + 1), cur] : past, future: [], dirty: true, dirtySince: get().dirtySince ?? Date.now(), lastKey: null });
   },
   undo: () => {
     const { past, project, future } = get();
     if (!past.length || !project) return;
-    set({ project: past[past.length - 1], past: past.slice(0, -1), future: [project, ...future], dirty: true, lastKey: null });
+    set({ project: past[past.length - 1], past: past.slice(0, -1), future: [project, ...future], dirty: true, dirtySince: get().dirtySince ?? Date.now(), lastKey: null });
   },
   redo: () => {
     const { past, project, future } = get();
     if (!future.length || !project) return;
-    set({ project: future[0], past: [...past, project], future: future.slice(1), dirty: true, lastKey: null });
+    set({ project: future[0], past: [...past, project], future: future.slice(1), dirty: true, dirtySince: get().dirtySince ?? Date.now(), lastKey: null });
   },
-  markSaved: (at) => set({ dirty: false, savedAt: at }),
+  markSaved: (at, auto = false) => set({ dirty: false, savedAt: at, savedByAutosave: auto, dirtySince: null }),
   setMissing: (ids) => set({ missing: ids }),
 }));
 

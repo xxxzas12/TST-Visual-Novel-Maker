@@ -5,6 +5,7 @@ import type { ImportPlan, ImportReport } from '../../shared/api';
 import { getLanguage, setLanguage, type Lang } from '../../shared/i18n';
 import { DEFAULT_UI_FONT_SIZE, type Appearance } from '../appearance';
 import type { PluginContributions } from '../../shared/plugins';
+import { autosaveConfig, type AutosaveConfig } from '../../shared/autosave';
 import { api } from '../api';
 
 export type AppSettingsSection = 'general' | 'interface' | 'logo' | 'plugins' | 'autosave' | 'about';
@@ -87,6 +88,8 @@ export interface UiState {
   appLogo: string | null;
   /** Themes and action templates of the enabled plugins. */
   plugins: PluginContributions;
+  /** Autosave settings in effect (Application Settings → Autosave & recovery). */
+  autosave: AutosaveConfig;
   openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
@@ -134,6 +137,7 @@ export const useUi = create<UiState>((set, get) => ({
   appSettings: null,
   appLogo: null,
   plugins: { themes: [], actionTemplates: [] },
+  autosave: autosaveConfig({}),
   openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),

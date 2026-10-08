@@ -12,7 +12,10 @@ export interface RecentProject {
 export interface AppSettings {
   onboardingDone: boolean;
   lastProjectParent?: string;
+  /** Minutes after the first unsaved change (older versions: 0 = off). */
   autosaveMinutes: number;
+  /** Autosave on/off (absent in older settings: on unless autosaveMinutes is 0). */
+  autosaveEnabled?: boolean;
   uiScale?: number;
   language?: 'en' | 'th';
   /** Editor UI font family ('' = default). */

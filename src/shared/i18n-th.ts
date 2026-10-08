@@ -1228,4 +1228,13 @@ export const TH: Record<string, string> = {
   "{name}: “{var}” is a {type} variable but would be set to “{value}”.": "{name}: “{var}” เป็นตัวแปรแบบ{type} แต่จะถูกตั้งเป็น “{value}”",
   "“{name}” is True / False — compare it with “equals” or “is not”.": "“{name}” เป็นตัวแปรจริง/เท็จ — เปรียบเทียบได้ด้วย “เท่ากับ” หรือ “ไม่เท่ากับ”",
   "“{name}” is a {type} variable but is compared with “{value}”.": "“{name}” เป็นตัวแปรแบบ{type} แต่ถูกเปรียบเทียบกับ “{value}”",
+  "Autosave and recovery are separate from Backups — backups are made before risky operations and are listed in the Backups view.": "บันทึกอัตโนมัติและการกู้คืนแยกจากสำรองข้อมูล — สำรองข้อมูลจะถูกสร้างก่อนการกระทำที่เสี่ยง และดูได้ในหน้าสำรองข้อมูล",
+  "Autosave every {0} min": "บันทึกอัตโนมัติทุก {0} นาที",
+  "Autosave in {0}": "บันทึกอัตโนมัติใน {0}",
+  "Autosave off": "ปิดบันทึกอัตโนมัติ",
+  "Autosave settings": "ตั้งค่าบันทึกอัตโนมัติ",
+  "Autosave the project": "บันทึกโปรเจกต์อัตโนมัติ",
+  "Crash recovery is always on: unsaved work is copied every 10 seconds and offered back when the project opens after a crash.": "การกู้คืนเมื่อโปรแกรมปิดผิดปกติเปิดอยู่เสมอ: งานที่ยังไม่บันทึกจะถูกคัดลอกทุก 10 วินาที และเสนอให้กู้คืนเมื่อเปิดโปรเจกต์ครั้งถัดไป",
+  "Save interval: minutes after the first unsaved change": "ช่วงเวลาบันทึก: กี่นาทีหลังการแก้ไขครั้งแรกที่ยังไม่บันทึก",
+  "✓ Autosaved {0}": "✓ บันทึกอัตโนมัติแล้ว {0}",
 };

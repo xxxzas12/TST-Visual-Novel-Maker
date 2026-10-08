@@ -1,5 +1,6 @@
 import { t as tr } from '../../shared/i18n';
-import { useDeferredValue, useEffect, useMemo } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { autosaveDue, autosaveIn } from '../../shared/autosave';
 import { useProject } from '../store/project';
 import { useUi, type View } from '../store/ui';
 import { api } from '../api';
@@ -78,26 +79,25 @@ function useShortcuts() {
   }, []);
 }
 
-/** Recovery snapshots every 10 s and a real save every N minutes while there are unsaved changes. */
+/**
+ * Crash-recovery snapshots every 10 s (always on) and, when enabled, an autosave N minutes after the
+ * first unsaved change. The interval is read on every tick, so changes in Application Settings apply at once.
+ */
 function useAutosave() {
   useEffect(() => {
-    let minutes = 2;
     let blockUnload = true;
-    void api.app.getSettings().then((s) => (minutes = s.autosaveMinutes || 2));
     // Automated tests close the window directly; the main process allows it anyway.
     void api.app.info().then((i) => (blockUnload = !i.isE2E));
-    let lastSave = Date.now();
+    let saving = false;
     const recovery = setInterval(() => {
       const { dir, project, dirty } = useProject.getState();
       if (dir && project && dirty) void api.project.writeRecovery(dir, project).catch(() => undefined);
     }, 10000);
     const autosave = setInterval(() => {
-      const { dirty } = useProject.getState();
-      if (dirty && minutes > 0 && Date.now() - lastSave > minutes * 60000) {
-        lastSave = Date.now();
-        void saveNow(true);
-      }
-    }, 15000);
+      if (saving || !autosaveDue(Date.now(), useProject.getState().dirtySince, useUi.getState().autosave)) return;
+      saving = true;
+      void saveNow(true, true).finally(() => (saving = false));
+    }, 2000);
     const beforeUnload = (e: BeforeUnloadEvent) => {
       if (useProject.getState().dirty) {
         const { dir, project } = useProject.getState();
@@ -117,10 +117,32 @@ function useAutosave() {
   }, []);
 }
 
+/** Current time, refreshed every second while `active` (for the autosave countdown). */
+function useClock(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+}
+
+function formatLeft(ms: number): string {
+  const s = Math.ceil(ms / 1000);
+  return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s}s`;
+}
+
 export function Shell() {
   const project = useProject((s) => s.project)!;
   const dirty = useProject((s) => s.dirty);
   const savedAt = useProject((s) => s.savedAt);
+  const savedByAutosave = useProject((s) => s.savedByAutosave);
+  const dirtySince = useProject((s) => s.dirtySince);
+  const autosave = useUi((s) => s.autosave);
+  const now = useClock(dirty && autosave.enabled);
+  const autosaveLeft = autosaveIn(now, dirtySince, autosave);
   const canUndo = useProject((s) => s.past.length > 0);
   const canRedo = useProject((s) => s.future.length > 0);
   const missing = useProject((s) => s.missing);
@@ -187,8 +209,15 @@ export function Shell() {
       </div>
       <footer className="statusbar">
         <span className={dirty ? 'dirty' : ''} data-testid="save-status">
-          {dirty ? tr("● Unsaved changes") : savedAt ? tr("✓ Saved {0}", { 0: new Date(savedAt).toLocaleTimeString() }) : tr("✓ Saved")}
+          {dirty ? tr("● Unsaved changes") : savedAt ? (savedByAutosave ? tr("✓ Autosaved {0}", { 0: new Date(savedAt).toLocaleTimeString() }) : tr("✓ Saved {0}", { 0: new Date(savedAt).toLocaleTimeString() })) : tr("✓ Saved")}
         </span>
+        <button className="btn ghost sm" onClick={() => useUi.getState().openAppSettings('autosave')} title={tr("Autosave settings")} data-testid="autosave-status">
+          {!autosave.enabled
+            ? tr("Autosave off")
+            : autosaveLeft !== null
+              ? tr("Autosave in {0}", { 0: formatLeft(autosaveLeft) })
+              : tr("Autosave every {0} min", { 0: autosave.minutes })}
+        </button>
         <span>{tr("{0} scenes", { 0: project.scenes.length })}</span>
         <span>{tr("{0} assets", { 0: project.assets.length })}</span>
         <span>{tr("{0} characters", { 0: project.characters.length })}</span>

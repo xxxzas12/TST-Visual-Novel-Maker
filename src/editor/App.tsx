@@ -8,6 +8,7 @@ import { ImportFlow } from './views/assets/ImportFlow';
 import { PreviewModal } from './views/PreviewModal';
 import { AppSettingsDialog } from './views/AppSettings';
 import { api } from './api';
+import { autosaveConfig } from '../shared/autosave';
 import { applyLook, DEFAULT_UI_FONT_SIZE, registerCustomFonts } from './appearance';
 
 export function App() {
@@ -35,6 +36,7 @@ export function App() {
         // Older settings stored a scale factor instead of a size.
         uiFontSize: s.uiFontSize ?? Math.round(DEFAULT_UI_FONT_SIZE * (s.uiScale ?? 1)),
         appearance: s.appearance ?? 'dark',
+        autosave: autosaveConfig(s),
       });
       applyLanguage(s.language === 'th' ? 'th' : 'en');
     });

@@ -2,6 +2,17 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.10
+### Added
+- Autosave on/off switch and interval (minutes after the first unsaved change) in Application Settings →
+  Autosave & recovery, with an explanation of crash recovery and how it differs from Backups.
+- Status bar: "✓ Autosaved hh:mm" vs "✓ Saved hh:mm", and an autosave indicator ("Autosave in 1:23",
+  "Autosave every 2 min", "Autosave off") that opens the settings.
+
+### Fixed
+- Changing the autosave interval had no effect until the project was reopened.
+- Autosave timing now counts from the first unsaved change (not from when the project was opened).
+
 ## v1.0.9
 ### Added
 - Validation before export now also catches variables used with the wrong type: True/False variables

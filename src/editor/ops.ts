@@ -53,13 +53,14 @@ export async function openProjectDir(dir: string) {
   if (r) await loadProjectResult(r);
 }
 
-export async function saveNow(silent = false): Promise<boolean> {
+/** Saves the project. `auto` = an autosave (silent, shown as "Autosaved" in the status bar). */
+export async function saveNow(silent = false, auto = false): Promise<boolean> {
   const { dir, project } = useProject.getState();
   if (!dir || !project) return false;
   try {
     const at = await api.project.save(dir, project);
     // Only clear "dirty" if nothing changed while saving.
-    if (useProject.getState().project === project) useProject.getState().markSaved(at);
+    if (useProject.getState().project === project) useProject.getState().markSaved(at, auto);
     if (!silent) toast(tr("Project saved"), 'success');
     return true;
   } catch (e) {

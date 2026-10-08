@@ -10,12 +10,39 @@ import { Modal } from '../components/Modal';
 import { useUi, type AppSettingsSection } from '../store/ui';
 import { NumberInput } from './scenes/fields';
 import { UiFontSettings } from './FontSettings';
+import { AUTOSAVE_MINUTES, autosaveConfig } from '../../shared/autosave';
 import { AppBrand } from '../components/AppBrand';
 import { PluginManager } from './PluginManager';
 import { run } from '../ops';
 import { toast } from '../store/ui';
 
 /** Custom application logo: TSTVN's own logo and window icon. Games use their own Game icon. */
+function AutosaveSettings({ app, onChange }: { app: Settings; onChange: (patch: Partial<Settings>) => void }) {
+  // The live setting (updated at once); the file is written in the background.
+  const cfg = useUi((s) => s.autosave);
+  const save = (patch: Partial<Settings>) => {
+    const next = autosaveConfig({ ...app, autosaveEnabled: cfg.enabled, autosaveMinutes: cfg.minutes, ...patch });
+    useUi.setState({ autosave: next });
+    onChange({ autosaveEnabled: next.enabled, autosaveMinutes: next.minutes });
+  };
+  return (
+    <>
+      <label className="check">
+        <input type="checkbox" checked={cfg.enabled} onChange={(e) => save({ autosaveEnabled: e.target.checked })} data-testid="autosave-enabled" />
+        {tr('Autosave the project')}
+      </label>
+      <div className="field">
+        <span className="field-label">{tr('Save interval: minutes after the first unsaved change')}</span>
+        <NumberInput value={cfg.minutes} min={AUTOSAVE_MINUTES.min} max={AUTOSAVE_MINUTES.max} onChange={(v) => save({ autosaveMinutes: Math.round(v) })} />
+      </div>
+      <div className="small muted" data-testid="autosave-help">
+        {tr('Crash recovery is always on: unsaved work is copied every 10 seconds and offered back when the project opens after a crash.')}{' '}
+        {tr('Autosave and recovery are separate from Backups — backups are made before risky operations and are listed in the Backups view.')}
+      </div>
+    </>
+  );
+}
+
 function LogoSettings() {
   const logo = useUi((s) => s.appLogo);
   const choose = async () => {
@@ -136,10 +163,7 @@ export function AppSettingsDialog() {
           {section === 'autosave' && app && (
             <div className="col">
               <div className="section-title">{tr('Autosave & recovery')}</div>
-              <div className="field">
-                <span className="field-label">{tr('Autosave every (minutes, 0 = off; recovery copies are always kept)')}</span>
-                <NumberInput value={app.autosaveMinutes} min={0} max={60} onChange={(v) => void setAppSetting({ autosaveMinutes: Math.max(0, Math.round(v)) })} />
-              </div>
+              <AutosaveSettings app={app} onChange={(patch) => void setAppSetting(patch)} />
             </div>
           )}
           {section === 'about' && info && (
