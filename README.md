@@ -77,19 +77,74 @@ TSTVN เป็นโปรแกรมสร้าง Visual Novel ที่อ
 
 ## 📥 Download | ดาวน์โหลด
 
-You can download the latest version of TSTVN from the **Releases** page.
+| | Version | |
+|---|---|---|
+| ⭐ **Recommended / แนะนำ** | **v1.1.0** (latest) | 👉 **[Download Latest](https://github.com/xxxzas12/TST-Visual-Novel-Maker/releases/latest)** |
+| Previous / ก่อนหน้า | v1.0.0 | [v1.0.0 release](https://github.com/xxxzas12/TST-Visual-Novel-Maker/releases/tag/V1.0.0) |
+| All versions / ทุกเวอร์ชัน | | 📚 **[All Releases](https://github.com/xxxzas12/TST-Visual-Novel-Maker/releases)** |
 
-สามารถดาวน์โหลด TSTVN เวอร์ชันล่าสุดได้จากหน้า **Releases**
-
-👉 **[Download TSTVN](../../releases/latest)**
-
-Download the `.exe` installer and follow the installation instructions.
+Download the `.exe` installer (`TSTVN-Setup-<version>.exe`) and follow the installation instructions.
+Windows 10/11 (64-bit). No Node.js or programming tools needed.
 
 > **Windows SmartScreen:** the installer is not code-signed yet, so Windows may show *“Windows protected your PC”*. Click **More info → Run anyway**.
 
-ดาวน์โหลดไฟล์ `.exe` แล้วติดตั้งตามขั้นตอนได้เลย
+ดาวน์โหลดไฟล์ `.exe` (`TSTVN-Setup-<เวอร์ชัน>.exe`) แล้วติดตั้งตามขั้นตอนได้เลย ใช้กับ Windows 10/11 (64 บิต)
+ไม่ต้องติดตั้ง Node.js หรือเครื่องมือเขียนโปรแกรมใด ๆ
 
 > **Windows SmartScreen:** ตัวติดตั้งยังไม่ได้เซ็นดิจิทัล Windows อาจขึ้นหน้าจอ *“Windows protected your PC”* ให้กด **More info → Run anyway**
+
+---
+
+## 🆕 What's new in v1.1.0 | มีอะไรใหม่ใน v1.1.0
+
+- 🎨 **Design your game's UI visually:** drag, resize and style the dialogue box, name box, choices and
+  menu bar on a live preview. **Basic** mode for beginners, **Advanced** when you want every detail.
+- 🗨️ **9 textbox styles with real shapes:** Classic VN, Modern, Speech Bubble (its tail points at the
+  speaker), Minimal, Fantasy, Sci-Fi, Horror, RPG, Retro. You can also use your own frame image.
+- 🔘 **7 choice styles**, including Image Button with your own pictures. Choices can also set
+  variables, play sounds, animate characters or shake the screen, with no code.
+- ✨ **UI animations** with one-click presets and ▶ Preview. Text can appear letter by letter or word
+  by word.
+- 📚 **Style Library:** make a style once and reuse it everywhere. Edit it once and every scene updates.
+- 🪟 **Flexible workspace**, 💾 autosave and crash recovery, 🔌 Plugin Manager, 🖼️ in-game gallery,
+  👆 Point & Click scenes, ✅ project check before export.
+
+ภาษาไทย:
+- 🎨 **ออกแบบ UI ของเกมได้ด้วยตาเห็น:** ลาก ปรับขนาด และแต่งกล่องบทสนทนา กล่องชื่อ ตัวเลือก
+  และแถบเมนูบนหน้าจอตัวอย่างจริง มีโหมด **พื้นฐาน** สำหรับมือใหม่ และ **ขั้นสูง** เมื่ออยากปรับละเอียด
+- 🗨️ **กล่องข้อความ 9 แบบที่รูปทรงต่างกันจริง** เช่น กล่องคำพูดที่หางชี้ไปที่คนพูด แฟนตาซี ไซไฟ RPG
+  เรโทร และใช้ภาพกรอบของคุณเองได้
+- 🔘 **ปุ่มตัวเลือก 7 แบบ** รวมปุ่มรูปภาพ และให้ตัวเลือกตั้งค่าตัวแปร เล่นเสียง ขยับตัวละคร หรือเขย่าจอได้
+  โดยไม่ต้องเขียนโค้ด
+- ✨ **แอนิเมชัน UI** เลือกจากชุดสำเร็จรูปได้ในคลิกเดียว พร้อม ▶ ดูตัวอย่าง ข้อความแสดงทีละตัวหรือทีละคำได้
+- 📚 **คลังสไตล์:** ทำสไตล์ครั้งเดียว ใช้ได้ทุกที่ แก้ครั้งเดียวทุกฉากอัปเดตตาม
+- 🪟 พื้นที่ทำงานปรับได้, 💾 บันทึกอัตโนมัติและกู้คืน, 🔌 ตัวจัดการปลั๊กอิน, 🖼️ แกลเลอรีในเกม,
+  👆 ฉาก Point & Click, ✅ ตรวจโปรเจกต์ก่อน Export
+
+Full notes / รายละเอียดทั้งหมด:
+[v1.1.0 release notes](https://github.com/xxxzas12/TST-Visual-Novel-Maker/releases/tag/v1.1.0) ·
+[CHANGELOG](CHANGELOG.md)
+
+---
+
+## ⚖️ TSTVN vs Ren'Py | เทียบกับ Ren'Py
+
+[Ren'Py](https://www.renpy.org/) is the best-known free engine for visual novels. Both are free, but
+they are made for different people:
+
+| | **TSTVN** | **Ren'Py** |
+|---|---|---|
+| How you make the game | Visual editor: menus, drag & drop, live preview. **No code.** | Script files in Ren'Py's own language (based on Python) |
+| Customizing the UI | Visual designer with presets, styles and animations | Code (screen language, styles, ATL), very flexible |
+| Editor runs on | Windows 10/11 | Windows, macOS, Linux |
+| Exports games to | Windows, Web (also opens in phone browsers) | Windows, macOS, Linux, Android, iOS, Web |
+| Maturity | New, small project | Developed for many years; large community; many published games |
+| Best for | Beginners and artists who don't want to code; quick prototypes | Creators who are fine with scripting and need the widest platform support and flexibility |
+
+ภาษาไทย: **TSTVN** เน้นสร้างเกมแบบไม่ต้องเขียนโค้ด ทำผ่านหน้าจอและลากวาง เห็นผลทันที เหมาะกับมือใหม่และ
+คนที่ถนัดงานภาพ ส่วน **Ren'Py** สร้างเกมด้วยการเขียนสคริปต์ ยืดหยุ่นกว่า รองรับแพลตฟอร์มมากกว่า (รวม
+Android, iOS, macOS, Linux) และพัฒนามานานจนมีชุมชนใหญ่ TSTVN ยังเป็นโปรเจกต์ใหม่ จึงยังไม่ครบเท่า Ren'Py
+ในหลายด้าน
 
 ---
 

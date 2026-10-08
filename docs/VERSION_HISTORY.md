@@ -41,3 +41,19 @@ raised once per feature or fix. Nothing has been published as a GitHub Release y
 
 `npm run dist` writes `release/TSTVN-Setup-<version>.exe`. Older installers are kept in `release/`
 (not tracked in git).
+
+## GitHub Releases (downloads)
+
+| Release | Tag | Installer | Status |
+|---|---|---|---|
+| TSTVN v1.1.0 | `v1.1.0` (18ca57a) | `TSTVN-Setup-1.1.0.exe` | ⭐ Latest, recommended |
+| TSTVN v1.0.0 — First Release | `V1.0.0` (9760a03) | `TSTVN-Setup-1.0.0.exe` (uploaded by the author) | Previous version, kept unchanged |
+
+Versions 1.0.1–1.0.20 were development builds made within two days on the way to 1.1.0. Their tags,
+source code and detailed reports are available, but they were never published as releases. 1.1.0
+contains all of their changes, and v1.0.20 is the same app as 1.1.0, so no separate installers are
+published for them. Any of them could still be built from its tag (`npm ci && npm run dist`) if
+needed.
+
+New releases are built by `.github/workflows/release.yml` when a version tag is pushed (see
+[GUIDE.md](GUIDE.md#releasing)).

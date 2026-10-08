@@ -1,0 +1,97 @@
+# Builds the Windows installer for a version tag and creates a DRAFT GitHub Release with it.
+#
+#   1. Set the version in package.json (e.g. 1.2.0), commit, then tag it:  git tag v1.2.0 && git push origin v1.2.0
+#   2. This workflow builds TSTVN-Setup-1.2.0.exe from exactly that tag and creates a draft release.
+#   3. Review the draft on GitHub (Releases) and click "Publish release".
+#
+# Safety: it never edits, replaces or deletes an existing release. If a release for the tag already
+# exists (draft or published), the run stops without changing anything. The tag must match package.json.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and draft a release for (e.g. v1.2.0)'
+        required: true
+
+permissions:
+  contents: write # create the draft release and upload the installer; nothing else
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+
+      - name: Stop if a release for this tag already exists
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::A release for $TAG already exists. Nothing was changed."
+            exit 1
+          fi
+
+      - name: Check that the tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::Tag $TAG does not match package.json version $version."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - name: Build the installer
+        # --publish never: electron-builder must not upload anything itself.
+        run: npm run dist -- --publish never
+
+      - name: Release notes
+        # docs/releases/<tag>.md if written for this version, else the version's section of CHANGELOG.md.
+        run: |
+          if [ -f "docs/releases/$TAG.md" ]; then
+            cp "docs/releases/$TAG.md" notes.md
+          else
+            awk -v h="## $TAG" '$0 == h { on = 1; next } on && /^## v/ { exit } on' CHANGELOG.md > section.md
+            if [ ! -s section.md ]; then
+              echo "::error::No notes found: add docs/releases/$TAG.md or a '## $TAG' section to CHANGELOG.md."
+              exit 1
+            fi
+            { echo "# TSTVN $VERSION"; echo; cat section.md; echo; echo "Full history: [CHANGELOG.md](CHANGELOG.md) · Known issues: [KNOWN_ISSUES.md](KNOWN_ISSUES.md)"; } > notes.md
+          fi
+          exe="release/TSTVN-Setup-$VERSION.exe"
+          test -f "$exe"
+          sha="$(sha256sum "$exe" | cut -d' ' -f1 | tr 'a-f' 'A-F')"
+          if ! grep -q "$sha" notes.md; then printf '\n**Checksum:** `TSTVN-Setup-%s.exe` SHA-256 `%s`\n' "$VERSION" "$sha" >> notes.md; fi
+
+      - name: Create the draft release
+        run: |
+          gh release create "$TAG" "release/TSTVN-Setup-$VERSION.exe" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --draft \
+            --title "TSTVN v$VERSION" \
+            --notes-file notes.md
+          echo "Draft release created for $TAG. Review it on GitHub and click 'Publish release'." >> "$GITHUB_STEP_SUMMARY"

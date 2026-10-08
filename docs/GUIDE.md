@@ -177,3 +177,19 @@ Every export is built in a staging folder, verified (required files, runtime int
 reference) and only then moved into place — a broken export never replaces a working one.
 
 See [docs/architecture.md](architecture.md) and [docs/development-log.md](development-log.md).
+
+### Releasing
+
+Installers are built by GitHub Actions; nothing is published without your approval.
+
+1. Set the new version in `package.json` (and `package-lock.json`: `npm install --package-lock-only`), add a
+   `## vX.Y.Z` section to `CHANGELOG.md` (and optionally a bilingual `docs/releases/vX.Y.Z.md`), commit.
+2. Tag and push: `git tag vX.Y.Z && git push origin main vX.Y.Z`.
+3. **Release** workflow (`.github/workflows/release.yml`) checks that the tag matches `package.json`, runs lint
+   and unit tests, builds `TSTVN-Setup-X.Y.Z.exe` from exactly that tag and creates a **draft** release with
+   the notes (from `docs/releases/vX.Y.Z.md`, else the CHANGELOG section) and the installer's SHA-256.
+4. Open **Releases** on GitHub, check the draft, and click **Publish release**.
+
+The workflow never edits or replaces an existing release: if a release for the tag exists, it stops. It can
+also be started by hand (Actions → Release → Run workflow) for an existing tag. **CI**
+(`.github/workflows/ci.yml`) runs lint, unit tests and the build on every push and pull request.
