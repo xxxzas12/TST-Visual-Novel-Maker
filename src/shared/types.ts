@@ -1,4 +1,5 @@
 // Core TSTVN project data model.
+import type { ThemeAnimations } from './uianim';
 // The Editor edits a Project; the Runtime plays GameData built from a Project.
 
 export type AssetType =
@@ -449,8 +450,10 @@ export interface Theme {
     accent: string;
     opacity: number;
   };
-  /** How the dialogue box appears. */
+  /** How the dialogue box appears (older setting; kept in step with anim.dialogIn for older TSTVN versions). */
   animation: 'fade' | 'slide' | 'none';
+  /** Entrance/exit animations of the dialogue box, text reveal and choice buttons. */
+  anim: ThemeAnimations;
   accessibility: ThemeAccessibility;
 }
 

@@ -21,6 +21,8 @@ interface Props {
   /** Called continuously while dragging with the theme as it should be now. */
   onChange: (next: Theme, key: string) => void;
   onReadOnlyEdit: () => void;
+  /** ▶ Preview of an animation. */
+  replay?: { target: 'dialog' | 'choices' | 'text'; n: number } | null;
 }
 
 /** Order matters: later entries are drawn on top. */
@@ -137,6 +139,7 @@ export function UiCanvas(props: Props) {
               testId="theme-preview"
               safeArea={device.safe}
               liveTheme={props.theme}
+              replay={props.replay}
             />
           ) : (
             <PreviewFrame
@@ -150,6 +153,7 @@ export function UiCanvas(props: Props) {
               design={props.sample}
               safeArea={device.safe}
               liveTheme={props.theme}
+              replay={props.replay}
               onEvent={onLayoutEvent(setLayout)}
             />
           )}

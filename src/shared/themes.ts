@@ -1,5 +1,6 @@
 // Game UI themes: presets, migration of older theme files, and helpers shared by editor and runtime.
 import type { ChoiceShape, ChoiceStateStyle, DialogFrame, NameShape, FontRef, MenuAction, MenuButtonDef, Theme, UiAnchor, UiLength, UiShadow, UiSurface, UiText } from './types';
+import { animationsFromLegacy, defaultAnimations, normalizeAnimations } from './uianim';
 
 export const SANS = '"Segoe UI", "Leelawadee UI", "Noto Sans Thai", "Noto Sans", system-ui, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", "Noto Serif Thai", serif';
@@ -132,6 +133,7 @@ function modern(): Theme {
     },
     menu: { background: '#0b0e18', color: '#ffffff', accent: '#4f6bff', opacity: 0.94 },
     animation: 'fade',
+    anim: defaultAnimations(),
     accessibility: { minFontSize: 14, minTouchTarget: 44, highContrast: false },
   };
 }
@@ -163,7 +165,10 @@ export function merge<T>(base: T, over: unknown): T {
 }
 
 function preset(id: string, name: string, patch: DeepPartial<Theme>): Theme {
-  return { ...merge(modern(), patch), id, name, preset: id };
+  const t = merge(modern(), patch);
+  // Presets describe their entrance with the older single setting.
+  if (!patch.anim) t.anim = animationsFromLegacy(t.animation);
+  return { ...t, id, name, preset: id };
 }
 
 export const THEME_PRESETS: readonly Theme[] = Object.freeze([
@@ -427,6 +432,7 @@ export function normalizeTheme(raw: unknown): Theme {
   const src = raw.version === 2 ? raw : migrateV1(raw);
   const t = merge(modern(), src);
   t.version = 2;
+  t.anim = normalizeAnimations(isPlain(src.anim) ? src.anim : undefined, t.animation);
   t.id = String(src.id ?? 'theme');
   t.name = String(src.name ?? 'Theme');
   t.preset = typeof src.preset === 'string' ? src.preset : undefined;

@@ -22,6 +22,12 @@ export interface PreviewThemeRequest {
   theme: Theme;
 }
 
+/** Editor preview: play an element's animation again. */
+export interface PreviewReplayRequest {
+  type: 'tstvn:replay';
+  target: 'dialog' | 'choices' | 'text';
+}
+
 let player: Player | null = null;
 
 declare global {
@@ -30,8 +36,12 @@ declare global {
   }
 }
 
-window.addEventListener('message', (e: MessageEvent<PreviewRequest | PreviewThemeRequest>) => {
+window.addEventListener('message', (e: MessageEvent<PreviewRequest | PreviewThemeRequest | PreviewReplayRequest>) => {
   if (e.source !== window.parent) return;
+  if (e.data?.type === 'tstvn:replay') {
+    player?.replayAnimation(e.data.target);
+    return;
+  }
   if (e.data?.type === 'tstvn:theme') {
     player?.setTheme(e.data.theme);
     return;

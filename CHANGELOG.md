@@ -2,6 +2,13 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.16
+### Added
+- Game UI animations (UI/UX Phase 5): the dialogue box can appear and disappear with Fade, Slide, Pop, Scale,
+  Bounce, Shake or Pulse; text can appear letter by letter, word by word, fading in or instantly; choice
+  buttons can animate in one after another; the "continue" mark can bounce, pulse, blink or stay still.
+- Each preset fills in a sensible duration and easing; ▶ Preview plays it in the editor canvas.
+
 ## v1.0.15
 ### Added
 - Choice button styles (UI/UX Phase 4): Classic, Modern, Minimal, RPG, Fantasy, Bubble and Image Button

@@ -1382,4 +1382,22 @@ export const TH: Record<string, string> = {
   // Choice preset names (shared/choicestyle.ts)
   "Image Button": "ปุ่มรูปภาพ",
   "Bubble": "บับเบิล",
+  "Appear": "ตอนปรากฏ",
+  "Blink": "กะพริบ",
+  "Disappear": "ตอนหายไป",
+  "Duration (seconds)": "ระยะเวลา (วินาที)",
+  "Ease In (smooth start)": "ค่อย ๆ เร่ง (เริ่มนุ่มนวล)",
+  "Ease Out (smooth stop)": "ค่อย ๆ หยุด (จบนุ่มนวล)",
+  "How the movement speeds up and slows down. “Ease Out” starts fast and stops gently.": "ลักษณะการเร่งและชะลอของการเคลื่อนไหว “ค่อย ๆ หยุด” จะเริ่มเร็วแล้วหยุดอย่างนุ่มนวล",
+  "Instant": "ทันที",
+  "One after another": "ทีละปุ่ม",
+  "Preview the animation": "ดูตัวอย่างแอนิเมชัน",
+  "Springy": "เด้งดึ๋ง",
+  "Still": "อยู่นิ่ง",
+  "Text appears": "การปรากฏของข้อความ",
+  "Typewriter (letter by letter)": "พิมพ์ดีด (ทีละตัวอักษร)",
+  "Word by word": "ทีละคำ",
+  "“Continue” mark": "เครื่องหมาย “ไปต่อ”",
+  // Animation preset names (shared/uianim.ts)
+  "Pop": "เด้งออกมา",
 };

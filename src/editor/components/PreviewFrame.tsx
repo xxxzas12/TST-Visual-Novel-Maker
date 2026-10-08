@@ -33,6 +33,8 @@ export const PreviewFrame = forwardRef<
      * must not: they restart while the user edits, and would steal focus from the input being typed in.
      */
     autoFocus?: boolean;
+    /** Play an element's animation again (editor ▶ Preview); sent each time its n changes. */
+    replay?: { target: 'dialog' | 'choices' | 'text'; n: number } | null;
   }
 >(function PreviewFrame(props, ref) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -67,6 +69,10 @@ export const PreviewFrame = forwardRef<
   useEffect(() => {
     if (ready && props.liveTheme) frame.current?.contentWindow?.postMessage({ type: 'tstvn:theme', theme: props.liveTheme }, '*');
   }, [ready, props.liveTheme]);
+
+  useEffect(() => {
+    if (ready && props.replay) frame.current?.contentWindow?.postMessage({ type: 'tstvn:replay', target: props.replay.target }, '*');
+  }, [ready, props.replay]);
 
   return <iframe ref={frame} src="./preview.html" className={props.className} style={props.style} title={tr("Game preview")} data-testid={props.testId ?? 'preview-frame'} />;
 });

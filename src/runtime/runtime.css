@@ -1176,3 +1176,20 @@ button.tvn-gallery-item:focus-visible {
   padding-left: 1.6em;
   clip-path: polygon(1em 0, 100% 0, 100% 100%, 1em 100%, 0 50%);
 }
+
+/* ---------- "click to continue" mark (data-indicator) ---------- */
+.tvn-root[data-indicator='pulse'] .tvn-indicator.tvn-show {
+  animation: tvn-ind-pulse 1.1s ease-in-out infinite;
+}
+.tvn-root[data-indicator='blink'] .tvn-indicator.tvn-show {
+  animation: tvn-pixel-blink 0.9s steps(1) infinite;
+}
+.tvn-root[data-indicator='none'] .tvn-indicator.tvn-show {
+  animation: none;
+}
+@keyframes tvn-ind-pulse {
+  50% {
+    transform: scale(1.35);
+    opacity: 0.45;
+  }
+}

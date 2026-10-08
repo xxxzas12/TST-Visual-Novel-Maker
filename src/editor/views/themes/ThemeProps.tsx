@@ -6,6 +6,17 @@ import { deleteMenuButton, duplicateMenuButton, moveMenuButton, type UiElementId
 import { newId } from '../../../shared/ids';
 import { AnchorPicker, ColorField, Field, FontField, ImageField, LengthInput, Section, Slider, SurfaceEditor, TextEditor, type Edit } from './controls';
 import { useState } from 'react';
+import { AnimControl } from './AnimControls';
+import { EXIT_PRESETS, INDICATOR_ANIMS, TEXT_REVEALS, legacyAnimation, type IndicatorAnim, type TextReveal, type ThemeAnimations } from '../../../shared/uianim';
+
+export type ReplayTarget = 'dialog' | 'choices' | 'text';
+
+/** Edits a theme's animations; the older single setting is kept in step for older TSTVN versions. */
+const animEdit = (edit: Edit) => (fn: (a: ThemeAnimations) => void, key: string) =>
+  edit((t) => {
+    fn(t.anim);
+    t.animation = legacyAnimation(t.anim.dialogIn);
+  }, `anim:${key}`);
 
 const FALLBACK_FONTS = [
   { label: 'Modern Sans', value: SANS },
@@ -85,14 +96,17 @@ interface Props {
   gameFont: string | null;
   /** Show every setting (Advanced) or only the essentials (Basic). */
   advanced: boolean;
+  /** ▶ Preview: play an element's animation in the canvas. */
+  onReplay?: (target: ReplayTarget) => void;
 }
 
-export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced }: Props) {
+export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced, onReplay }: Props) {
+  const anim = animEdit(edit);
   const surf = (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
   const text = (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
   const themeFontLabel = theme.fontFace ? theme.fontFace.family : gameFont ? tr('Game font ({0})', { 0: gameFont }) : tr('Theme font');
 
-  if (!el) return <ThemeGeneral theme={theme} edit={edit} gameFont={gameFont} advanced={advanced} />;
+  if (!el) return <ThemeGeneral theme={theme} edit={edit} gameFont={gameFont} advanced={advanced} onReplay={onReplay} />;
 
   if (el === 'dialog') {
     const d = theme.dialog;
@@ -137,6 +151,35 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced }: Pr
             </label>
           </Field>
           {d.textSpeed !== null && <Slider label={tr('Characters per second')} value={d.textSpeed} min={5} max={200} onChange={(v) => edit((t) => void (t.dialog.textSpeed = v), 'd:speed')} testId="dialog-speed" />}
+        </Section>
+        <Section title={tr('Animation')} testId="props-dialog-anim">
+          <AnimControl label={tr('Appear')} spec={theme.anim.dialogIn} onChange={(v, k) => anim((a) => void (a.dialogIn = v), `in:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} testId="anim-dialog-in" />
+          <AnimControl label={tr('Disappear')} list={EXIT_PRESETS} spec={theme.anim.dialogOut} onChange={(v, k) => anim((a) => void (a.dialogOut = v), `out:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} testId="anim-dialog-out" />
+          <Field label={tr('Text appears')}>
+            <div className="row" style={{ gap: '0.3rem' }}>
+              <select className="select grow" value={theme.anim.text} onChange={(e) => anim((a) => void (a.text = e.target.value as TextReveal), 'text')} data-testid="anim-text">
+                {TEXT_REVEALS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {tr(o.label)}
+                  </option>
+                ))}
+              </select>
+              {onReplay && (
+                <button type="button" className="btn sm" onClick={() => onReplay('text')} title={tr('Preview the animation')} aria-label={tr('Preview the animation')} data-testid="anim-text-preview">
+                  ▶
+                </button>
+              )}
+            </div>
+          </Field>
+          <Field label={tr('“Continue” mark')}>
+            <select className="select" value={theme.anim.indicator} onChange={(e) => anim((a) => void (a.indicator = e.target.value as IndicatorAnim), 'indicator')} data-testid="anim-indicator">
+              {INDICATOR_ANIMS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {tr(o.label)}
+                </option>
+              ))}
+            </select>
+          </Field>
         </Section>
       </>
     );
@@ -200,7 +243,7 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced }: Pr
     );
   }
 
-  if (el === 'choices') return <ChoiceProps theme={theme} edit={edit} surf={surf} text={text} fontLabel={themeFontLabel} advanced={advanced} />;
+  if (el === 'choices') return <ChoiceProps theme={theme} edit={edit} surf={surf} text={text} fontLabel={themeFontLabel} advanced={advanced} onReplay={onReplay} />;
 
   // Menu bar or one of its buttons.
   const m = theme.menuBar;
@@ -310,10 +353,12 @@ function ChoiceProps({
   text,
   fontLabel,
   advanced,
+  onReplay,
 }: {
   theme: Theme;
   edit: Edit;
   advanced: boolean;
+  onReplay?: (target: ReplayTarget) => void;
   surf: (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => void;
   text: (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => void;
   fontLabel: string;
@@ -418,11 +463,31 @@ function ChoiceProps({
       <Section title={tr('Text')}>
         <TextEditor x={c.text} set={text((t) => t.choice.text, 'ct')} prefix="choice-text" color={false} gameFontNote={fontLabel} advanced={advanced} />
       </Section>
+      <Section title={tr('Animation')} testId="props-choice-anim">
+        <AnimControl
+          label={tr('Appear')}
+          spec={theme.anim.choicesIn}
+          onChange={(v, k) => animEdit(edit)((a) => void (a.choicesIn = v), `choices:${k}`)}
+          onPreview={onReplay && (() => onReplay('choices'))}
+          testId="anim-choices-in"
+        />
+        {theme.anim.choicesIn.kind !== 'none' && (
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={theme.anim.choiceStagger > 0}
+              onChange={(e) => animEdit(edit)((a) => void (a.choiceStagger = e.target.checked ? 0.08 : 0), 'stagger')}
+              data-testid="anim-choices-stagger"
+            />{' '}
+            {tr('One after another')}
+          </label>
+        )}
+      </Section>
     </>
   );
 }
 
-function ThemeGeneral({ theme, edit, gameFont, advanced }: { theme: Theme; edit: Edit; gameFont: string | null; advanced: boolean }) {
+function ThemeGeneral({ theme, edit, gameFont, advanced, onReplay }: { theme: Theme; edit: Edit; gameFont: string | null; advanced: boolean; onReplay?: (target: ReplayTarget) => void }) {
   const a = theme.accessibility;
   return (
     <>
@@ -450,13 +515,13 @@ function ThemeGeneral({ theme, edit, gameFont, advanced }: { theme: Theme; edit:
             </select>
           </Field>
         )}
-        <Field label={tr('Dialogue box animation')}>
-          <select className="select" value={theme.animation} onChange={(e) => edit((t) => void (t.animation = e.target.value as Theme['animation']), 'anim')} data-testid="theme-animation">
-            <option value="fade">{tr('Fade')}</option>
-            <option value="slide">{tr('Slide up')}</option>
-            <option value="none">{tr('None')}</option>
-          </select>
-        </Field>
+        <AnimControl
+          label={tr('Dialogue box animation')}
+          spec={theme.anim.dialogIn}
+          onChange={(v, k) => animEdit(edit)((a) => void (a.dialogIn = v), `in:${k}`)}
+          onPreview={onReplay && (() => onReplay('dialog'))}
+          testId="theme-animation"
+        />
       </Section>
       <Section title={tr('Menus & title screen')}>
         <ColorField label={tr('Background')} value={theme.menu.background} onChange={(v) => edit((t) => void (t.menu.background = v), 'mbg')} />

@@ -127,6 +127,9 @@ export function ThemesView() {
   const [previewPreset, setPreviewPreset] = useState<string | null>(null);
   /** Choice preset shown in the canvas while the pointer is over its card. */
   const [previewChoice, setPreviewChoice] = useState<string | null>(null);
+  /** ▶ Preview of an animation in the canvas (a new object each click replays it). */
+  const [replay, setReplay] = useState<{ target: 'dialog' | 'choices' | 'text'; n: number } | null>(null);
+  const onReplay = (target: 'dialog' | 'choices' | 'text') => setReplay((r) => ({ target, n: (r?.n ?? 0) + 1 }));
   const device = DEVICES.find((d) => d.id === deviceId) ?? DEVICES[0];
   const pluginThemes = useUi((s) => s.plugins.themes);
   const advanced = useUi((s) => s.themeEditorAdvanced);
@@ -507,6 +510,7 @@ export function ThemesView() {
               onSelect={setEl}
               onChange={replaceTheme}
               onReadOnlyEdit={readOnly}
+              replay={replay}
             />
           </div>
 
@@ -596,7 +600,7 @@ export function ThemesView() {
             </div>
           )}
           <fieldset disabled={!isCustom} className="ui-props-body">
-            <ThemeProps theme={isCustom ? sel : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} advanced={advanced} />
+            <ThemeProps theme={isCustom ? sel : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} advanced={advanced} onReplay={onReplay} />
             {!advanced && (
               <div className="small faint" style={{ paddingTop: '0.4rem' }}>
                 {tr('More settings (borders, shadows, glow, gradients, textures, frame images, spacing) are in Advanced.')}

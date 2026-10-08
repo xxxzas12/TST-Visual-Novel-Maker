@@ -6,6 +6,7 @@ import { stateBeforeAction, type ChangeHint, type CharState, type ImageState, ty
 import { AudioManager } from './audio';
 import { emphasisFrames, enterFrames, exitFrames, play, transitionInFrames, transitionOutFrames } from './animate';
 import { applyStyle, h, sleep } from './dom';
+import { animFrames, easingCss, type AnimSpec } from '../../shared/uianim';
 import { AUTO_SLOT, SaveStorage, type PlayerSettings, type SlotData } from './storage';
 import { makeTranslator, type Translate } from './strings';
 
@@ -222,6 +223,7 @@ export class Player implements RuntimeHost {
     r.dFrame = theme.dialog.frame;
     r.nShape = theme.nameBox.shape;
     r.cShape = theme.choice.shape;
+    r.indicator = theme.anim.indicator;
     this.applyContrast();
     if (theme.nameBox.attach === 'outside') this.dialog.insertBefore(this.nameRow, this.dialogBody);
     else this.dialogBody.insertBefore(this.nameRow, this.textEl);
@@ -1060,9 +1062,7 @@ export class Player implements RuntimeHost {
     const wasHidden = dlg.classList.contains('tvn-hidden');
     dlg.classList.remove('tvn-hidden');
     dlg.classList.toggle('tvn-narration', d.narration);
-    if (wasHidden && this.theme.animation !== 'none' && !this.skipMode) {
-      void play(dlg, this.theme.animation === 'slide' ? [{ transform: 'translateY(30px)', opacity: 0 }, { transform: 'none', opacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }], 0.25);
-    }
+    if (wasHidden && !this.skipMode) void this.playSpec(dlg, this.theme.anim.dialogIn, 'in');
     this.nameEl.textContent = d.speakerName ?? '';
     this.nameEl.classList.toggle('tvn-hidden', !d.speakerName || !this.theme.nameBox.enabled);
     if (d.speakerColor) this.nameEl.style.setProperty('--tvn-speaker', d.speakerColor);
@@ -1082,11 +1082,93 @@ export class Player implements RuntimeHost {
     this.emit('dialogue', d);
 
     const speed = d.defaultSpeed && this.theme.dialog.textSpeed ? this.theme.dialog.textSpeed : d.textSpeed;
-    await this.typeText(d.text, speed * this.settings.textSpeedFactor);
+    await this.revealText(d.text, speed * this.settings.textSpeedFactor);
     this.indicator.classList.add('tvn-show');
     await this.waitAdvance(this.settings.autoDelay + Math.min(4, d.text.length / 40));
     this.indicator.classList.remove('tvn-show');
     this.sound.stopVoice();
+  }
+
+  /**
+   * Plays a theme animation on an element (entrance or exit). Distances are design px, scaled like the
+   * rest of the UI. Resolves when it ends; nothing happens for "None".
+   */
+  private playSpec(el: Element, spec: AnimSpec, phase: 'in' | 'out', extraDelay = 0): Promise<void> {
+    const frames = animFrames(spec, phase, this.ctx?.s ?? 1);
+    if (!frames || typeof (el as HTMLElement).animate !== 'function') return Promise.resolve();
+    const anim = (el as HTMLElement).animate(frames as Keyframe[], {
+      duration: spec.duration * 1000,
+      delay: (spec.delay + extraDelay) * 1000,
+      easing: easingCss(spec.easing),
+      // Before a delayed entrance starts, show its first frame (e.g. invisible) instead of the final state.
+      fill: phase === 'in' ? 'backwards' : 'forwards',
+    });
+    return new Promise((resolve) => {
+      anim.onfinish = () => resolve();
+      anim.oncancel = () => resolve();
+    });
+  }
+
+  /** Hides the dialogue box, playing its exit animation first. */
+  private async hideDialog() {
+    const dlg = this.dialog;
+    if (dlg.classList.contains('tvn-hidden')) return;
+    if (!this.skipMode && this.theme.anim.dialogOut.kind !== 'none') {
+      await this.playSpec(dlg, this.theme.anim.dialogOut, 'out');
+      dlg.getAnimations().forEach((a) => a.cancel());
+    }
+    dlg.classList.add('tvn-hidden');
+  }
+
+  /** Shows the line the way the theme says: typewriter, word by word, fading in, or at once. */
+  private revealText(text: string, cps: number): Promise<void> {
+    const mode = this.theme.anim.text;
+    if (mode === 'typewriter') return this.typeText(text, cps);
+    this.textEl.textContent = '';
+    if (mode === 'instant' || this.skipMode || cps <= 0 || cps >= 500) {
+      this.textEl.textContent = text;
+      return Promise.resolve();
+    }
+    if (mode === 'fade') {
+      this.textEl.textContent = text;
+      const anim = this.textEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: Math.min(900, Math.max(250, (text.length / cps) * 400)), easing: 'ease-out' });
+      return new Promise((resolve) => {
+        const done = () => {
+          anim.cancel();
+          this.finishTyping = null;
+          resolve();
+        };
+        anim.onfinish = done;
+        this.finishTyping = done;
+      });
+    }
+    // Word by word: words keep their spaces; about five letters per word at the text speed.
+    const words = text.split(/(?<=\s)/);
+    let i = 0;
+    return new Promise((resolve) => {
+      const timer = window.setInterval(() => {
+        i++;
+        this.textEl.textContent = words.slice(0, i).join('');
+        if (i >= words.length) done();
+      }, Math.max(40, 5000 / cps));
+      const done = () => {
+        window.clearInterval(timer);
+        this.textEl.textContent = text;
+        this.finishTyping = null;
+        resolve();
+      };
+      this.finishTyping = done;
+    });
+  }
+
+  /** Editor preview: plays an element's animation again. */
+  replayAnimation(target: 'dialog' | 'choices' | 'text') {
+    if (target === 'dialog') void this.playSpec(this.dialog, this.theme.anim.dialogIn, 'in').then(() => this.playSpec(this.dialog, this.theme.anim.dialogOut, 'out')).then(() => this.dialog.getAnimations().forEach((a) => a.cancel()));
+    else if (target === 'choices') [...this.choicesEl.children].forEach((b, i) => void this.playSpec(b, this.theme.anim.choicesIn, 'in', i * this.theme.anim.choiceStagger));
+    else {
+      const text = this.textEl.textContent ?? '';
+      void this.revealText(text, 40);
+    }
   }
 
   private typeText(text: string, cps: number): Promise<void> {
@@ -1148,7 +1230,7 @@ export class Player implements RuntimeHost {
       this.tailSpeaker = null;
       this.placeTail();
       this.indicator.classList.remove('tvn-show');
-    } else this.dialog.classList.add('tvn-hidden');
+    } else await this.hideDialog();
     this.emit('choice', c);
     return new Promise((resolve) => {
       const buttons = c.options.map((o, i) =>
@@ -1174,6 +1256,7 @@ export class Player implements RuntimeHost {
       this.choicesEl.replaceChildren(...buttons);
       this.choicesEl.classList.remove('tvn-hidden');
       this.fitChoices();
+      if (!this.skipMode) buttons.forEach((b, i) => void this.playSpec(b, this.theme.anim.choicesIn, 'in', i * this.theme.anim.choiceStagger));
       buttons.find((b) => !b.disabled)?.focus({ preventScroll: true });
     });
   }
@@ -1184,7 +1267,7 @@ export class Player implements RuntimeHost {
     this.skipMode = false;
     this.updateQuickState();
     this.choiceActive = true;
-    this.dialog.classList.add('tvn-hidden');
+    await this.hideDialog();
     this.emit('hotspots', v);
     return new Promise((resolve) => {
       const layer = h('div', { class: 'tvn-hotspots', 'data-testid': 'tvn-hotspots' });
