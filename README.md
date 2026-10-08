@@ -67,8 +67,30 @@ by `tests/appearance.test.ts`.
   text size and high contrast in the game's Settings. Choice options can be shown greyed out when their
   condition is not met ("show when locked").
 
+- **Basic / Advanced:** Basic (the default) shows only the essentials; Advanced adds every setting, with
+  **?** help on unfamiliar ones.
+- **Textbox styles** (Classic VN, Modern, Speech Bubble, Minimal, Fantasy, Sci-Fi, Horror, RPG, Retro):
+  real shapes, not just colours. For example, the speech bubble's tail points at the speaking character.
+  Point at a style to preview it, click to use it, **⟲ Reset** to go back. Advanced adds glow, gradient,
+  texture, **your own frame image** (it fits any box size), text outline and shadow colour.
+- **Choice styles** (Classic, Modern, Minimal, RPG, Fantasy, Bubble, **Image Button**): shapes, an icon in
+  front of options, and your own button picture for Normal / Hover / Pressed / Disabled. Each option can
+  also **set or add to a variable, play a sound, animate a character or shake the screen** when chosen.
+- **Animations:** the dialogue box appears and disappears (Fade, Slide, Pop, Scale, Bounce, Shake, Pulse)
+  with sensible timing per preset and **▶ Preview**. Text can appear letter by letter, word by word,
+  fading in or instantly, and choices can appear one after another. Advanced adds delay, direction,
+  distance, size, rotation and opacity.
+- **📚 Style Library:** save a textbox or choice style once and use it in any theme. Edit it once and
+  every theme and scene using it updates; **Edit only here** keeps a change local.
+
 Everything is saved in the project, and the exported game reads the same theme data — what you design is
 what players get.
+
+## Workspace
+
+The scene editor's panels can be resized by dragging the dividers, folded, hidden, or swapped
+(Properties on the left). The **🪟 Workspace** menu has presets: **Default, Writing, Scene Design,
+Art / Assets**. You can also save your own layout. The layout is remembered.
 
 ## Plugins
 
