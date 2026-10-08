@@ -18,11 +18,28 @@ const NO_SHADOW: UiShadow = { size: 0, y: 0, color: '#000000', opacity: 0.4 };
 const shadow = (size: number, y: number, opacity = 0.4, color = '#000000'): UiShadow => ({ size, y, color, opacity });
 
 function surface(p: Partial<UiSurface>): UiSurface {
-  return { background: '#101420', image: null, imageFit: 'stretch', opacity: 1, borderColor: '#ffffff', borderWidth: 0, radius: 0, shadow: NO_SHADOW, blur: 0, ...p };
+  return {
+    background: '#101420',
+    image: null,
+    imageFit: 'stretch',
+    opacity: 1,
+    borderColor: '#ffffff',
+    borderWidth: 0,
+    radius: 0,
+    shadow: NO_SHADOW,
+    blur: 0,
+    glow: { size: 0, color: '#8090ff', opacity: 0.8 },
+    gradient: { enabled: false, color: '#000000', angle: 180 },
+    texture: null,
+    frameImage: null,
+    frameSlice: 30,
+    frameWidth: 24,
+    ...p,
+  };
 }
 
 function text(p: Partial<UiText>): UiText {
-  return { font: null, size: 38, color: '#ffffff', lineHeight: 1.55, letterSpacing: 0, align: 'left', bold: false, shadow: false, ...p };
+  return { font: null, size: 38, color: '#ffffff', lineHeight: 1.55, letterSpacing: 0, align: 'left', bold: false, shadow: false, shadowColor: '#000000', outline: 0, outlineColor: '#000000', ...p };
 }
 
 const st = (background: string, color: string, borderColor: string, opacity = 1): ChoiceStateStyle => ({ background, color, borderColor, opacity });
@@ -136,7 +153,7 @@ export function merge<T>(base: T, over: unknown): T {
     else if (Array.isArray(b)) out[k] = Array.isArray(v) ? v : b;
     else if (isPlain(b)) out[k] = isPlain(v) ? merge(b, v) : b;
     else if (typeof v === typeof b) out[k] = typeof v === 'number' && !Number.isFinite(v) ? b : v;
-    else if (v === null && (k === 'image' || k === 'font' || k === 'fontFace' || k === 'textSpeed' || k === 'preset')) out[k] = null;
+    else if (v === null && (k === 'image' || k === 'texture' || k === 'frameImage' || k === 'font' || k === 'fontFace' || k === 'textSpeed' || k === 'preset')) out[k] = null;
   }
   return out as T;
 }
@@ -425,10 +442,10 @@ export function normalizeTheme(raw: unknown): Theme {
 const surfacesOf = (t: Theme): UiSurface[] => [t.dialog.surface, t.nameBox.surface, t.choice.surface, t.menuBar.surface];
 const textsOf = (t: Theme): UiText[] => [t.dialog.text, t.nameBox.text, t.choice.text, t.menuBar.text];
 
-/** Image assets a theme uses. */
+/** Image assets a theme uses (backgrounds, textures, frame images). */
 export function themeAssetIds(t: Theme): string[] {
   return surfacesOf(t)
-    .map((s) => s.image)
+    .flatMap((s) => [s.image, s.texture, s.frameImage])
     .filter((x): x is string => !!x);
 }
 
@@ -437,9 +454,19 @@ export function themeFontRefs(t: Theme): FontRef[] {
   return [t.fontFace, ...textsOf(t).map((x) => x.font)].filter((f): f is FontRef => !!f?.family);
 }
 
-/** Calls fn for every image slot of a theme (mutating helpers for asset replace/remove). */
-export function forEachThemeImage(t: Theme, fn: (s: UiSurface) => void) {
-  surfacesOf(t).forEach(fn);
+/**
+ * Calls fn for every image slot of a theme that holds an asset and stores what it returns
+ * (the same id, another id, or null to clear the slot). Used to replace or remove assets.
+ * A slot is only written when it changes: themes in the editor store are frozen.
+ */
+export function mapThemeImages(t: Theme, fn: (assetId: string) => string | null) {
+  for (const s of surfacesOf(t))
+    for (const k of ['image', 'texture', 'frameImage'] as const) {
+      const id = s[k];
+      if (!id) continue;
+      const next = fn(id);
+      if (next !== id) s[k] = next;
+    }
 }
 
 /** Quote a font family for CSS. */

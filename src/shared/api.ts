@@ -28,6 +28,8 @@ export interface AppSettings {
   workspace?: WorkspaceLayout;
   /** Workspaces saved by the user. */
   customWorkspaces?: CustomWorkspace[];
+  /** Game UI editor: show every setting. */
+  themeEditorAdvanced?: boolean;
 }
 
 export interface SystemFont {

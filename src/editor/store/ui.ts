@@ -94,6 +94,8 @@ export interface UiState {
   /** Scene editor layout (saved in Application Settings). */
   workspace: WorkspaceLayout;
   customWorkspaces: CustomWorkspace[];
+  /** Game UI editor shows every setting (true) or only the essentials (false, the default). */
+  themeEditorAdvanced: boolean;
   openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
@@ -144,6 +146,7 @@ export const useUi = create<UiState>((set, get) => ({
   autosave: autosaveConfig({}),
   workspace: defaultLayout(),
   customWorkspaces: [],
+  themeEditorAdvanced: false,
   openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),
@@ -207,4 +210,9 @@ export function applyWorkspace(id: string) {
 export function setCustomWorkspaces(customWorkspaces: CustomWorkspace[]) {
   useUi.setState({ customWorkspaces });
   void api.app.setSettings({ customWorkspaces }).catch(() => undefined);
+}
+
+export function setThemeEditorAdvanced(themeEditorAdvanced: boolean) {
+  useUi.setState({ themeEditorAdvanced });
+  void api.app.setSettings({ themeEditorAdvanced }).catch(() => undefined);
 }

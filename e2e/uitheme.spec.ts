@@ -74,6 +74,7 @@ test('game UI editor: design, responsive check, export/import, scene override, p
   await expect(page.getByTestId('theme-editor')).toBeVisible();
   await expect(page.getByTestId('theme-title')).toHaveText('Horror (custom)');
   await page.getByTestId('use-theme').click();
+  await page.getByTestId('ui-mode-advanced').click(); // every setting (Basic shows only the essentials)
 
   const design = page.frameLocator('[data-testid="ui-design-frame"]');
   await expect(design.getByTestId('tvn-dialog')).toBeVisible();

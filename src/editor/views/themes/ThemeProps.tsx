@@ -69,14 +69,16 @@ interface Props {
   onSelect: (el: UiElementId | null) => void;
   /** Family set in Settings → Fonts (used when the theme has no font of its own). */
   gameFont: string | null;
+  /** Show every setting (Advanced) or only the essentials (Basic). */
+  advanced: boolean;
 }
 
-export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
+export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced }: Props) {
   const surf = (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
   const text = (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
   const themeFontLabel = theme.fontFace ? theme.fontFace.family : gameFont ? tr('Game font ({0})', { 0: gameFont }) : tr('Theme font');
 
-  if (!el) return <ThemeGeneral theme={theme} edit={edit} gameFont={gameFont} />;
+  if (!el) return <ThemeGeneral theme={theme} edit={edit} gameFont={gameFont} advanced={advanced} />;
 
   if (el === 'dialog') {
     const d = theme.dialog;
@@ -85,31 +87,35 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
         <Section title={tr('Position & size')} testId="props-dialog-layout">
           <AnchorPicker value={d.anchor} onChange={(a) => edit((t) => void (t.dialog.anchor = a), 'd:anchor')} testId="dialog-anchor" />
           <div className="prop-grid">
-            <LengthInput label="X" value={d.x} onChange={(v) => edit((t) => void (t.dialog.x = v), 'd:x')} testId="dialog-x" />
-            <LengthInput label="Y" value={d.y} onChange={(v) => edit((t) => void (t.dialog.y = v), 'd:y')} testId="dialog-y" />
+            {advanced && <LengthInput label="X" value={d.x} onChange={(v) => edit((t) => void (t.dialog.x = v), 'd:x')} testId="dialog-x" />}
+            {advanced && <LengthInput label="Y" value={d.y} onChange={(v) => edit((t) => void (t.dialog.y = v), 'd:y')} testId="dialog-y" />}
             <LengthInput label={tr('Width')} value={d.width} onChange={(v) => edit((t) => void (t.dialog.width = v), 'd:w')} testId="dialog-width" />
             <LengthInput label={tr('Height (minimum)')} value={d.height} onChange={(v) => edit((t) => void (t.dialog.height = v), 'd:h')} testId="dialog-height" />
           </div>
-          <div className="prop-grid">
-            <Slider label={tr('Padding X')} value={d.padding.x} min={0} max={160} onChange={(v) => edit((t) => void (t.dialog.padding.x = v), 'd:px')} testId="dialog-padding-x" />
-            <Slider label={tr('Padding Y')} value={d.padding.y} min={0} max={120} onChange={(v) => edit((t) => void (t.dialog.padding.y = v), 'd:py')} testId="dialog-padding-y" />
-          </div>
+          {advanced && (
+            <div className="prop-grid">
+              <Slider label={tr('Padding X')} value={d.padding.x} min={0} max={160} onChange={(v) => edit((t) => void (t.dialog.padding.x = v), 'd:px')} testId="dialog-padding-x" />
+              <Slider label={tr('Padding Y')} value={d.padding.y} min={0} max={120} onChange={(v) => edit((t) => void (t.dialog.padding.y = v), 'd:py')} testId="dialog-padding-y" />
+            </div>
+          )}
           <div className="small faint">{tr('px = pixels on a 1920×1080 screen, scaled to every screen size. % = share of the screen. The box never leaves the screen and grows (then scrolls) for long text.')}</div>
         </Section>
         <Section title={tr('Box style')}>
-          <Field label={tr('Shape')}>
-            <select className="select" value={d.frame} onChange={(e) => edit((t) => void (t.dialog.frame = e.target.value as DialogFrame), 'd:frame')} data-testid="dialog-frame">
-              {DIALOG_FRAMES.map((f) => (
-                <option key={f} value={f}>
-                  {frameLabel(f)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <SurfaceEditor s={d.surface} set={surf((t) => t.dialog.surface, 'd')} prefix="dialog" />
+          {advanced && (
+            <Field label={tr('Shape')}>
+              <select className="select" value={d.frame} onChange={(e) => edit((t) => void (t.dialog.frame = e.target.value as DialogFrame), 'd:frame')} data-testid="dialog-frame">
+                {DIALOG_FRAMES.map((f) => (
+                  <option key={f} value={f}>
+                    {frameLabel(f)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <SurfaceEditor s={d.surface} set={surf((t) => t.dialog.surface, 'd')} prefix="dialog" advanced={advanced} />
         </Section>
         <Section title={tr('Text')}>
-          <TextEditor x={d.text} set={text((t) => t.dialog.text, 'dt')} prefix="dialog-text" gameFontNote={themeFontLabel} />
+          <TextEditor x={d.text} set={text((t) => t.dialog.text, 'dt')} prefix="dialog-text" gameFontNote={themeFontLabel} advanced={advanced} />
           <Field label={tr('Text speed')}>
             <label className="check">
               <input type="checkbox" checked={d.textSpeed === null} onChange={(e) => edit((t) => void (t.dialog.textSpeed = e.target.checked ? null : 40), 'd:speed')} data-testid="dialog-speed-default" />
@@ -145,38 +151,42 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
               ))}
             </div>
           </Field>
-          <div className="prop-grid">
-            <Slider label={tr('Offset X')} value={n.x} min={-400} max={400} onChange={(v) => edit((t) => void (t.nameBox.x = v), 'n:x')} testId="name-x" />
-            <Slider label={tr('Offset Y')} value={n.y} min={-200} max={200} onChange={(v) => edit((t) => void (t.nameBox.y = v), 'n:y')} testId="name-y" />
-            <Slider label={tr('Minimum width')} value={n.width} min={0} max={800} onChange={(v) => edit((t) => void (t.nameBox.width = v), 'n:w')} testId="name-width" />
-            <Slider label={tr('Minimum height')} value={n.height} min={0} max={200} onChange={(v) => edit((t) => void (t.nameBox.height = v), 'n:h')} testId="name-height" />
-            <Slider label={tr('Padding X')} value={n.padding.x} min={0} max={100} onChange={(v) => edit((t) => void (t.nameBox.padding.x = v), 'n:px')} />
-            <Slider label={tr('Padding Y')} value={n.padding.y} min={0} max={60} onChange={(v) => edit((t) => void (t.nameBox.padding.y = v), 'n:py')} />
-          </div>
+          {advanced && (
+            <div className="prop-grid">
+              <Slider label={tr('Offset X')} value={n.x} min={-400} max={400} onChange={(v) => edit((t) => void (t.nameBox.x = v), 'n:x')} testId="name-x" />
+              <Slider label={tr('Offset Y')} value={n.y} min={-200} max={200} onChange={(v) => edit((t) => void (t.nameBox.y = v), 'n:y')} testId="name-y" />
+              <Slider label={tr('Minimum width')} value={n.width} min={0} max={800} onChange={(v) => edit((t) => void (t.nameBox.width = v), 'n:w')} testId="name-width" />
+              <Slider label={tr('Minimum height')} value={n.height} min={0} max={200} onChange={(v) => edit((t) => void (t.nameBox.height = v), 'n:h')} testId="name-height" />
+              <Slider label={tr('Padding X')} value={n.padding.x} min={0} max={100} onChange={(v) => edit((t) => void (t.nameBox.padding.x = v), 'n:px')} />
+              <Slider label={tr('Padding Y')} value={n.padding.y} min={0} max={60} onChange={(v) => edit((t) => void (t.nameBox.padding.y = v), 'n:py')} />
+            </div>
+          )}
           <label className="check">
             <input type="checkbox" checked={n.speakerColor} onChange={(e) => edit((t) => void (t.nameBox.speakerColor = e.target.checked), 'n:sc')} /> {tr('Underline in the character’s color')}
           </label>
         </Section>
         <Section title={tr('Box style')}>
-          <Field label={tr('Shape')}>
-            <select className="select" value={n.shape} onChange={(e) => edit((t) => void (t.nameBox.shape = e.target.value as NameShape), 'n:shape')} data-testid="name-shape">
-              {NAME_SHAPES.map((x) => (
-                <option key={x} value={x}>
-                  {shapeLabel(x)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <SurfaceEditor s={n.surface} set={surf((t) => t.nameBox.surface, 'n')} prefix="name" />
+          {advanced && (
+            <Field label={tr('Shape')}>
+              <select className="select" value={n.shape} onChange={(e) => edit((t) => void (t.nameBox.shape = e.target.value as NameShape), 'n:shape')} data-testid="name-shape">
+                {NAME_SHAPES.map((x) => (
+                  <option key={x} value={x}>
+                    {shapeLabel(x)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <SurfaceEditor s={n.surface} set={surf((t) => t.nameBox.surface, 'n')} prefix="name" advanced={advanced} />
         </Section>
         <Section title={tr('Text')}>
-          <TextEditor x={n.text} set={text((t) => t.nameBox.text, 'nt')} prefix="name-text" gameFontNote={themeFontLabel} />
+          <TextEditor x={n.text} set={text((t) => t.nameBox.text, 'nt')} prefix="name-text" gameFontNote={themeFontLabel} advanced={advanced} />
         </Section>
       </>
     );
   }
 
-  if (el === 'choices') return <ChoiceProps theme={theme} edit={edit} surf={surf} text={text} fontLabel={themeFontLabel} />;
+  if (el === 'choices') return <ChoiceProps theme={theme} edit={edit} surf={surf} text={text} fontLabel={themeFontLabel} advanced={advanced} />;
 
   // Menu bar or one of its buttons.
   const m = theme.menuBar;
@@ -250,12 +260,12 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
         </div>
       </Section>
       <Section title={tr('Button style')}>
-        <SurfaceEditor s={m.surface} set={surf((t) => t.menuBar.surface, 'm')} prefix="menubar" />
+        <SurfaceEditor s={m.surface} set={surf((t) => t.menuBar.surface, 'm')} prefix="menubar" advanced={advanced} />
         <ColorField label={tr('Hover background')} value={m.hover.background} onChange={(v) => edit((t) => void (t.menuBar.hover.background = v), 'm:hbg')} />
         <ColorField label={tr('Hover text color')} value={m.hover.color} onChange={(v) => edit((t) => void (t.menuBar.hover.color = v), 'm:hc')} />
       </Section>
       <Section title={tr('Text')}>
-        <TextEditor x={m.text} set={text((t) => t.menuBar.text, 'mt')} prefix="menubar-text" gameFontNote={themeFontLabel} />
+        <TextEditor x={m.text} set={text((t) => t.menuBar.text, 'mt')} prefix="menubar-text" gameFontNote={themeFontLabel} advanced={advanced} />
       </Section>
     </>
   );
@@ -285,9 +295,11 @@ function ChoiceProps({
   surf,
   text,
   fontLabel,
+  advanced,
 }: {
   theme: Theme;
   edit: Edit;
+  advanced: boolean;
   surf: (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => void;
   text: (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => void;
   fontLabel: string;
@@ -347,16 +359,16 @@ function ChoiceProps({
         <Slider label={tr('Animation speed (seconds)')} value={c.animationSpeed} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.animationSpeed = v), 'c:speed')} />
       </Section>
       <Section title={tr('Button style')}>
-        <SurfaceEditor s={c.surface} set={surf((t) => t.choice.surface, 'c')} prefix="choice" colors={false} />
+        <SurfaceEditor s={c.surface} set={surf((t) => t.choice.surface, 'c')} prefix="choice" colors={false} advanced={advanced} />
       </Section>
       <Section title={tr('Text')}>
-        <TextEditor x={c.text} set={text((t) => t.choice.text, 'ct')} prefix="choice-text" color={false} gameFontNote={fontLabel} />
+        <TextEditor x={c.text} set={text((t) => t.choice.text, 'ct')} prefix="choice-text" color={false} gameFontNote={fontLabel} advanced={advanced} />
       </Section>
     </>
   );
 }
 
-function ThemeGeneral({ theme, edit, gameFont }: { theme: Theme; edit: Edit; gameFont: string | null }) {
+function ThemeGeneral({ theme, edit, gameFont, advanced }: { theme: Theme; edit: Edit; gameFont: string | null; advanced: boolean }) {
   const a = theme.accessibility;
   return (
     <>
@@ -372,16 +384,18 @@ function ThemeGeneral({ theme, edit, gameFont }: { theme: Theme; edit: Edit; gam
           testId="theme-font"
         />
         {gameFont && <div className="small faint">{tr('Settings → Fonts sets the game font “{0}”; it replaces this theme font (fonts chosen for single elements still win).', { 0: gameFont })}</div>}
-        <Field label={tr('Fallback fonts')}>
-          <select className="select" value={theme.font} onChange={(e) => edit((t) => void (t.font = e.target.value), 'font')}>
-            {FALLBACK_FONTS.map((f) => (
-              <option key={f.label} value={f.value}>
-                {tr(f.label)}
-              </option>
-            ))}
-            {!FALLBACK_FONTS.some((f) => f.value === theme.font) && <option value={theme.font}>{tr('Current')}</option>}
-          </select>
-        </Field>
+        {advanced && (
+          <Field label={tr('Fallback fonts')} tip={tr('Used for letters the chosen font does not have, and when it is not installed on the player’s computer.')}>
+            <select className="select" value={theme.font} onChange={(e) => edit((t) => void (t.font = e.target.value), 'font')}>
+              {FALLBACK_FONTS.map((f) => (
+                <option key={f.label} value={f.value}>
+                  {tr(f.label)}
+                </option>
+              ))}
+              {!FALLBACK_FONTS.some((f) => f.value === theme.font) && <option value={theme.font}>{tr('Current')}</option>}
+            </select>
+          </Field>
+        )}
         <Field label={tr('Dialogue box animation')}>
           <select className="select" value={theme.animation} onChange={(e) => edit((t) => void (t.animation = e.target.value as Theme['animation']), 'anim')} data-testid="theme-animation">
             <option value="fade">{tr('Fade')}</option>

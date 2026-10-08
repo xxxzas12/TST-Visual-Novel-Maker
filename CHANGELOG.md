@@ -2,6 +2,16 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.14
+### Added
+- Game UI editor: Basic / Advanced switch (Basic by default, remembered). Basic shows only the essentials.
+- Advanced textbox settings: glow, gradient, tiled texture, your own frame image that fits any box size
+  (9-slice), text outline, text shadow colour; ? help marks on unfamiliar settings.
+- "⟲ Reset" button to return the dialogue and name box to their textbox preset.
+
+### Fixed
+- Setting a texture raised "Cannot assign to read only property" (image listing wrote to frozen state).
+
 ## v1.0.13
 ### Added
 - Textbox style presets (UI/UX Phase 2) with their own shapes: Classic VN, Modern, Speech Bubble (tail points

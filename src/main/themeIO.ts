@@ -7,7 +7,7 @@ import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import type { DuplicateDecision } from '../shared/api';
 import type { Asset, Theme } from '../shared/types';
 import { newId } from '../shared/ids';
-import { forEachThemeImage, normalizeTheme, themeAssetIds, themeFontRefs } from '../shared/themes';
+import { mapThemeImages, normalizeTheme, themeAssetIds, themeFontRefs } from '../shared/themes';
 import { executeImport, scanImport, type Thumbnailer } from './importer';
 import { exists, resolveInside, safeName, toPosix, uniquePath, writeFileAtomic } from './paths';
 
@@ -113,10 +113,8 @@ export async function importThemeFile(projectDir: string, file: string, existing
         const nid = newIdBySource.get(path.resolve(staged.get(name)!));
         if (nid) remap.set(oldId, nid);
       }
-      forEachThemeImage(theme, (s) => {
-        if (s.image) s.image = remap.get(s.image) ?? null;
-      });
-    } else forEachThemeImage(theme, (s) => void (s.image = null));
+      mapThemeImages(theme, (id) => remap.get(id) ?? null);
+    } else mapThemeImages(theme, () => null);
   } finally {
     await fs.rm(staging, { recursive: true, force: true });
   }

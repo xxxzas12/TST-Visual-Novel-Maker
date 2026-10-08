@@ -44,6 +44,7 @@ test('textbox presets: preview, apply, every shape, undo, saved, bubble tail in 
   await page.getByTestId('theme-title').hover();
   await expect.poll(() => frameOf(design)).toBe('bubble');
   await expect(design.getByTestId('tvn-dialog')).toHaveAttribute('data-tail', 'top');
+  await page.getByTestId('ui-mode-advanced').click();
   await expect(page.getByTestId('dialog-frame')).toHaveValue('bubble');
 
   // Every preset gives its own shape (screenshots for review).

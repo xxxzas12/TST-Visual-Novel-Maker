@@ -8,7 +8,7 @@ import { newId, deepClone } from '../../shared/ids';
 import { makeContext } from '../../shared/uilayout';
 import { DEVICES, alignElement, canAlign, checkAllDevices, deleteMenuButton, duplicateMenuButton, moveElement, positioned, type AlignEdge, type UiElementId } from '../../shared/uicheck';
 import { useProject, getDir } from '../store/project';
-import { confirmDialog, toast, useUi } from '../store/ui';
+import { confirmDialog, setThemeEditorAdvanced, toast, useUi } from '../store/ui';
 import { api } from '../api';
 import { run } from '../ops';
 import { Modal } from '../components/Modal';
@@ -125,6 +125,7 @@ export function ThemesView() {
   const [previewPreset, setPreviewPreset] = useState<string | null>(null);
   const device = DEVICES.find((d) => d.id === deviceId) ?? DEVICES[0];
   const pluginThemes = useUi((s) => s.plugins.themes);
+  const advanced = useUi((s) => s.themeEditorAdvanced);
   const pluginTheme = pluginThemes.find((t) => t.id === selId);
   const sel: Theme = pluginTheme ?? resolveTheme(selId, project.themes);
   const isCustom = project.themes.some((t) => t.id === selId);
@@ -527,6 +528,14 @@ export function ThemesView() {
         <aside className="props ui-props" data-testid={isCustom ? 'theme-editor' : 'theme-props-readonly'}>
           <div className="row" style={{ padding: '0.6rem 0.8rem 0' }}>
             <b className="grow ellipsis">{elementLabel(el, sel)}</b>
+            <div className="seg" role="radiogroup" aria-label={tr('How many settings to show')}>
+              <button type="button" role="radio" aria-checked={!advanced} className={!advanced ? 'on' : ''} onClick={() => setThemeEditorAdvanced(false)} title={tr('Only the essential settings')} data-testid="ui-mode-basic">
+                {tr('Basic')}
+              </button>
+              <button type="button" role="radio" aria-checked={advanced} className={advanced ? 'on' : ''} onClick={() => setThemeEditorAdvanced(true)} title={tr('Every setting: borders, shadows, glow, textures, spacing…')} data-testid="ui-mode-advanced">
+                {tr('Advanced')}
+              </button>
+            </div>
             {el && positioned(el) !== el && (
               <button className="btn ghost sm" onClick={() => setEl('menubar')}>
                 {tr('Menu Bar')}
@@ -545,6 +554,11 @@ export function ThemesView() {
             <div className="ui-props-body" style={{ paddingBottom: 0 }} data-testid="textbox-style">
               <div className="section-title">{tr('Textbox style')}</div>
               <TextboxPresets current={sel.dialog.preset} onPreview={setPreviewPreset} onPick={pickTextbox} />
+              {isCustom && sel.dialog.preset && getTextboxPreset(sel.dialog.preset) && (
+                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickTextbox(sel.dialog.preset!)} title={tr('Undo your changes to the dialogue box and name box')} data-testid="textbox-reset">
+                  {tr('⟲ Reset to “{0}”', { 0: tr(getTextboxPreset(sel.dialog.preset)!.name) })}
+                </button>
+              )}
               <div className="small faint" style={{ marginTop: '0.4rem' }}>
                 {previewPreset
                   ? tr('Previewing “{0}” — click to use it', { 0: tr(getTextboxPreset(previewPreset)!.name) })
@@ -553,7 +567,12 @@ export function ThemesView() {
             </div>
           )}
           <fieldset disabled={!isCustom} className="ui-props-body">
-            <ThemeProps theme={isCustom ? sel : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} />
+            <ThemeProps theme={isCustom ? sel : live} el={el} edit={edit} onSelect={setEl} gameFont={project.settings.dialogueFont?.family ?? null} advanced={advanced} />
+            {!advanced && (
+              <div className="small faint" style={{ paddingTop: '0.4rem' }}>
+                {tr('More settings (borders, shadows, glow, gradients, textures, frame images, spacing) are in Advanced.')}
+              </div>
+            )}
           </fieldset>
         </aside>
       </div>

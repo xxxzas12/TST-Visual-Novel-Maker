@@ -186,10 +186,17 @@ export function fontStackFor(t: Theme, ref: FontRef | null): string {
   return ref?.family ? `${cssFamily(ref.family)}, ${base}` : base;
 }
 
-const TEXT_SHADOW = '0 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.65)';
+const textShadow = (color: string) => `0 1px 2px ${withAlpha(color, 0.9)}, 0 0 6px ${withAlpha(color, 0.65)}`;
+
+const cssUrl = (u: string | null) => (u ? `url(${JSON.stringify(u)})` : 'none');
 
 function surfaceVars(p: string, s: UiSurface, c: UiContext, img: (id: string) => string | null): Record<string, string> {
   const url = s.image ? img(s.image) : null;
+  const shadows = [
+    s.shadow.size > 0 ? `0 ${n(s.shadow.y * c.s)} ${n(s.shadow.size * c.s)} ${withAlpha(s.shadow.color, s.shadow.opacity)}` : '',
+    s.glow.size > 0 ? `0 0 ${n(s.glow.size * c.s)} ${n((s.glow.size * c.s) / 4)} ${withAlpha(s.glow.color, s.glow.opacity)}` : '',
+  ].filter(Boolean);
+  const frame = s.frameImage ? img(s.frameImage) : null;
   return {
     [`--tvn-${p}-bg`]: withAlpha(s.background, s.opacity),
     [`--tvn-${p}-img`]: url ? `url(${JSON.stringify(url)})` : 'none',
@@ -199,7 +206,12 @@ function surfaceVars(p: string, s: UiSurface, c: UiContext, img: (id: string) =>
     [`--tvn-${p}-bw`]: n(borderPx(s, c)),
     [`--tvn-${p}-bc`]: s.borderColor,
     [`--tvn-${p}-radius`]: n(s.radius * c.s),
-    [`--tvn-${p}-shadow`]: s.shadow.size > 0 ? `0 ${n(s.shadow.y * c.s)} ${n(s.shadow.size * c.s)} ${withAlpha(s.shadow.color, s.shadow.opacity)}` : 'none',
+    [`--tvn-${p}-shadow`]: shadows.length ? shadows.join(', ') : 'none',
+    [`--tvn-${p}-grad`]: s.gradient.enabled ? `linear-gradient(${s.gradient.angle}deg, ${withAlpha(s.background, s.opacity)}, ${withAlpha(s.gradient.color, s.opacity)})` : 'none',
+    [`--tvn-${p}-tex`]: cssUrl(s.texture ? img(s.texture) : null),
+    [`--tvn-${p}-fimg`]: cssUrl(frame),
+    [`--tvn-${p}-fslice`]: `${Math.max(0, Math.min(50, s.frameSlice))}%`,
+    [`--tvn-${p}-fw`]: frame ? n(Math.max(0, s.frameWidth) * c.s) : '0px',
     [`--tvn-${p}-blur`]: s.blur > 0 ? `blur(${n(s.blur * c.s)})` : 'none',
   };
 }
@@ -213,7 +225,8 @@ function textVars(p: string, t: Theme, x: UiText, c: UiContext): Record<string, 
     [`--tvn-${p}-ls`]: n(x.letterSpacing * c.s),
     [`--tvn-${p}-align`]: x.align,
     [`--tvn-${p}-weight`]: x.bold ? '700' : '400',
-    [`--tvn-${p}-tshadow`]: x.shadow ? TEXT_SHADOW : 'none',
+    [`--tvn-${p}-tshadow`]: x.shadow ? textShadow(x.shadowColor) : 'none',
+    [`--tvn-${p}-stroke`]: x.outline > 0 ? `${n(Math.max(0.5, x.outline * c.s))} ${x.outlineColor}` : '0 transparent',
   };
 }
 

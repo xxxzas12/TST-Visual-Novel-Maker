@@ -244,6 +244,34 @@ export interface UiSurface {
   shadow: UiShadow;
   /** Blur of the scene behind the element (frosted glass), design px. */
   blur: number;
+  /** Coloured light around the element (size 0 = off). */
+  glow: UiGlow;
+  /** Background as a gradient from the background color to gradient.color. */
+  gradient: UiGradient;
+  /** Tiled image over the background (paper, metal, noise…), asset id. */
+  texture: string | null;
+  /**
+   * Custom frame image (asset id) used as a 9-slice frame: the corners keep their size and the edges
+   * stretch, so one picture fits any box size. Drawn over the background.
+   */
+  frameImage: string | null;
+  /** How far in from the image edges the corners end, in % of the image (9-slice). */
+  frameSlice: number;
+  /** Thickness of the frame on screen, design px. */
+  frameWidth: number;
+}
+
+export interface UiGlow {
+  size: number;
+  color: string;
+  opacity: number;
+}
+
+export interface UiGradient {
+  enabled: boolean;
+  color: string;
+  /** Degrees: 180 = top to bottom. */
+  angle: number;
 }
 
 export interface UiText {
@@ -257,6 +285,10 @@ export interface UiText {
   bold: boolean;
   /** Soft outline/shadow behind letters for readability on busy backgrounds. */
   shadow: boolean;
+  shadowColor: string;
+  /** Outline around each letter, design px (0 = none). */
+  outline: number;
+  outlineColor: string;
 }
 
 export interface UiPadding {

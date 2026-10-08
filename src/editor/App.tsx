@@ -40,6 +40,7 @@ export function App() {
         autosave: autosaveConfig(s),
         workspace: normalizeLayout(s.workspace),
         customWorkspaces: normalizeCustomWorkspaces(s.customWorkspaces),
+        themeEditorAdvanced: !!s.themeEditorAdvanced,
       });
       applyLanguage(s.language === 'th' ? 'th' : 'en');
     });

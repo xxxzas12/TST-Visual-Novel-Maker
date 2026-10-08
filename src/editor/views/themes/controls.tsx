@@ -14,19 +14,27 @@ import { ColorInput, NumberInput } from '../scenes/fields';
 
 export type Edit = (fn: (t: Theme) => void, key: string) => void;
 
-export function Field({ label, children, testId }: { label: string; children: React.ReactNode; testId?: string }) {
+/** A labelled setting; `tip` explains an unfamiliar setting (shown on hover and read by screen readers). */
+export function Field({ label, children, testId, tip }: { label: string; children: React.ReactNode; testId?: string; tip?: string }) {
   return (
     <div className="field" data-testid={testId}>
-      <span className="field-label">{label}</span>
+      <span className="field-label">
+        {label}
+        {tip && (
+          <span className="field-tip" title={tip} aria-label={tip} role="note" tabIndex={0}>
+            ?
+          </span>
+        )}
+      </span>
       {children}
     </div>
   );
 }
 
 /** Slider + number box. */
-export function Slider(props: { label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; testId?: string; suffix?: string }) {
+export function Slider(props: { label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; testId?: string; suffix?: string; tip?: string }) {
   return (
-    <Field label={props.suffix ? `${props.label} (${props.suffix})` : props.label}>
+    <Field label={props.suffix ? `${props.label} (${props.suffix})` : props.label} tip={props.tip}>
       <div className="slider-row">
         <input type="range" min={props.min} max={props.max} step={props.step ?? 1} value={props.value} onChange={(e) => props.onChange(parseFloat(e.target.value))} aria-label={props.label} data-testid={props.testId} />
         <NumberInput value={props.value} step={props.step} onChange={props.onChange} />
@@ -106,11 +114,11 @@ export function AnchorPicker({ value, onChange, testId }: { value: UiAnchor; onC
   );
 }
 
-function ImageField({ value, onChange, testId }: { value: string | null; onChange: (id: string | null) => void; testId?: string }) {
+function ImageField({ value, onChange, testId, label = tr('Background image'), tip }: { value: string | null; onChange: (id: string | null) => void; testId?: string; label?: string; tip?: string }) {
   const asset = useProject((s) => (value ? s.project?.assets.find((a) => a.id === value) : undefined));
   const [open, setOpen] = useState(false);
   return (
-    <Field label={tr('Background image')}>
+    <Field label={label} tip={tip}>
       <div className="asset-field">
         <div className="mini">{asset ? <AssetThumb asset={asset} /> : value ? '⚠️' : '🖼️'}</div>
         <div className="grow ellipsis">{asset ? asset.name : value ? tr('Missing asset') : tr('None')}</div>
@@ -127,7 +135,7 @@ function ImageField({ value, onChange, testId }: { value: string | null; onChang
         <AssetPicker
           media="image"
           types={['ui', 'background', 'cg', 'unknown']}
-          title={tr('Choose {0}', { 0: tr('Background image') })}
+          title={tr('Choose {0}', { 0: label })}
           onClose={() => setOpen(false)}
           onPick={(a) => {
             setOpen(false);
@@ -139,35 +147,99 @@ function ImageField({ value, onChange, testId }: { value: string | null; onChang
   );
 }
 
-/** Background, image, opacity, border, corners, shadow and blur. `colors` = false when the colors live elsewhere (choice states). */
-export function SurfaceEditor({ s, set, prefix, colors = true }: { s: UiSurface; set: (fn: (s: UiSurface) => void, key: string) => void; prefix: string; colors?: boolean }) {
+/**
+ * Background and frame of an element. Basic: colour and opacity. Advanced: image, border, corners, shadow,
+ * glow, gradient, texture, frame image and blur. `colors` = false when the colours live elsewhere (choice states).
+ */
+export function SurfaceEditor({ s, set, prefix, colors = true, advanced = true }: { s: UiSurface; set: (fn: (s: UiSurface) => void, key: string) => void; prefix: string; colors?: boolean; advanced?: boolean }) {
   return (
     <>
       {colors && <ColorField label={tr('Background color')} value={s.background} onChange={(v) => set((x) => void (x.background = v), 'bg')} testId={`${prefix}-bg`} />}
-      <ImageField value={s.image} onChange={(v) => set((x) => void (x.image = v), 'img')} testId={`${prefix}-image`} />
-      {s.image && (
-        <Field label={tr('Image fit')}>
-          <select className="select" value={s.imageFit} onChange={(e) => set((x) => void (x.imageFit = e.target.value as UiSurface['imageFit']), 'fit')}>
-            <option value="stretch">{tr('Stretch')}</option>
-            <option value="cover">{tr('Cover')}</option>
-            <option value="contain">{tr('Contain')}</option>
-            <option value="tile">{tr('Tile')}</option>
-          </select>
-        </Field>
-      )}
       <Slider label={tr('Opacity')} value={s.opacity} min={0} max={1} step={0.05} onChange={(v) => set((x) => void (x.opacity = v), 'op')} testId={`${prefix}-opacity`} />
-      {colors && <ColorField label={tr('Border color')} value={s.borderColor} onChange={(v) => set((x) => void (x.borderColor = v), 'bc')} />}
-      <Slider label={tr('Border width')} value={s.borderWidth} min={0} max={20} step={0.5} onChange={(v) => set((x) => void (x.borderWidth = v), 'bw')} testId={`${prefix}-border`} />
-      <Slider label={tr('Corner radius')} value={Math.min(s.radius, 200)} min={0} max={200} onChange={(v) => set((x) => void (x.radius = v), 'radius')} testId={`${prefix}-radius`} />
-      <Slider label={tr('Shadow size')} value={s.shadow.size} min={0} max={120} onChange={(v) => set((x) => void (x.shadow.size = v), 'sh')} testId={`${prefix}-shadow`} />
-      {s.shadow.size > 0 && (
+      {advanced && (
         <>
-          <Slider label={tr('Shadow offset')} value={s.shadow.y} min={-40} max={40} onChange={(v) => set((x) => void (x.shadow.y = v), 'shy')} />
-          <ColorField label={tr('Shadow color')} value={s.shadow.color} onChange={(v) => set((x) => void (x.shadow.color = v), 'shc')} />
-          <Slider label={tr('Shadow opacity')} value={s.shadow.opacity} min={0} max={1} step={0.05} onChange={(v) => set((x) => void (x.shadow.opacity = v), 'sho')} />
+          {colors && (
+            <>
+              <label className="check">
+                <input type="checkbox" checked={s.gradient.enabled} onChange={(e) => set((x) => void (x.gradient.enabled = e.target.checked), 'grad')} data-testid={`${prefix}-gradient`} /> {tr('Gradient')}
+              </label>
+              {s.gradient.enabled && (
+                <div className="prop-grid">
+                  <ColorField label={tr('Gradient end color')} value={s.gradient.color} onChange={(v) => set((x) => void (x.gradient.color = v), 'gradc')} testId={`${prefix}-gradient-color`} />
+                  <Slider label={tr('Direction (degrees)')} value={s.gradient.angle} min={0} max={360} step={15} onChange={(v) => set((x) => void (x.gradient.angle = v), 'grada')} testId={`${prefix}-gradient-angle`} />
+                </div>
+              )}
+            </>
+          )}
+          <ImageField value={s.image} onChange={(v) => set((x) => void (x.image = v), 'img')} testId={`${prefix}-image`} />
+          {s.image && (
+            <Field label={tr('Image fit')}>
+              <select className="select" value={s.imageFit} onChange={(e) => set((x) => void (x.imageFit = e.target.value as UiSurface['imageFit']), 'fit')}>
+                <option value="stretch">{tr('Stretch')}</option>
+                <option value="cover">{tr('Cover')}</option>
+                <option value="contain">{tr('Contain')}</option>
+                <option value="tile">{tr('Tile')}</option>
+              </select>
+            </Field>
+          )}
+          <ImageField
+            label={tr('Texture')}
+            tip={tr('A small image repeated over the background, e.g. paper, fabric or metal.')}
+            value={s.texture}
+            onChange={(v) => set((x) => void (x.texture = v), 'tex')}
+            testId={`${prefix}-texture`}
+          />
+          <ImageField
+            label={tr('Frame image')}
+            tip={tr('Your own picture of a box (e.g. my_dialogue_frame.png). The corners keep their size and the edges stretch, so it fits any box size.')}
+            value={s.frameImage}
+            onChange={(v) => set((x) => void (x.frameImage = v), 'fimg')}
+            testId={`${prefix}-frame-image`}
+          />
+          {s.frameImage && (
+            <div className="prop-grid">
+              <Slider
+                label={tr('Corner size in the image')}
+                suffix="%"
+                tip={tr('How far in from the edges of the picture the corners end. Increase it if the corners look stretched.')}
+                value={s.frameSlice}
+                min={1}
+                max={50}
+                onChange={(v) => set((x) => void (x.frameSlice = v), 'fslice')}
+                testId={`${prefix}-frame-slice`}
+              />
+              <Slider label={tr('Frame thickness')} value={s.frameWidth} min={0} max={160} onChange={(v) => set((x) => void (x.frameWidth = v), 'fw')} testId={`${prefix}-frame-width`} />
+            </div>
+          )}
+          {colors && <ColorField label={tr('Border color')} value={s.borderColor} onChange={(v) => set((x) => void (x.borderColor = v), 'bc')} />}
+          <Slider label={tr('Border width')} value={s.borderWidth} min={0} max={20} step={0.5} onChange={(v) => set((x) => void (x.borderWidth = v), 'bw')} testId={`${prefix}-border`} />
+          <Slider label={tr('Corner radius')} value={Math.min(s.radius, 200)} min={0} max={200} onChange={(v) => set((x) => void (x.radius = v), 'radius')} testId={`${prefix}-radius`} />
+          <Slider label={tr('Shadow size')} value={s.shadow.size} min={0} max={120} onChange={(v) => set((x) => void (x.shadow.size = v), 'sh')} testId={`${prefix}-shadow`} />
+          {s.shadow.size > 0 && (
+            <>
+              <Slider label={tr('Shadow offset')} value={s.shadow.y} min={-40} max={40} onChange={(v) => set((x) => void (x.shadow.y = v), 'shy')} />
+              <ColorField label={tr('Shadow color')} value={s.shadow.color} onChange={(v) => set((x) => void (x.shadow.color = v), 'shc')} />
+              <Slider label={tr('Shadow opacity')} value={s.shadow.opacity} min={0} max={1} step={0.05} onChange={(v) => set((x) => void (x.shadow.opacity = v), 'sho')} />
+            </>
+          )}
+          <Slider label={tr('Glow')} tip={tr('Coloured light around the box. 0 = off.')} value={s.glow.size} min={0} max={80} onChange={(v) => set((x) => void (x.glow.size = v), 'glow')} testId={`${prefix}-glow`} />
+          {s.glow.size > 0 && (
+            <div className="prop-grid">
+              <ColorField label={tr('Glow color')} value={s.glow.color} onChange={(v) => set((x) => void (x.glow.color = v), 'glowc')} testId={`${prefix}-glow-color`} />
+              <Slider label={tr('Glow strength')} value={s.glow.opacity} min={0} max={1} step={0.05} onChange={(v) => set((x) => void (x.glow.opacity = v), 'glowo')} />
+            </div>
+          )}
+          <Slider
+            label={tr('Background blur')}
+            tip={tr('Blurs the scene behind the box (frosted glass). Only visible when the box is see-through.')}
+            value={s.blur}
+            min={0}
+            max={40}
+            onChange={(v) => set((x) => void (x.blur = v), 'blur')}
+            testId={`${prefix}-blur`}
+          />
         </>
       )}
-      <Slider label={tr('Background blur')} value={s.blur} min={0} max={40} onChange={(v) => set((x) => void (x.blur = v), 'blur')} testId={`${prefix}-blur`} />
     </>
   );
 }
@@ -199,15 +271,37 @@ export function FontField({ label, value, defaultLabel, onChange, testId }: { la
   );
 }
 
-/** Font, size, color, line height, letter spacing, alignment, bold and text shadow. */
-export function TextEditor({ x, set, prefix, color = true, gameFontNote }: { x: UiText; set: (fn: (x: UiText) => void, key: string) => void; prefix: string; color?: boolean; gameFontNote?: string }) {
+/** Font, size and colour; Advanced adds line and letter spacing, alignment, bold, shadow and outline. */
+export function TextEditor({
+  x,
+  set,
+  prefix,
+  color = true,
+  gameFontNote,
+  advanced = true,
+}: {
+  x: UiText;
+  set: (fn: (x: UiText) => void, key: string) => void;
+  prefix: string;
+  color?: boolean;
+  gameFontNote?: string;
+  advanced?: boolean;
+}) {
   return (
     <>
       <FontField label={tr('Font')} value={x.font} defaultLabel={gameFontNote ?? tr('Theme font')} onChange={(f) => set((v) => void (v.font = f), 'font')} testId={`${prefix}-font`} />
       <Slider label={tr('Font size')} suffix="px" value={x.size} min={10} max={96} onChange={(v) => set((t) => void (t.size = v), 'size')} testId={`${prefix}-size`} />
       {color && <ColorField label={tr('Font color')} value={x.color} onChange={(v) => set((t) => void (t.color = v), 'color')} testId={`${prefix}-color`} />}
-      <Slider label={tr('Line height')} value={x.lineHeight} min={0.9} max={2.5} step={0.05} onChange={(v) => set((t) => void (t.lineHeight = v), 'lh')} />
-      <Slider label={tr('Letter spacing')} value={x.letterSpacing} min={-4} max={12} step={0.5} onChange={(v) => set((t) => void (t.letterSpacing = v), 'ls')} />
+      {advanced && <TextAdvanced x={x} set={set} prefix={prefix} />}
+    </>
+  );
+}
+
+function TextAdvanced({ x, set, prefix }: { x: UiText; set: (fn: (x: UiText) => void, key: string) => void; prefix: string }) {
+  return (
+    <>
+      <Slider label={tr('Line height')} value={x.lineHeight} min={0.9} max={2.5} step={0.05} onChange={(v) => set((t) => void (t.lineHeight = v), 'lh')} testId={`${prefix}-line-height`} />
+      <Slider label={tr('Letter spacing')} value={x.letterSpacing} min={-4} max={12} step={0.5} onChange={(v) => set((t) => void (t.letterSpacing = v), 'ls')} testId={`${prefix}-letter-spacing`} />
       <Field label={tr('Text alignment')}>
         <div className="seg" role="radiogroup">
           {(['left', 'center', 'right'] as const).map((a) => (
@@ -222,9 +316,12 @@ export function TextEditor({ x, set, prefix, color = true, gameFontNote }: { x: 
           <input type="checkbox" checked={x.bold} onChange={(e) => set((t) => void (t.bold = e.target.checked), 'bold')} /> {tr('Bold')}
         </label>
         <label className="check">
-          <input type="checkbox" checked={x.shadow} onChange={(e) => set((t) => void (t.shadow = e.target.checked), 'tsh')} /> {tr('Text shadow (readability)')}
+          <input type="checkbox" checked={x.shadow} onChange={(e) => set((t) => void (t.shadow = e.target.checked), 'tsh')} data-testid={`${prefix}-shadow`} /> {tr('Text shadow (readability)')}
         </label>
       </div>
+      {x.shadow && <ColorField label={tr('Text shadow color')} value={x.shadowColor} onChange={(v) => set((t) => void (t.shadowColor = v), 'tshc')} testId={`${prefix}-shadow-color`} />}
+      <Slider label={tr('Text outline')} tip={tr('A line around every letter. Keeps text readable on any background. 0 = off.')} value={x.outline} min={0} max={12} step={0.5} onChange={(v) => set((t) => void (t.outline = v), 'outline')} testId={`${prefix}-outline`} />
+      {x.outline > 0 && <ColorField label={tr('Outline color')} value={x.outlineColor} onChange={(v) => set((t) => void (t.outlineColor = v), 'outlinec')} testId={`${prefix}-outline-color`} />}
     </>
   );
 }

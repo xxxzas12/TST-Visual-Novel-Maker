@@ -2369,3 +2369,25 @@ body.resizing-y * {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- help marks on settings ---------- */
+.field-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-left: 0.35rem;
+  border-radius: 50%;
+  border: 1px solid var(--line2);
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: help;
+  vertical-align: middle;
+}
+.field-tip:hover,
+.field-tip:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  outline: none;
+}

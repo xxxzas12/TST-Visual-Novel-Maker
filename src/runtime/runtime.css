@@ -173,9 +173,9 @@
   overflow-wrap: anywhere;
 }
 .tvn-dialog::before {
-  background-image: var(--tvn-d-img);
-  background-size: var(--tvn-d-img-size);
-  background-repeat: var(--tvn-d-img-repeat);
+  background-image: var(--tvn-d-tex), var(--tvn-d-img);
+  background-size: auto, var(--tvn-d-img-size);
+  background-repeat: repeat, var(--tvn-d-img-repeat);
   opacity: var(--tvn-d-img-op);
 }
 /* The text area scrolls instead of being clipped when it is longer than the box may grow. */
@@ -239,9 +239,9 @@
   border-bottom: max(3px, var(--tvn-n-bw)) solid var(--tvn-speaker, var(--tvn-n-bc));
 }
 .tvn-name::before {
-  background-image: var(--tvn-n-img);
-  background-size: var(--tvn-n-img-size);
-  background-repeat: var(--tvn-n-img-repeat);
+  background-image: var(--tvn-n-tex), var(--tvn-n-img);
+  background-size: auto, var(--tvn-n-img-size);
+  background-repeat: repeat, var(--tvn-n-img-repeat);
   opacity: var(--tvn-n-img-op);
 }
 .tvn-text {
@@ -376,9 +376,9 @@
   transition: background-color 0.15s, color 0.15s;
 }
 .tvn-qbtn::before {
-  background-image: var(--tvn-m-img);
-  background-size: var(--tvn-m-img-size);
-  background-repeat: var(--tvn-m-img-repeat);
+  background-image: var(--tvn-m-tex), var(--tvn-m-img);
+  background-size: auto, var(--tvn-m-img-size);
+  background-repeat: repeat, var(--tvn-m-img-repeat);
   opacity: var(--tvn-m-img-op);
 }
 .tvn-qbtn:hover,
@@ -429,6 +429,27 @@
   --tvn-m-bw: 2px;
   --tvn-m-hover-bg: #ffd400;
   --tvn-m-hover-color: #000;
+  /* plain surfaces: no gradients, textures, frame images or outlines */
+  --tvn-d-grad: none;
+  --tvn-d-tex: none;
+  --tvn-d-fimg: none;
+  --tvn-d-fw: 0px;
+  --tvn-d-stroke: 0 transparent;
+  --tvn-n-grad: none;
+  --tvn-n-tex: none;
+  --tvn-n-fimg: none;
+  --tvn-n-fw: 0px;
+  --tvn-n-stroke: 0 transparent;
+  --tvn-c-grad: none;
+  --tvn-c-tex: none;
+  --tvn-c-fimg: none;
+  --tvn-c-fw: 0px;
+  --tvn-c-stroke: 0 transparent;
+  --tvn-m-grad: none;
+  --tvn-m-tex: none;
+  --tvn-m-fimg: none;
+  --tvn-m-fw: 0px;
+  --tvn-m-stroke: 0 transparent;
 }
 .tvn-root[data-contrast='high'] .tvn-choice:disabled {
   text-decoration: line-through;
@@ -1051,4 +1072,37 @@ button.tvn-gallery-item:focus-visible {
     0 var(--p) 0 0 var(--tvn-n-bc),
     calc(var(--p) * -1) 0 0 0 var(--tvn-n-bc),
     var(--p) 0 0 0 var(--tvn-n-bc);
+}
+
+/* ---------- advanced surface & text: gradient, 9-slice frame image, text outline ---------- */
+.tvn-dialog {
+  background-image: var(--tvn-d-grad);
+  border-image: var(--tvn-d-fimg) var(--tvn-d-fslice) fill / var(--tvn-d-fw) stretch;
+  -webkit-text-stroke: var(--tvn-d-stroke);
+  paint-order: stroke fill;
+}
+.tvn-name {
+  background-image: var(--tvn-n-grad);
+  border-image: var(--tvn-n-fimg) var(--tvn-n-fslice) fill / var(--tvn-n-fw) stretch;
+  -webkit-text-stroke: var(--tvn-n-stroke);
+  paint-order: stroke fill;
+}
+.tvn-qbtn {
+  background-image: var(--tvn-m-grad);
+  border-image: var(--tvn-m-fimg) var(--tvn-m-fslice) fill / var(--tvn-m-fw) stretch;
+  -webkit-text-stroke: var(--tvn-m-stroke);
+  paint-order: stroke fill;
+}
+.tvn-root[data-d-frame='window'] .tvn-dialog {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.22)), var(--tvn-d-grad);
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog,
+.tvn-root[data-d-frame='torn'] .tvn-dialog {
+  background-image: none;
+}
+.tvn-root[data-d-frame='tech'] .tvn-dialog::after {
+  background: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--tvn-d-bc) 9%, transparent) 0 1px, transparent 1px 4px), var(--tvn-d-grad), var(--tvn-d-bg);
+}
+.tvn-root[data-d-frame='torn'] .tvn-dialog::after {
+  background: var(--tvn-d-grad), var(--tvn-d-bg);
 }

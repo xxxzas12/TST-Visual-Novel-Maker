@@ -1,7 +1,7 @@
 import type { Action, Condition, Hotspot, JumpTarget, Project, Theme, Variable } from './types';
 import { getActionDef, isKnownActionType } from './actions';
 import { t } from './i18n';
-import { forEachThemeImage, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
+import { mapThemeImages, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
 
 export const ASSET_PARAM_KEYS = ['assetId', 'voice', 'sfx'] as const;
 
@@ -120,12 +120,7 @@ export function replaceAssetReferences(p: Project, fromId: string, toId: string)
   if (p.settings.titleMusicAssetId === fromId) p.settings.titleMusicAssetId = toId;
   if (p.settings.gameIconAssetId === fromId) p.settings.gameIconAssetId = toId;
   for (const th of p.themes) {
-    forEachThemeImage(th, (s) => {
-      if (s.image === fromId) {
-        s.image = toId;
-        n++;
-      }
-    });
+    mapThemeImages(th, (id) => (id === fromId ? (n++, toId) : id));
   }
   return n;
 }
@@ -161,12 +156,7 @@ export function removeAssetReferences(p: Project, assetId: string): number {
   if (p.settings.titleMusicAssetId === assetId) p.settings.titleMusicAssetId = undefined;
   if (p.settings.gameIconAssetId === assetId) p.settings.gameIconAssetId = undefined;
   for (const th of p.themes) {
-    forEachThemeImage(th, (s) => {
-      if (s.image === assetId) {
-        s.image = null;
-        n++;
-      }
-    });
+    mapThemeImages(th, (id) => (id === assetId ? (n++, null) : id));
   }
   return n;
 }
