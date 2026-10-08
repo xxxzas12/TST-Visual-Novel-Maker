@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, shell } from 'electron';
-import type { Asset, Project } from '../shared/types';
+import type { Asset, Project, Theme } from '../shared/types';
 import type { AppSettings, DuplicateDecision, ExportGameRequest, FileFilter, ImportPlan } from '../shared/api';
 import { validateProject } from '../shared/validate';
 import { createBackup, deleteBackup, listBackups, restoreBackup } from './backups';
@@ -19,6 +19,7 @@ import { createProject, discardRecovery, openProject, saveProject, UserStore, wr
 import { electronThumbnailer } from './thumbnails';
 import { FontStore, listSystemFonts } from './fonts';
 import { readImageSize } from './imageSize';
+import { exportThemeFile, importThemeFile } from './themeIO';
 import { extOf } from '../shared/classify';
 import { getLanguage, setLanguage } from '../shared/i18n';
 
@@ -125,11 +126,18 @@ function registerIpc() {
     isE2E,
   }));
   handle('app:getSettings', async () => ({ ...DEFAULT_SETTINGS, language: getLanguage(), ...(await store.readJson<Partial<AppSettings>>('settings.json', {})) }));
-  handle('app:setSettings', async (_e, patch: Partial<AppSettings>) => {
-    const next = { ...DEFAULT_SETTINGS, ...(await store.readJson<Partial<AppSettings>>('settings.json', {})), ...patch };
-    await store.writeJson('settings.json', next);
-    setLanguage(next.language);
-    return next;
+  // Read-modify-write of settings.json is serialized: overlapping calls (e.g. a startup write
+  // while the user picks a language) must not overwrite each other with stale data.
+  let settingsQueue: Promise<unknown> = Promise.resolve();
+  handle('app:setSettings', (_e, patch: Partial<AppSettings>) => {
+    const job = settingsQueue.then(async () => {
+      const next = { ...DEFAULT_SETTINGS, ...(await store.readJson<Partial<AppSettings>>('settings.json', {})), ...patch };
+      await store.writeJson('settings.json', next);
+      if (patch.language) setLanguage(patch.language);
+      return next;
+    });
+    settingsQueue = job.catch(() => undefined);
+    return job;
   });
   handle('app:recent', () => store.recent());
   handle('app:removeRecent', (_e, p: string) => store.removeRecent(p));
@@ -251,6 +259,10 @@ function registerIpc() {
   handle('fonts:import', (_e, file: string) => fontStore.import(file));
   handle('fonts:remove', (_e, id: string) => fontStore.remove(id));
   handle('fonts:embed', (_e, dir: string, id: string) => fontStore.embedInProject(dir, id));
+
+  // ---------- game UI themes ----------
+  handle('themes:export', (_e, dir: string, theme: Theme, assets: Asset[], file: string) => exportThemeFile(dir, theme, assets, file));
+  handle('themes:import', (_e, dir: string, file: string, existing: Asset[]) => importThemeFile(dir, file, existing, electronThumbnailer));
 
   handle('templates:list', () => store.listTemplates());
   handle('templates:save', (_e, name: string, project: Project) => store.saveTemplate(name, project));

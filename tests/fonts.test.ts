@@ -7,6 +7,7 @@ import { FontStore, listSystemFonts, parseFontFamilies } from '../src/main/fonts
 import { exportGame } from '../src/main/gameExport';
 import { createProject } from '../src/main/projectStore';
 import { buildGameData } from '../src/shared/gamedata';
+import { fontStackFor } from '../src/shared/uilayout';
 import { validateProject } from '../src/shared/validate';
 import { createAction } from '../src/shared/actions';
 import { tempDir } from './helpers';
@@ -63,8 +64,8 @@ describe.skipIf(!hasArial)('font files', () => {
     project.settings.dialogueFontSize = 32;
     project.scenes[0].actions.push(createAction('narration', { text: 'hello' }));
     const game = buildGameData(project);
-    expect(game.theme.font.startsWith('"TSTVN Test Font"')).toBe(true);
-    expect(game.theme.fontSize).toBe(32);
+    expect(fontStackFor(game.theme, null).startsWith('"TSTVN Test Font"')).toBe(true);
+    expect(game.theme.dialog.text.size).toBe(32);
     expect(game.fonts).toEqual([{ family: 'TSTVN Test Font', path: embedded.file }]);
 
     const env = {

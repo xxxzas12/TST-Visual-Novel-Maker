@@ -3,6 +3,10 @@
 
 .tvn-root {
   --tvn-ui-scale: 1;
+  --tvn-safe-t: env(safe-area-inset-top, 0px);
+  --tvn-safe-r: env(safe-area-inset-right, 0px);
+  --tvn-safe-b: env(safe-area-inset-bottom, 0px);
+  --tvn-safe-l: env(safe-area-inset-left, 0px);
   position: relative;
   width: 100%;
   height: 100%;
@@ -100,14 +104,22 @@
   width: auto;
 }
 
-/* ---------- in-game UI ---------- */
+/* ---------- in-game UI ----------
+   Every look/size/position below comes from the theme (shared/uilayout.ts → CSS variables
+   and inline placement); nothing about the dialogue box, name box, choices or menu bar is hard-coded. */
 .tvn-ui {
   position: absolute;
   inset: 0;
   z-index: 10;
   pointer-events: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   transition: opacity 0.2s;
+}
+.tvn-safe {
+  position: absolute;
+  top: var(--tvn-safe-t);
+  right: var(--tvn-safe-r);
+  bottom: var(--tvn-safe-b);
+  left: var(--tvn-safe-l);
 }
 .tvn-ui-hidden .tvn-ui {
   opacity: 0;
@@ -116,47 +128,121 @@
   pointer-events: none !important;
 }
 
+/* Shared surface: background colour on the element, optional image on ::before (own opacity). */
+.tvn-dialog,
+.tvn-name,
+.tvn-choice,
+.tvn-qbtn {
+  position: relative;
+  isolation: isolate;
+  background-clip: padding-box;
+}
+.tvn-dialog::before,
+.tvn-name::before,
+.tvn-choice::before,
+.tvn-qbtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-position: center;
+}
+
 .tvn-dialog {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(14px * var(--tvn-ui-scale) + env(safe-area-inset-bottom));
-  width: min(var(--tvn-dialog-width, 90%), calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
-  max-width: 1500px;
-  min-height: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale) * 5);
-  max-height: 44%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: calc(var(--tvn-dialog-padding, 24px) * var(--tvn-ui-scale));
-  padding-bottom: calc(var(--tvn-dialog-padding, 24px) * var(--tvn-ui-scale) + 0.6em);
-  background: var(--tvn-dialog-bg, rgba(16, 20, 32, 0.85));
-  border: var(--tvn-dialog-border, none);
-  border-radius: var(--tvn-dialog-radius, 12px);
-  box-shadow: var(--tvn-dialog-shadow, none);
-  font-size: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale));
-  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  padding: var(--tvn-d-pad);
+  background-color: var(--tvn-d-bg);
+  border: var(--tvn-d-bw) solid var(--tvn-d-bc);
+  border-radius: var(--tvn-d-radius);
+  box-shadow: var(--tvn-d-shadow);
+  backdrop-filter: var(--tvn-d-blur);
+  -webkit-backdrop-filter: var(--tvn-d-blur);
+  font-family: var(--tvn-d-font);
+  font-size: var(--tvn-d-size);
+  line-height: var(--tvn-d-lh);
+  letter-spacing: var(--tvn-d-ls);
+  font-weight: var(--tvn-d-weight);
+  color: var(--tvn-d-color);
+  text-shadow: var(--tvn-d-tshadow);
+  text-align: var(--tvn-d-align);
   pointer-events: auto;
   overflow-wrap: anywhere;
 }
-.tvn-root[data-dialog-pos='top'] .tvn-dialog {
-  bottom: auto;
-  top: calc(64px * var(--tvn-ui-scale) + env(safe-area-inset-top));
+.tvn-dialog::before {
+  background-image: var(--tvn-d-img);
+  background-size: var(--tvn-d-img-size);
+  background-repeat: var(--tvn-d-img-repeat);
+  opacity: var(--tvn-d-img-op);
 }
-.tvn-root[data-dialog-pos='middle'] .tvn-dialog {
-  bottom: auto;
-  top: 50%;
-  transform: translate(-50%, -50%);
+/* The text area scrolls instead of being clipped when it is longer than the box may grow. */
+.tvn-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.6em;
+}
+
+.tvn-name-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 0.3em;
+  min-width: 0;
+}
+.tvn-root[data-name-align='center'] .tvn-name-row {
+  justify-content: center;
+}
+.tvn-root[data-name-align='right'] .tvn-name-row {
+  justify-content: flex-end;
+}
+.tvn-root[data-name-attach='outside'] .tvn-name-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  margin: 0;
+  pointer-events: none;
+}
+.tvn-name-row:has(> .tvn-name.tvn-hidden) {
+  display: none;
 }
 .tvn-name {
-  display: inline-block;
-  margin-bottom: 0.35em;
-  padding: 0.12em 0.7em;
-  font-weight: 700;
-  font-size: 0.92em;
-  background: var(--tvn-name-bg, #4f6bff);
-  color: var(--tvn-name-color, #fff);
-  border-radius: var(--tvn-name-radius, 6px);
-  border-bottom: 3px solid var(--tvn-speaker, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: var(--tvn-n-align);
+  max-width: 100%;
+  min-width: var(--tvn-n-minw);
+  min-height: var(--tvn-n-minh);
+  padding: var(--tvn-n-pad);
+  transform: translate(var(--tvn-n-x), var(--tvn-n-y));
+  background-color: var(--tvn-n-bg);
+  border: var(--tvn-n-bw) solid var(--tvn-n-bc);
+  border-radius: var(--tvn-n-radius);
+  box-shadow: var(--tvn-n-shadow);
+  backdrop-filter: var(--tvn-n-blur);
+  -webkit-backdrop-filter: var(--tvn-n-blur);
+  font-family: var(--tvn-n-font);
+  font-size: var(--tvn-n-size);
+  line-height: var(--tvn-n-lh);
+  letter-spacing: var(--tvn-n-ls);
+  font-weight: var(--tvn-n-weight);
+  color: var(--tvn-n-color);
+  text-shadow: var(--tvn-n-tshadow);
+  text-align: var(--tvn-n-align);
+  overflow-wrap: anywhere;
+}
+.tvn-root[data-speaker-color='true'] .tvn-name {
+  border-bottom: max(3px, var(--tvn-n-bw)) solid var(--tvn-speaker, var(--tvn-n-bc));
+}
+.tvn-name::before {
+  background-image: var(--tvn-n-img);
+  background-size: var(--tvn-n-img-size);
+  background-repeat: var(--tvn-n-img-repeat);
+  opacity: var(--tvn-n-img-op);
 }
 .tvn-text {
   white-space: pre-wrap;
@@ -167,8 +253,8 @@
 }
 .tvn-indicator {
   position: absolute;
-  right: calc(18px * var(--tvn-ui-scale));
-  bottom: calc(8px * var(--tvn-ui-scale));
+  right: 1em;
+  bottom: 0.4em;
   font-size: 0.6em;
   opacity: 0;
 }
@@ -183,84 +269,169 @@
   }
 }
 
+/* Choices: placed by the runtime in the space the dialogue box leaves free; scrolls if needed. */
 .tvn-choices {
   position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(12px * var(--tvn-ui-scale));
-  padding: calc(56px * var(--tvn-ui-scale) + env(safe-area-inset-top)) 12px 12px;
+  align-items: stretch;
+  gap: var(--tvn-c-gap);
+  /* room for hover growth/glow inside the scroll box */
+  padding: 8px 2.5%;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   pointer-events: auto;
 }
-.tvn-ui:has(.tvn-dialog:not(.tvn-hidden)) .tvn-choices {
-  padding-bottom: calc(var(--tvn-font-size, 26px) * var(--tvn-ui-scale) * 6 + 40px);
-}
 .tvn-choice {
-  width: min(640px, 92%);
-  min-height: 48px;
-  padding: 0.55em 1.2em;
-  font: inherit;
-  font-size: calc(var(--tvn-font-size, 26px) * 0.92 * var(--tvn-ui-scale));
-  line-height: 1.35;
-  color: var(--tvn-choice-color, #fff);
-  background: var(--tvn-choice-bg, rgba(16, 20, 32, 0.85));
-  border: 1px solid var(--tvn-choice-border, #fff);
-  border-radius: var(--tvn-choice-radius, 12px);
+  flex: none;
+  width: 100%;
+  min-height: var(--tvn-c-minh);
+  padding: var(--tvn-c-pad);
+  font-family: var(--tvn-c-font);
+  font-size: var(--tvn-c-size);
+  line-height: var(--tvn-c-lh);
+  letter-spacing: var(--tvn-c-ls);
+  font-weight: var(--tvn-c-weight);
+  text-align: var(--tvn-c-align);
+  text-shadow: var(--tvn-c-tshadow);
+  color: var(--tvn-c-normal-color);
+  background-color: var(--tvn-c-normal-bg);
+  border: var(--tvn-c-bw) solid var(--tvn-c-normal-bc);
+  border-radius: var(--tvn-c-radius);
+  box-shadow: var(--tvn-c-shadow);
+  backdrop-filter: var(--tvn-c-blur);
+  -webkit-backdrop-filter: var(--tvn-c-blur);
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
+  transition: background-color var(--tvn-c-speed), color var(--tvn-c-speed), border-color var(--tvn-c-speed), transform var(--tvn-c-speed), box-shadow var(--tvn-c-speed);
   overflow-wrap: anywhere;
 }
-.tvn-choice:hover,
-.tvn-choice:focus-visible {
-  background: var(--tvn-choice-hover, #4f6bff);
-  transform: scale(1.02);
+.tvn-choice::before {
+  background-image: var(--tvn-c-img);
+  background-size: var(--tvn-c-img-size);
+  background-repeat: var(--tvn-c-img-repeat);
+  opacity: var(--tvn-c-img-op);
+}
+.tvn-choice:hover:not(:disabled),
+.tvn-choice:focus-visible:not(:disabled),
+.tvn-choice.tvn-state-hover {
+  color: var(--tvn-c-hover-color);
+  background-color: var(--tvn-c-hover-bg);
+  border-color: var(--tvn-c-hover-bc);
+  transform: var(--tvn-c-hover-transform);
+  box-shadow: var(--tvn-c-hover-shadow);
   outline: none;
 }
+.tvn-choice:active:not(:disabled),
+.tvn-choice.tvn-state-pressed {
+  color: var(--tvn-c-pressed-color);
+  background-color: var(--tvn-c-pressed-bg);
+  border-color: var(--tvn-c-pressed-bc);
+  transform: var(--tvn-c-press-transform);
+  box-shadow: var(--tvn-c-hover-shadow);
+}
+.tvn-choice:disabled {
+  color: var(--tvn-c-disabled-color);
+  background-color: var(--tvn-c-disabled-bg);
+  border-color: var(--tvn-c-disabled-bc);
+  cursor: not-allowed;
+}
 
+/* Menu bar (quick buttons). */
 .tvn-quick {
   position: absolute;
-  top: calc(10px + env(safe-area-inset-top));
-  right: calc(10px + env(safe-area-inset-right));
   display: flex;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--tvn-m-gap);
   pointer-events: auto;
   transition: opacity 0.4s;
 }
+.tvn-root[data-menu-dir='column'] .tvn-quick {
+  flex-direction: column;
+}
+.tvn-quick.tvn-disabled {
+  display: none;
+}
 .tvn-qbtn {
-  min-height: 34px;
-  min-width: 34px;
-  padding: 0 12px;
-  font: 600 13px system-ui, sans-serif;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
+  min-height: var(--tvn-m-minh);
+  min-width: var(--tvn-m-minw);
+  padding: var(--tvn-m-pad);
+  font-family: var(--tvn-m-font);
+  font-size: var(--tvn-m-size);
+  line-height: var(--tvn-m-lh);
+  letter-spacing: var(--tvn-m-ls);
+  font-weight: var(--tvn-m-weight);
+  text-align: var(--tvn-m-align);
+  text-shadow: var(--tvn-m-tshadow);
+  color: var(--tvn-m-color);
+  background-color: var(--tvn-m-bg);
+  border: var(--tvn-m-bw) solid var(--tvn-m-bc);
+  border-radius: var(--tvn-m-radius);
+  box-shadow: var(--tvn-m-shadow);
+  backdrop-filter: var(--tvn-m-blur);
+  -webkit-backdrop-filter: var(--tvn-m-blur);
+  white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.tvn-qbtn::before {
+  background-image: var(--tvn-m-img);
+  background-size: var(--tvn-m-img-size);
+  background-repeat: var(--tvn-m-img-repeat);
+  opacity: var(--tvn-m-img-op);
 }
 .tvn-qbtn:hover,
-.tvn-qbtn:focus-visible {
-  background: var(--tvn-accent, #4f6bff);
+.tvn-qbtn:focus-visible,
+.tvn-qbtn.tvn-on {
+  background-color: var(--tvn-m-hover-bg);
+  color: var(--tvn-m-hover-color);
   outline: none;
 }
-.tvn-qbtn.tvn-on {
-  background: var(--tvn-accent, #4f6bff);
-}
-@media (pointer: coarse) {
-  .tvn-qbtn {
-    min-height: 44px;
-    min-width: 44px;
-    font-size: 14px;
-  }
-}
-.tvn-root[data-compact='true'] .tvn-quick [data-testid='tvn-q-load'],
-.tvn-root[data-compact='true'] .tvn-quick [data-testid='tvn-q-hide'] {
+.tvn-root[data-compact='true'] .tvn-mobile-hide {
   display: none;
 }
 .tvn-autohide.tvn-idle .tvn-quick {
   opacity: 0;
+}
+
+/* Accessibility: high contrast overrides the theme's look (sizes and positions stay). */
+.tvn-root[data-contrast='high'] .tvn-ui {
+  --tvn-d-bg: #000;
+  --tvn-d-img: none;
+  --tvn-d-color: #fff;
+  --tvn-d-bc: #fff;
+  --tvn-d-bw: 2px;
+  --tvn-d-blur: none;
+  --tvn-n-bg: #000;
+  --tvn-n-img: none;
+  --tvn-n-color: #ffd400;
+  --tvn-n-bc: #fff;
+  --tvn-n-bw: 2px;
+  --tvn-c-img: none;
+  --tvn-c-bw: 2px;
+  --tvn-c-normal-bg: #000;
+  --tvn-c-normal-color: #fff;
+  --tvn-c-normal-bc: #fff;
+  --tvn-c-hover-bg: #ffd400;
+  --tvn-c-hover-color: #000;
+  --tvn-c-hover-bc: #ffd400;
+  --tvn-c-pressed-bg: #ffe866;
+  --tvn-c-pressed-color: #000;
+  --tvn-c-pressed-bc: #fff;
+  --tvn-c-disabled-bg: #000;
+  --tvn-c-disabled-color: #9a9a9a;
+  --tvn-c-disabled-bc: #9a9a9a;
+  --tvn-m-bg: #000;
+  --tvn-m-img: none;
+  --tvn-m-color: #fff;
+  --tvn-m-bc: #fff;
+  --tvn-m-bw: 2px;
+  --tvn-m-hover-bg: #ffd400;
+  --tvn-m-hover-color: #000;
+}
+.tvn-root[data-contrast='high'] .tvn-choice:disabled {
+  text-decoration: line-through;
 }
 
 /* ---------- screens (title / end / error) ---------- */
@@ -271,7 +442,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: max(16px, var(--tvn-safe-t)) max(16px, var(--tvn-safe-r)) max(16px, var(--tvn-safe-b)) max(16px, var(--tvn-safe-l));
   background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.6));
   color: var(--tvn-menu-color, #fff);
   overflow-y: auto;
@@ -337,7 +508,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  padding: max(12px, var(--tvn-safe-t)) max(12px, var(--tvn-safe-r)) max(12px, var(--tvn-safe-b)) max(12px, var(--tvn-safe-l));
   background: rgba(0, 0, 0, 0.55);
 }
 .tvn-menu {
@@ -485,7 +656,7 @@
 
 .tvn-toast {
   position: absolute;
-  top: calc(14px + env(safe-area-inset-top));
+  top: calc(14px + var(--tvn-safe-t));
   left: 50%;
   transform: translateX(-50%);
   z-index: 40;
@@ -511,15 +682,11 @@
 .tvn-video-hint {
   position: absolute;
   right: 16px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
+  bottom: calc(12px + var(--tvn-safe-b));
   font: 13px system-ui, sans-serif;
   opacity: 0.6;
 }
 
-/* Portrait phones: give dialogue more room, keep the stage visible above. */
-.tvn-root[data-orientation='portrait'] .tvn-dialog {
-  max-height: 48%;
-}
 @media (prefers-reduced-motion: reduce) {
   .tvn-indicator.tvn-show {
     animation: none;

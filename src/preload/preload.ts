@@ -76,6 +76,10 @@ const api: TstvnApi = {
     remove: call('fonts:remove') as TstvnApi['fonts']['remove'],
     embed: call('fonts:embed') as TstvnApi['fonts']['embed'],
   },
+  themes: {
+    exportFile: call('themes:export') as TstvnApi['themes']['exportFile'],
+    importFile: call('themes:import') as TstvnApi['themes']['importFile'],
+  },
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 };
 

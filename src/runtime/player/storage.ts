@@ -12,6 +12,10 @@ export interface PlayerSettings {
   volumes: Volumes;
   autoHideUI: boolean;
   displayMode: 'windowed' | 'fullscreen' | 'borderless';
+  /** Accessibility: multiplies every UI text size. */
+  textScale: number;
+  /** Accessibility: null = the theme's default. */
+  highContrast: boolean | null;
 }
 
 export const AUTO_SLOT = 'auto';
@@ -23,6 +27,8 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   volumes: { master: 1, bgm: 0.8, sfx: 1, voice: 1 },
   autoHideUI: false,
   displayMode: 'windowed',
+  textScale: 1,
+  highContrast: null,
 };
 
 /** Save slots and settings in localStorage (works in Electron, browsers and mobile WebViews). */

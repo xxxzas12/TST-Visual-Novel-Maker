@@ -3,7 +3,8 @@ import { classifyAsset, mediaKindOf, extOf } from '../src/shared/classify';
 import { detectCharacters, mergeDetectedCharacters } from '../src/shared/characters';
 import { ACTION_DEFS, cloneActions, createAction, searchActions, actionsInCategory, CATEGORIES } from '../src/shared/actions';
 import { BUILTIN_TEMPLATES, createProjectFromTemplate, normalizeProject, createEmptyProject } from '../src/shared/project';
-import { THEME_PRESETS, themeToCssVars, resolveTheme, withAlpha } from '../src/shared/themes';
+import { THEME_PRESETS, resolveTheme, withAlpha } from '../src/shared/themes';
+import { makeContext, themeVars } from '../src/shared/uilayout';
 import { validateProject, findAssetUsages, replaceAssetReferences, removeAssetReferences, collectUsedAssetIds } from '../src/shared/validate';
 import { buildGameData } from '../src/shared/gamedata';
 import { deriveFlowEdges } from '../src/shared/flow';
@@ -118,10 +119,10 @@ describe('project templates and normalization', () => {
 });
 
 describe('themes', () => {
-  it('has the five presets and produces css variables', () => {
-    expect(THEME_PRESETS.map((t) => t.id)).toEqual(['modern', 'minimal', 'classic', 'dark', 'fantasy']);
-    const vars = themeToCssVars(THEME_PRESETS[0]);
-    expect(vars['--tvn-dialog-bg']).toMatch(/^rgba\(/);
+  it('has the presets and produces css variables', () => {
+    expect(THEME_PRESETS.map((t) => t.id)).toEqual(['modern', 'minimal', 'classic', 'dark', 'fantasy', 'soft', 'rpg', 'romance', 'horror']);
+    const vars = themeVars(THEME_PRESETS[0], makeContext(THEME_PRESETS[0], 1920, 1080));
+    expect(vars['--tvn-d-bg']).toMatch(/^rgba\(/);
     expect(withAlpha('transparent', 0.5)).toBe('transparent');
     expect(resolveTheme('nope', []).id).toBe('modern');
   });

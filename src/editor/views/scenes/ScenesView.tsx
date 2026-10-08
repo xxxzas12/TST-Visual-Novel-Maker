@@ -2,6 +2,7 @@ import { t as tr } from '../../../shared/i18n';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { ActionType } from '../../../shared/types';
 import { validateProject } from '../../../shared/validate';
+import { THEME_PRESETS } from '../../../shared/themes';
 import { useProject } from '../../store/project';
 import { useUi } from '../../store/ui';
 import { addAction, addScene, findScene, insertActionTemplate } from '../../sceneOps';
@@ -101,6 +102,22 @@ export function ScenesView() {
             {tr("＋ Action")}
           </button>
           <span className="grow" />
+          <select
+            className="select"
+            style={{ width: 'auto', maxWidth: '11rem' }}
+            value={scene.themeId ?? ''}
+            onChange={(e) => useProject.getState().update((p) => void (findScene(p, scene.id)!.themeId = e.target.value || null))}
+            title={tr("Game UI theme of this scene")}
+            aria-label={tr("Game UI theme of this scene")}
+            data-testid="scene-theme"
+          >
+            <option value="">{tr("🎨 Project theme")}</option>
+            {[...THEME_PRESETS, ...project.themes].map((t) => (
+              <option key={t.id} value={t.id}>
+                🎨 {tr(t.name)}
+              </option>
+            ))}
+          </select>
           <span className="small faint">{tr("{0} actions", { 0: scene.actions.length })}</span>
         </div>
         <ActionList scene={scene} issueIds={issueIds} stage={state} />

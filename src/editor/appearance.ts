@@ -5,7 +5,8 @@ import { cssFamily } from '../shared/gamedata';
 export const DEFAULT_UI_FONT_STACK = "'Segoe UI', 'Leelawadee UI', 'Noto Sans Thai', 'Noto Sans', system-ui, sans-serif";
 export const DEFAULT_UI_FONT_SIZE = 14;
 export const UI_FONT_SIZE_RANGE = { min: 11, max: 20 };
-export const DIALOGUE_FONT_SIZE_RANGE = { min: 14, max: 48 };
+/** Design px on the 1920×1080 UI canvas (see shared/uilayout.ts). */
+export const DIALOGUE_FONT_SIZE_RANGE = { min: 20, max: 72 };
 
 export type Appearance = 'dark' | 'light' | 'system';
 

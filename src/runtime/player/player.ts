@@ -1,8 +1,8 @@
-import type { GameData } from '../../shared/types';
-import { themeToCssVars } from '../../shared/themes';
+import type { GameData, MenuAction, Theme } from '../../shared/types';
+import { choiceRegion, choiceWidth, layoutDialog, lengthPx, makeContext, placeBox, placeChoices, themeVars, type UiContext } from '../../shared/uilayout';
 import { charBoxStyle, fitStage, imageBoxStyle } from '../../shared/stage';
 import { Engine, type AnimateCommand, type AudioCommand, type ChoiceView, type DialogueView, type RuntimeHost } from '../core/engine';
-import type { ChangeHint, CharState, ImageState, VisualState } from '../core/state';
+import { stateBeforeAction, type ChangeHint, type CharState, type ImageState, type VisualState } from '../core/state';
 import { AudioManager } from './audio';
 import { emphasisFrames, enterFrames, exitFrames, play, transitionInFrames, transitionOutFrames } from './animate';
 import { applyStyle, h, sleep } from './dom';
@@ -25,8 +25,40 @@ export interface PlayerOptions {
   corsImages?: boolean;
   /** Editor preview: start at a scene/action and skip the title screen. */
   preview?: { sceneId?: string | null; index?: number; skipTitle?: boolean };
+  /**
+   * Editor UI designer: shows dialogue, name box, every choice state and the menu bar at once
+   * (no story playback) and reports element positions with a 'layout' event.
+   */
+  design?: DesignSample;
+  /** Simulated safe-area insets in CSS px (device previews with notches). */
+  safeArea?: { top: number; right: number; bottom: number; left: number };
   onEvent?: (type: string, detail?: unknown) => void;
 }
+
+export interface DesignSample {
+  speaker: string;
+  text: string;
+  choices: string[];
+}
+
+/** Elements the editor can select in design mode. */
+export interface DesignLayout {
+  rects: Record<string, { left: number; top: number; width: number; height: number }>;
+  scale: number;
+  area: { left: number; top: number; width: number; height: number };
+  viewport: { width: number; height: number };
+}
+
+const MENU_LABELS: Record<MenuAction, [string, string, string]> = {
+  // [label, tooltip, test id]
+  auto: ['Auto', 'Auto-advance (A)', 'tvn-q-auto'],
+  skip: ['Skip', 'Skip (hold Ctrl)', 'tvn-q-skip'],
+  save: ['Save', 'Save (S)', 'tvn-q-save'],
+  load: ['Load', 'Load (L)', 'tvn-q-load'],
+  settings: ['Settings', 'Settings', 'tvn-q-settings'],
+  hide: ['Hide', 'Hide UI (H / right-click)', 'tvn-q-hide'],
+  menu: ['Menu', 'Menu (Esc)', 'tvn-q-menu'],
+};
 
 type Screen = 'title' | 'game' | 'end' | 'error';
 type MenuView = 'pause' | 'save' | 'load' | 'settings' | null;
@@ -48,8 +80,14 @@ export class Player implements RuntimeHost {
   private cgLayer!: HTMLDivElement;
   private fx!: HTMLDivElement;
   private ui!: HTMLDivElement;
+  private safe!: HTMLDivElement;
   private dialog!: HTMLDivElement;
+  private dialogBody!: HTMLDivElement;
+  private nameRow!: HTMLDivElement;
   private nameEl!: HTMLDivElement;
+  /** Theme in effect (project theme or the current scene's override). */
+  theme!: Theme;
+  private ctx: UiContext | null = null;
   private textEl!: HTMLDivElement;
   private indicator!: HTMLDivElement;
   private choicesEl!: HTMLDivElement;
@@ -95,14 +133,13 @@ export class Player implements RuntimeHost {
 
   private mount() {
     this.root = h('div', { class: 'tvn-root', tabindex: 0, 'data-testid': 'tvn-root' });
-    applyStyle(this.root, themeToCssVars(this.game.theme));
+    const sa = this.opts.safeArea;
+    if (sa) applyStyle(this.root, { '--tvn-safe-t': `${sa.top}px`, '--tvn-safe-r': `${sa.right}px`, '--tvn-safe-b': `${sa.bottom}px`, '--tvn-safe-l': `${sa.left}px` });
     // Fonts shipped with the game (no installation needed on the player's device).
     for (const f of this.game.fonts ?? []) {
       const css = `@font-face{font-family:${JSON.stringify(f.family)};src:url(${JSON.stringify(this.opts.resolvePath(f.path))});font-display:swap}`;
       this.root.append(h('style', {}, css));
     }
-    this.root.dataset.dialogPos = this.game.theme.dialog.position;
-    this.root.dataset.anim = this.game.theme.animation;
 
     this.bgLayer = h('div', { class: 'tvn-bg-layer' });
     this.stage = h('div', { class: 'tvn-stage' });
@@ -110,24 +147,16 @@ export class Player implements RuntimeHost {
     this.sceneEl = h('div', { class: 'tvn-scene' }, this.bgLayer, this.stage, this.cgLayer);
     this.fx = h('div', { class: 'tvn-fx' });
 
-    this.nameEl = h('div', { class: 'tvn-name', 'data-testid': 'tvn-name' });
+    this.nameEl = h('div', { class: 'tvn-name', 'data-testid': 'tvn-name', 'data-ui': 'name' });
+    this.nameRow = h('div', { class: 'tvn-name-row' }, this.nameEl);
     this.textEl = h('div', { class: 'tvn-text', 'data-testid': 'tvn-text' });
     this.indicator = h('div', { class: 'tvn-indicator', 'aria-hidden': 'true' }, '▼');
-    this.dialog = h('div', { class: 'tvn-dialog tvn-hidden', 'data-testid': 'tvn-dialog', role: 'log', 'aria-live': 'polite' }, this.nameEl, this.textEl, this.indicator);
-    this.choicesEl = h('div', { class: 'tvn-choices tvn-hidden', role: 'menu', 'data-testid': 'tvn-choices' });
-
-    const qb = (label: string, title: string, fn: () => void, testid: string) =>
-      h('button', { class: 'tvn-qbtn', title, 'aria-label': title, 'data-testid': testid, onclick: (e: Event) => { e.stopPropagation(); fn(); } }, label);
-    this.quick = h(
-      'div',
-      { class: 'tvn-quick tvn-hidden' },
-      qb(this.tr('Auto'), this.tr('Auto-advance (A)'), () => this.toggleAuto(), 'tvn-q-auto'),
-      qb(this.tr('Save'), this.tr('Save (S)'), () => void this.openMenu('save'), 'tvn-q-save'),
-      qb(this.tr('Load'), this.tr('Load (L)'), () => void this.openMenu('load'), 'tvn-q-load'),
-      qb(this.tr('Hide'), this.tr('Hide UI (H / right-click)'), () => this.setUiHidden(true), 'tvn-q-hide'),
-      qb('☰', this.tr('Menu (Esc)'), () => void this.openMenu('pause'), 'tvn-q-menu'),
-    );
-    this.ui = h('div', { class: 'tvn-ui' }, this.dialog, this.choicesEl, this.quick);
+    this.dialogBody = h('div', { class: 'tvn-dialog-body' }, this.nameRow, this.textEl);
+    this.dialog = h('div', { class: 'tvn-dialog tvn-hidden', 'data-testid': 'tvn-dialog', 'data-ui': 'dialog', role: 'log', 'aria-live': 'polite' }, this.dialogBody, this.indicator);
+    this.choicesEl = h('div', { class: 'tvn-choices tvn-hidden', role: 'menu', 'data-testid': 'tvn-choices', 'data-ui': 'choices' });
+    this.quick = h('div', { class: 'tvn-quick tvn-hidden', 'data-testid': 'tvn-menubar', 'data-ui': 'menubar' });
+    this.safe = h('div', { class: 'tvn-safe' }, this.dialog, this.choicesEl, this.quick);
+    this.ui = h('div', { class: 'tvn-ui' }, this.safe);
     this.overlay = h('div', { class: 'tvn-overlay tvn-hidden' });
     this.screenEl = h('div', { class: 'tvn-screen tvn-hidden' });
     this.toastEl = h('div', { class: 'tvn-toast tvn-hidden', role: 'status' });
@@ -145,6 +174,7 @@ export class Player implements RuntimeHost {
       if (e.key === 'Control') {
         window.clearTimeout(this.skipTimer);
         this.skipMode = false;
+        this.updateQuickState();
       }
     };
     const onMove = () => this.bumpIdle();
@@ -160,11 +190,93 @@ export class Player implements RuntimeHost {
 
     this.resizeObserver = new ResizeObserver(() => this.layout());
     this.resizeObserver.observe(this.root);
-    this.layout();
+    // A growing dialogue box (long text, a choice question) changes where choices may go.
+    const dialogObserver = new ResizeObserver(() => {
+      if (!this.choicesEl.classList.contains('tvn-hidden')) this.fitChoices();
+      if (this.opts.design) this.reportLayout();
+    });
+    dialogObserver.observe(this.dialog);
+    this.disposers.push(() => dialogObserver.disconnect());
+    this.applyTheme(this.game.theme);
     this.applyIdleClass();
   }
 
-  /** Fit the stage to the window and scale UI text for small screens. */
+  // ---------------------------------------------------------------- theme & layout
+
+  /** Switches the game UI to a theme (project theme, scene override, or live edits from the editor). */
+  applyTheme(theme: Theme) {
+    this.theme = theme;
+    const r = this.root.dataset;
+    r.anim = theme.animation;
+    r.nameAttach = theme.nameBox.attach;
+    r.nameAlign = theme.nameBox.align;
+    r.speakerColor = String(theme.nameBox.speakerColor);
+    r.menuDir = theme.menuBar.direction;
+    r.hoverAnim = theme.choice.hoverAnimation;
+    this.applyContrast();
+    if (theme.nameBox.attach === 'outside') this.dialog.insertBefore(this.nameRow, this.dialogBody);
+    else this.dialogBody.insertBefore(this.nameRow, this.textEl);
+    if (!theme.nameBox.enabled) this.nameEl.classList.add('tvn-hidden');
+    else if (this.nameEl.textContent) this.nameEl.classList.remove('tvn-hidden');
+    this.buildMenuBar();
+    this.layout();
+    this.emit('theme', theme.id);
+  }
+
+  /** Live theme update without restarting (editor). */
+  setTheme(theme: Theme) {
+    this.applyTheme(theme);
+  }
+
+  private applyContrast() {
+    const high = this.settings.highContrast ?? this.theme.accessibility.highContrast;
+    this.root.dataset.contrast = high ? 'high' : 'normal';
+  }
+
+  private buildMenuBar() {
+    const bar = this.theme.menuBar;
+    const buttons = bar.buttons.map((b) => {
+      const [label, title, testid] = MENU_LABELS[b.action];
+      const text = b.label || this.tr(label);
+      return h(
+        'button',
+        {
+          class: `tvn-qbtn${b.hideOnMobile ? ' tvn-mobile-hide' : ''}`,
+          title: this.tr(title),
+          'aria-label': b.label ? `${b.label} — ${this.tr(title)}` : this.tr(title),
+          'data-testid': testid,
+          'data-action': b.action,
+          'data-ui': `button:${b.id}`,
+          onclick: (e: Event) => {
+            e.stopPropagation();
+            this.menuAction(b.action);
+          },
+        },
+        text,
+      );
+    });
+    this.quick.replaceChildren(...buttons);
+    this.quick.classList.toggle('tvn-disabled', !bar.enabled || !buttons.length);
+    this.updateQuickState();
+  }
+
+  private menuAction(a: MenuAction) {
+    if (this.opts.design) return;
+    if (a === 'auto') this.toggleAuto();
+    else if (a === 'skip') this.toggleSkip();
+    else if (a === 'save') void this.openMenu('save');
+    else if (a === 'load') void this.openMenu('load');
+    else if (a === 'settings') void this.openMenu('settings');
+    else if (a === 'hide') this.setUiHidden(true);
+    else void this.openMenu('pause');
+  }
+
+  private updateQuickState() {
+    for (const b of this.quick.querySelectorAll<HTMLElement>('[data-action="auto"]')) b.classList.toggle('tvn-on', this.autoMode);
+    for (const b of this.quick.querySelectorAll<HTMLElement>('[data-action="skip"]')) b.classList.toggle('tvn-on', this.skipMode);
+  }
+
+  /** Fit the stage to the window, scale the UI and place every themed element. */
   private layout() {
     const w = this.root.clientWidth || window.innerWidth;
     const hgt = this.root.clientHeight || window.innerHeight;
@@ -174,9 +286,117 @@ export class Player implements RuntimeHost {
     this.root.style.setProperty('--tvn-ui-scale', String(scale));
     this.root.dataset.orientation = hgt > w ? 'portrait' : 'landscape';
     this.root.dataset.compact = Math.min(w, hgt) < 520 ? 'true' : 'false';
+    if (!this.theme) return;
+
+    const area = this.safe.getBoundingClientRect();
+    const rootRect = this.root.getBoundingClientRect();
+    const safe = { top: area.top - rootRect.top, left: area.left - rootRect.left, right: rootRect.right - area.right, bottom: rootRect.bottom - area.bottom };
+    const c = makeContext(this.theme, w, hgt, safe, this.settings.textScale);
+    this.ctx = c;
+    applyStyle(this.root, themeVars(this.theme, c, (id) => this.assetUrl(id)));
+
+    const d = layoutDialog(this.theme, c);
+    applyStyle(this.dialog, {
+      left: `${d.left}px`,
+      width: `${d.width}px`,
+      top: d.top === null ? 'auto' : `${d.top}px`,
+      bottom: d.bottom === null ? 'auto' : `${d.bottom}px`,
+      minHeight: `${d.minHeight}px`,
+      maxHeight: `${Math.max(d.minHeight, d.maxHeight)}px`,
+    });
+
+    // Menu bar: measured (its size depends on labels and fonts), then kept inside the safe area.
+    const bar = this.theme.menuBar;
+    // Measure at the top-left corner: an absolutely placed box near the right edge would shrink-wrap (and wrap its buttons).
+    applyStyle(this.quick, { left: '0px', top: '0px', maxWidth: `${c.areaW}px` });
+    const bw = this.quick.offsetWidth;
+    const bh = this.quick.offsetHeight;
+    const mb = placeBox(bar.anchor, lengthPx(bar.x, 'x', c), lengthPx(bar.y, 'y', c), bw, bh, c.areaW, c.areaH);
+    applyStyle(this.quick, { left: `${mb.left}px`, top: `${mb.top}px` });
+
+    if (!this.choicesEl.classList.contains('tvn-hidden')) this.fitChoices();
+    if (this.opts.design) this.reportLayout();
+  }
+
+  /** Places the choice buttons in the free space next to the dialogue box (never overlapping it). */
+  private fitChoices() {
+    const c = this.ctx;
+    if (!c) return;
+    const area = this.safe.getBoundingClientRect();
+    let dlg: { left: number; top: number; width: number; height: number } | null = null;
+    if (!this.dialog.classList.contains('tvn-hidden')) {
+      const r = this.dialog.getBoundingClientRect();
+      const nameOut = this.theme.nameBox.attach === 'outside' && !this.nameEl.classList.contains('tvn-hidden') ? this.nameEl.getBoundingClientRect() : null;
+      const top = Math.min(r.top, nameOut && nameOut.height ? nameOut.top : r.top);
+      dlg = { left: r.left - area.left, top: top - area.top, width: r.width, height: r.bottom - top };
+    }
+    const region = choiceRegion(c, dlg, this.theme.choice.spacing * c.s);
+    const width = choiceWidth(this.theme, c, region.width);
+    applyStyle(this.choicesEl, { width: `${width}px`, maxHeight: 'none', left: '0px', top: '0px' });
+    const natural = this.choicesEl.scrollHeight;
+    const box = placeChoices(this.theme, c, region, Math.min(natural, region.height));
+    applyStyle(this.choicesEl, {
+      left: `${box.left}px`,
+      top: `${box.top}px`,
+      width: `${box.width}px`,
+      maxHeight: `${Math.max(0, region.top + region.height - box.top)}px`,
+    });
+  }
+
+  /** Design mode: positions of selectable elements (relative to the game viewport). */
+  private reportLayout() {
+    window.cancelAnimationFrame(this.reportFrame);
+    this.reportFrame = window.requestAnimationFrame(() => {
+      const root = this.root.getBoundingClientRect();
+      const rel = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left - root.left, top: r.top - root.top, width: r.width, height: r.height };
+      };
+      const rects: DesignLayout['rects'] = {};
+      for (const el of this.root.querySelectorAll('[data-ui]')) {
+        if ((el as HTMLElement).offsetParent === null) continue;
+        rects[(el as HTMLElement).dataset.ui!] = rel(el);
+      }
+      const layout: DesignLayout = { rects, scale: this.ctx?.s ?? 1, area: rel(this.safe), viewport: { width: root.width, height: root.height } };
+      this.emit('layout', layout);
+    });
+  }
+  private reportFrame = 0;
+
+  /** The story entered a scene: use its theme override, if any. */
+  sceneChanged(sceneId: string) {
+    if (this.opts.design) return;
+    const sc = this.game.scenes.find((s) => s.id === sceneId);
+    const next = (sc?.themeId && this.game.themes?.[sc.themeId]) || this.game.theme;
+    if (next !== this.theme) this.applyTheme(next);
+  }
+
+  /** Design mode: show every UI element at once with sample content (no story playback). */
+  private async showDesign(sample: DesignSample) {
+    this.setScreen('game');
+    const scene = this.game.scenes[0];
+    if (scene) {
+      const { state } = stateBeforeAction(this.game, scene.actions, scene.actions.length);
+      await this.render(state, [], true);
+    }
+    this.dialog.classList.remove('tvn-hidden', 'tvn-narration');
+    this.nameEl.textContent = sample.speaker;
+    this.nameEl.classList.toggle('tvn-hidden', !this.theme.nameBox.enabled);
+    const ch = this.game.characters[0];
+    if (ch?.color) this.nameEl.style.setProperty('--tvn-speaker', ch.color);
+    this.textEl.textContent = sample.text;
+    this.indicator.classList.add('tvn-show');
+    const states = ['normal', 'hover', 'pressed', 'disabled'];
+    const buttons = sample.choices.map((text, i) =>
+      h('button', { class: `tvn-choice tvn-state-${states[i] ?? 'normal'}`, disabled: states[i] === 'disabled', 'data-testid': `tvn-choice-${i}`, 'data-ui': `choice:${i}`, tabindex: -1 }, text),
+    );
+    this.choicesEl.replaceChildren(...buttons);
+    this.choicesEl.classList.remove('tvn-hidden');
+    this.layout();
   }
 
   async boot() {
+    if (this.opts.design) return this.showDesign(this.opts.design);
     this.root.focus({ preventScroll: true });
     const pv = this.opts.preview;
     if (pv?.skipTitle) await this.startGame(pv.sceneId ?? null, pv.index ?? 0);
@@ -215,6 +435,7 @@ export class Player implements RuntimeHost {
   }
 
   private onPointerUp(e: PointerEvent) {
+    if (this.opts.design) return;
     this.bumpIdle();
     if (e.button !== 0) return;
     if (this.isUiTarget(e)) return;
@@ -227,6 +448,7 @@ export class Player implements RuntimeHost {
   }
 
   private onKeyDown(e: KeyboardEvent) {
+    if (this.opts.design) return;
     this.bumpIdle();
     const inField = (e.target as HTMLElement | null)?.closest('input, select, textarea');
     if (e.key === 'F11' || (e.key === 'Enter' && e.altKey)) {
@@ -252,7 +474,7 @@ export class Player implements RuntimeHost {
     if (inField || this.menu || this.screen !== 'game') return;
     if (this.choiceActive) {
       const n = parseInt(e.key, 10);
-      const btns = [...this.choicesEl.querySelectorAll('button')];
+      const btns = [...this.choicesEl.querySelectorAll('button')].filter((b) => !b.disabled);
       if (n >= 1 && n <= btns.length) btns[n - 1].click();
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -275,6 +497,7 @@ export class Player implements RuntimeHost {
           window.clearTimeout(this.skipTimer);
           this.skipTimer = window.setTimeout(() => {
             this.skipMode = true;
+            this.updateQuickState();
             this.advance();
           }, 300);
         }
@@ -312,9 +535,17 @@ export class Player implements RuntimeHost {
 
   private toggleAuto() {
     this.autoMode = !this.autoMode;
-    this.quick.querySelector('[data-testid="tvn-q-auto"]')?.classList.toggle('tvn-on', this.autoMode);
+    this.updateQuickState();
     this.toast(this.autoMode ? this.tr('Auto mode ON') : this.tr('Auto mode OFF'));
     if (this.autoMode && !this.finishTyping && this.advanceResolver && !this.choiceActive) this.advance();
+  }
+
+  /** Skip button: fast-forward until the next choice (or until pressed again). */
+  private toggleSkip() {
+    this.skipMode = !this.skipMode;
+    this.updateQuickState();
+    this.toast(this.skipMode ? this.tr('Skip ON') : this.tr('Skip OFF'));
+    if (this.skipMode && !this.choiceActive) this.advance();
   }
 
   private setUiHidden(hidden: boolean) {
@@ -376,6 +607,9 @@ export class Player implements RuntimeHost {
     this.closeMenu();
     this.setUiHidden(false);
     this.autoMode = false;
+    this.skipMode = false;
+    this.updateQuickState();
+    if (this.theme !== this.game.theme) this.applyTheme(this.game.theme);
     this.setScreen('title');
     const bg = this.assetUrl(this.game.titleBackgroundAssetId);
     if (bg) this.bgLayer.append(this.makeBg({ assetId: this.game.titleBackgroundAssetId }));
@@ -642,11 +876,11 @@ export class Player implements RuntimeHost {
     const wasHidden = dlg.classList.contains('tvn-hidden');
     dlg.classList.remove('tvn-hidden');
     dlg.classList.toggle('tvn-narration', d.narration);
-    if (wasHidden && this.game.theme.animation !== 'none') {
-      void play(dlg, this.game.theme.animation === 'slide' ? [{ transform: 'translateY(30px)', opacity: 0 }, { transform: 'none', opacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }], 0.25);
+    if (wasHidden && this.theme.animation !== 'none' && !this.skipMode) {
+      void play(dlg, this.theme.animation === 'slide' ? [{ transform: 'translateY(30px)', opacity: 0 }, { transform: 'none', opacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }], 0.25);
     }
     this.nameEl.textContent = d.speakerName ?? '';
-    this.nameEl.classList.toggle('tvn-hidden', !d.speakerName);
+    this.nameEl.classList.toggle('tvn-hidden', !d.speakerName || !this.theme.nameBox.enabled);
     if (d.speakerColor) this.nameEl.style.setProperty('--tvn-speaker', d.speakerColor);
     else this.nameEl.style.removeProperty('--tvn-speaker');
 
@@ -661,7 +895,8 @@ export class Player implements RuntimeHost {
     this.indicator.classList.remove('tvn-show');
     this.emit('dialogue', d);
 
-    await this.typeText(d.text, d.textSpeed * this.settings.textSpeedFactor);
+    const speed = d.defaultSpeed && this.theme.dialog.textSpeed ? this.theme.dialog.textSpeed : d.textSpeed;
+    await this.typeText(d.text, speed * this.settings.textSpeedFactor);
     this.indicator.classList.add('tvn-show');
     await this.waitAdvance(this.settings.autoDelay + Math.min(4, d.text.length / 40));
     this.indicator.classList.remove('tvn-show');
@@ -718,6 +953,7 @@ export class Player implements RuntimeHost {
   async choice(c: ChoiceView): Promise<number> {
     await this.liftBlackout();
     this.skipMode = false;
+    this.updateQuickState();
     this.choiceActive = true;
     if (c.question) {
       this.dialog.classList.remove('tvn-hidden');
@@ -733,6 +969,8 @@ export class Player implements RuntimeHost {
           {
             class: 'tvn-choice',
             role: 'menuitem',
+            disabled: !!o.disabled,
+            'aria-disabled': o.disabled ? 'true' : undefined,
             'data-testid': `tvn-choice-${i}`,
             onclick: (e: Event) => {
               e.stopPropagation();
@@ -747,7 +985,8 @@ export class Player implements RuntimeHost {
       );
       this.choicesEl.replaceChildren(...buttons);
       this.choicesEl.classList.remove('tvn-hidden');
-      buttons[0]?.focus({ preventScroll: true });
+      this.fitChoices();
+      buttons.find((b) => !b.disabled)?.focus({ preventScroll: true });
     });
   }
 
@@ -965,6 +1204,10 @@ export class Player implements RuntimeHost {
       this.sound.setVolumes(this.settings.volumes);
       this.applyIdleClass();
     };
+    const relayout = () => {
+      this.applyContrast();
+      this.layout();
+    };
     const slider = (label: string, value: number, min: number, max: number, step: number, set: (v: number) => void, fmt: (v: number) => string) => {
       const out = h('span', { class: 'tvn-val' }, fmt(value));
       const input = h('input', { type: 'range', min, max, step, value, 'aria-label': label });
@@ -988,9 +1231,17 @@ export class Player implements RuntimeHost {
       this.settings.autoHideUI = autoHide.checked;
       save();
     });
+    const contrast = h('input', { type: 'checkbox', checked: s.highContrast ?? this.theme.accessibility.highContrast, 'aria-label': this.tr('High contrast'), 'data-testid': 'tvn-contrast' });
+    contrast.addEventListener('change', () => {
+      this.settings.highContrast = contrast.checked;
+      save();
+      relayout();
+    });
     return h(
       'div',
       { class: 'tvn-form' },
+      slider(this.tr('Text size'), s.textScale, 0.8, 1.6, 0.1, (v) => { this.settings.textScale = v; relayout(); }, pct),
+      h('label', { class: 'tvn-field tvn-check' }, h('span', {}, this.tr('High contrast')), contrast),
       slider(this.tr('Text speed'), s.textSpeedFactor, 0.25, 4, 0.25, (v) => (this.settings.textSpeedFactor = v), (v) => `${v}×`),
       slider(this.tr('Auto speed'), s.autoDelay, 0.5, 5, 0.25, (v) => (this.settings.autoDelay = v), (v) => `${v}s`),
       slider(this.tr('Master volume'), s.volumes.master, 0, 1, 0.05, (v) => (this.settings.volumes.master = v), pct),

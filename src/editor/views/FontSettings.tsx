@@ -3,6 +3,7 @@ import { t as tr } from '../../shared/i18n';
 import type { ProjectSettings } from '../../shared/types';
 import { buildGameData } from '../../shared/gamedata';
 import { resolveTheme } from '../../shared/themes';
+import { fontStackFor } from '../../shared/uilayout';
 import { api } from '../api';
 import { DEFAULT_UI_FONT_SIZE, DIALOGUE_FONT_SIZE_RANGE, fontStack, UI_FONT_SIZE_RANGE } from '../appearance';
 import { FontPicker, type FontChoice } from '../components/FontPicker';
@@ -36,7 +37,7 @@ export function FontSettings() {
   const [picking, setPicking] = useState<null | 'ui' | 'dialogue'>(null);
   const dirty = !same(draft, saved);
   const theme = resolveTheme(project.settings.themeId, project.themes);
-  const themeFamily = theme.font.split(',')[0].replace(/["']/g, '').trim();
+  const themeFamily = theme.fontFace?.family ?? theme.font.split(',')[0].replace(/["']/g, '').trim();
 
   // Live game preview (debounced so dragging a slider doesn't restart the game on every pixel).
   const [previewDraft, setPreviewDraft] = useState(draft);
@@ -128,7 +129,7 @@ export function FontSettings() {
           <div className="field">
             <span className="field-label">{tr('Dialogue font (this game)')}</span>
             <div className="font-current">
-              <span className="grow ellipsis" style={{ fontFamily: draft.dialogueFont ? fontStack(draft.dialogueFont.family) : theme.font }} data-testid="dialogue-font-name">
+              <span className="grow ellipsis" style={{ fontFamily: draft.dialogueFont ? fontStack(draft.dialogueFont.family) : fontStackFor(theme, null) }} data-testid="dialogue-font-name">
                 {draft.dialogueFont ? draft.dialogueFont.family : tr('Theme default ({0})', { 0: themeFamily })}
               </span>
               {draft.dialogueFont?.file && <span className="badge ok">{tr('included in game')}</span>}
@@ -136,6 +137,9 @@ export function FontSettings() {
                 {tr('Change…')}
               </button>
             </div>
+            {theme.dialog.text.font && (
+              <span className="small faint">{tr('The theme “{0}” sets its own dialogue font ({1}); it is used instead. Change it in Themes.', { 0: tr(theme.name), 1: theme.dialog.text.font.family })}</span>
+            )}
             {draft.dialogueFont && !draft.dialogueFont.file && (
               <span className="small faint">{tr('System fonts only appear if players have them installed. Import the font file to include it in the game.')}</span>
             )}
@@ -145,10 +149,10 @@ export function FontSettings() {
               <input
                 type="checkbox"
                 checked={draft.dialogueFontSize === null}
-                onChange={(e) => setDraft({ ...draft, dialogueFontSize: e.target.checked ? null : theme.fontSize })}
+                onChange={(e) => setDraft({ ...draft, dialogueFontSize: e.target.checked ? null : theme.dialog.text.size })}
                 data-testid="dialogue-size-theme"
               />
-              {tr('Use the theme’s text size ({0}px)', { 0: theme.fontSize })}
+              {tr('Use the theme’s text size ({0}px)', { 0: theme.dialog.text.size })}
             </label>
             {draft.dialogueFontSize !== null && (
               <>

@@ -1,5 +1,5 @@
 // Contract between the Electron main process and the editor renderer.
-import type { Asset, AssetType, MediaKind, Project } from './types';
+import type { Asset, AssetType, MediaKind, Project, Theme } from './types';
 import type { Issue } from './validate';
 
 export interface RecentProject {
@@ -213,6 +213,12 @@ export interface TstvnApi {
     remove(id: string): Promise<CustomFont[]>;
     /** Copy a custom font into the project (fonts/…) so exported games include it. */
     embed(dir: string, id: string): Promise<{ family: string; file: string }>;
+  };
+  themes: {
+    /** Writes a .tsttheme file (theme + its images and fonts). */
+    exportFile(dir: string, theme: Theme, assets: Asset[], file: string): Promise<{ files: number; bytes: number }>;
+    /** Reads a .tsttheme file into the project: returns the theme (new id) and the image assets it added. */
+    importFile(dir: string, file: string, existing: Asset[]): Promise<{ theme: Theme; added: Asset[] }>;
   };
   getPathForFile(file: File): string;
 }

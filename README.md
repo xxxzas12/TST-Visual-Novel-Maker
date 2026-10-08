@@ -12,7 +12,7 @@ backgrounds, music, variables, animations), press **Play**, and export a real ga
 
 ## Install
 
-Run **`TSTVN-Setup-1.0.0.exe`** (built into `release/` by `npm run dist`) on any Windows 10/11 x64 PC.
+Run **`TSTVN-Setup-<version>.exe`** (built into `release/` by `npm run dist`) on any Windows 10/11 x64 PC.
 It installs for the current user (no admin needed), lets you pick the folder, and creates Desktop and
 Start Menu shortcuts. Uninstall from Windows Settings → Apps.
 
@@ -38,6 +38,35 @@ projects from templates are created in the current language.
 
 **Settings → Editor → Appearance**: Dark, Light, or Follow Windows. Both palettes are checked for WCAG contrast
 by `tests/appearance.test.ts`.
+
+## Game UI & Themes
+
+**Themes** is a visual editor for everything players see on top of the story — no code:
+
+- **Dialogue box, name box, choice buttons, menu bar and each menu button** can be clicked in a live
+  preview of the real game, then **dragged** to move, **resized** with handles, **aligned** to screen
+  edges, nudged with the arrow keys; menu buttons can be **duplicated / deleted / added**
+  (Auto, Skip, Save, Load, Settings, Hide UI, Menu).
+- The **properties panel** shows every setting of the selected element: position (anchor + X/Y),
+  width/height in **px** (on a 1920×1080 canvas), **%** or **vw/vh**, padding, background color/image,
+  opacity, border, corner radius, shadow, background blur, font (system or imported .ttf/.otf), size,
+  color, line height, letter spacing, alignment, text speed; choice buttons have **Normal / Hover /
+  Pressed / Disabled** styles and hover/press animations.
+- **Device previews** (desktop, laptop, tablet, phones with notches) and a **layout check** for all of
+  them: the UI scales to every screen, stays inside the safe area, never makes text smaller than the
+  minimum or buttons smaller than the touch target, never lets choices cover the dialogue, and warns about
+  low contrast or overlaps.
+- **Presets:** Modern, Minimal, Classic, Dark, Soft, RPG, Romance, Horror (+ Fantasy). Presets are
+  read-only: **Edit a copy** / **Save as Custom Preset**, then edit, rename or delete your own.
+- **Project theme + scene overrides:** "Use for whole project", "Use in scenes…", or the 🎨 menu in
+  the Scenes view.
+- **Export / Import .tsttheme** — a single file with the theme, its images and fonts, to share or reuse.
+- **Accessibility:** minimum text size, minimum touch target, high contrast default; players can change
+  text size and high contrast in the game's Settings. Choice options can be shown greyed out when their
+  condition is not met ("show when locked").
+
+Everything is saved in the project, and the exported game reads the same theme data — what you design is
+what players get.
 
 ## Quick start (users)
 
@@ -81,7 +110,7 @@ npm install          # also downloads the Electron binary (postinstall)
 npm run dev          # editor with hot reload (Vite) + Electron
 npm run build        # typecheck + runtime + editor + main process → dist/
 npm start            # run the built editor
-npm run dist         # build + package → release/TSTVN-Setup-1.0.0.exe (installer) + release/win-unpacked/
+npm run dist         # build + package → release/TSTVN-Setup-<version>.exe (installer) + release/win-unpacked/
 node scripts/i18n-keys.mjs --missing   # list UI strings that still need a Thai translation
 ```
 

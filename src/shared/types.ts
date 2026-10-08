@@ -74,6 +74,8 @@ export interface ChoiceOption {
   target: JumpTarget;
   /** Optional: only show this option when the condition holds. */
   condition?: Condition | null;
+  /** When the condition fails: show the option disabled instead of hiding it. */
+  showLocked?: boolean;
 }
 
 export interface TextStyle {

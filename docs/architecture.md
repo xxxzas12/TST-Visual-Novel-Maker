@@ -42,12 +42,15 @@ src/
     characters.ts   Characters/<Name>/<expression>.png → character + expressions
     validate.ts     Integrity checks, reference find / replace / remove
     gamedata.ts     Project → GameData (what preview and export run)
-    flow.ts, search.ts, project.ts (templates, normalization), themes.ts, animations.ts, stage.ts, api.ts
+    themes.ts       Game UI themes: presets, v1 → v2 migration/repair, references, WCAG contrast
+    uilayout.ts     Theme + screen size → pixel layout and CSS variables (shared by runtime and editor)
+    uicheck.ts      Visual-editor operations (move/resize/align, menu buttons) + multi-device layout check
+    flow.ts, search.ts, project.ts (templates, normalization), animations.ts, stage.ts, api.ts
   runtime/     Game runtime
     core/engine.ts  Async story interpreter (jumps, labels, conditions, choices, save/restore, loop guard)
     core/state.ts   Pure visual-state reducer (also used by Play From Here and the editor stage)
     player/         DOM renderer: layers, transitions, typewriter, choices, menus, save slots, audio, input
-    runtime.css     Responsive, safe-area aware, touch-friendly UI themed by CSS variables
+    runtime.css     Responsive, safe-area aware, touch-friendly UI; every game-UI style comes from theme variables
     entry.ts        Standalone boot for exported games
   main/        Electron main process (Node)
     importer.ts     Recursive scan → plan (hash, size, dimensions, duplicates) → execute (copy, thumbnails)
@@ -56,11 +59,35 @@ src/
     backups.ts      Backups before risky operations, restore (with files), prune
     packageIO.ts    .tstvn zip export/import (streaming, path-traversal safe)
     gameExport.ts   Validate → stage → build → verify → publish
+    themeIO.ts      .tsttheme zip export/import (theme.json + images + fonts, duplicate images reused)
     main.ts         Window, IPC, `tstvn-asset://` protocol (serves only the open project)
   preload/     contextBridge API (window.tstvn), typed by shared/api.ts
   game-shell/  main.cjs + preload.cjs copied into every Windows export
   editor/      React app: views/, components/, store/ (zustand + immer), ops.ts, sceneOps.ts
 ```
+
+## Game UI themes
+
+A theme describes the dialogue box, name box, choice buttons (four states), menu bar (individual
+buttons), menus, fonts, animations and accessibility limits. Sizes are **design pixels on a 1920×1080
+canvas** (1080×1920 in portrait); lengths may also be `%` of the safe area or `vw`/`vh`.
+
+```
+Theme ─► uilayout.makeContext(screen, safe area, player text size)
+      ─► themeVars()   CSS variables (colors, fonts, px sizes)  ─► runtime.css
+      ─► layoutDialog / placeBox / placeChoices   positions, clamped inside the safe area
+```
+
+- The runtime places elements with these functions on every resize; text is never below the theme's
+  minimum size, buttons never below the minimum touch target, boxes never leave the screen, the dialogue
+  text scrolls instead of being clipped, and choices use the free space next to the dialogue box.
+- The editor's Visual UI editor runs the same runtime in **design mode** (`Player.design`): it shows every
+  element at once and reports element rectangles, which the editor overlays with selection boxes and
+  handles. Edits are sent with `tstvn:theme` messages, so the preview updates without restarting.
+- `uicheck.checkAllDevices` evaluates a theme on six device presets (overflow, overlap, readability,
+  touch size) without rendering; unit tests require every preset to pass.
+- Scenes may override the project theme (`scene.themeId`); `GameData.themes` carries the overrides and
+  the engine calls `host.sceneChanged` so the player switches theme when a scene starts.
 
 ## Project on disk
 

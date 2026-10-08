@@ -58,6 +58,12 @@ const TH: Record<string, string> = {
   'Hide UI (H / right-click)': 'ซ่อน UI (H / คลิกขวา)',
   'Menu (Esc)': 'เมนู (Esc)',
   'This game has no scenes to play.': 'เกมนี้ยังไม่มีฉากให้เล่น',
+  Skip: 'ข้าม',
+  'Skip (hold Ctrl)': 'ข้าม (กด Ctrl ค้าง)',
+  'Skip ON': 'โหมดข้าม: เปิด',
+  'Skip OFF': 'โหมดข้าม: ปิด',
+  'Text size': 'ขนาดตัวอักษร',
+  'High contrast': 'คอนทราสต์สูง',
 };
 
 export type Translate = (key: string, vars?: Record<string, string | number>) => string;

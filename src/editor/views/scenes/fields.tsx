@@ -305,6 +305,10 @@ function ChoiceOptionsEditor({ value, onChange, scene }: { value: ChoiceOption[]
             <>
               <span className="field-label">{tr("Only show if")}</span>
               <ConditionRow c={o.condition} onChange={(condition) => set(i, { ...o, condition })} onRemove={() => set(i, { ...o, condition: null })} />
+              <label className="check small">
+                <input type="checkbox" checked={!!o.showLocked} onChange={(e) => set(i, { ...o, showLocked: e.target.checked })} data-testid={`choice-locked-${i}`} />
+                {tr("Otherwise show it greyed out (disabled) instead of hiding it")}
+              </label>
             </>
           ) : (
             <button className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => set(i, { ...o, condition: { variableId: '', op: '>=', value: 0 } })}>

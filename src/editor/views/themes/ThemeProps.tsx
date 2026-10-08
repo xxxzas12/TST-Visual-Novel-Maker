@@ -1,0 +1,374 @@
+// Properties panel of the Game UI editor: shows the settings of the selected element.
+import { t as tr } from '../../../shared/i18n';
+import type { ChoiceState, MenuAction, Theme, UiSurface, UiText } from '../../../shared/types';
+import { MENU_ACTIONS, SANS } from '../../../shared/themes';
+import { deleteMenuButton, duplicateMenuButton, moveMenuButton, type UiElementId } from '../../../shared/uicheck';
+import { newId } from '../../../shared/ids';
+import { AnchorPicker, ColorField, Field, FontField, LengthInput, Section, Slider, SurfaceEditor, TextEditor, type Edit } from './controls';
+import { useState } from 'react';
+
+const FALLBACK_FONTS = [
+  { label: 'Modern Sans', value: SANS },
+  { label: 'Serif', value: 'Georgia, "Times New Roman", "Noto Serif Thai", serif' },
+  { label: 'Storybook', value: '"Palatino Linotype", "Book Antiqua", Palatino, "Noto Serif Thai", serif' },
+  { label: 'Rounded', value: '"Trebuchet MS", "Segoe UI", "Leelawadee UI", "Noto Sans Thai", sans-serif' },
+  { label: 'Typewriter', value: '"Courier New", Consolas, "Leelawadee UI", monospace' },
+  { label: 'Handwritten', value: '"Comic Sans MS", "Segoe Print", cursive' },
+];
+
+export function menuActionLabel(a: MenuAction): string {
+  switch (a) {
+    case 'auto':
+      return tr('Auto');
+    case 'skip':
+      return tr('Skip');
+    case 'save':
+      return tr('Save');
+    case 'load':
+      return tr('Load');
+    case 'settings':
+      return tr('Settings');
+    case 'hide':
+      return tr('Hide UI');
+    default:
+      return tr('Menu');
+  }
+}
+
+export function elementLabel(el: UiElementId | null, theme: Theme): string {
+  if (!el) return tr('Theme');
+  if (el === 'dialog') return tr('Dialogue Box');
+  if (el === 'name') return tr('Name Box');
+  if (el === 'choices') return tr('Choice Buttons');
+  if (el === 'menubar') return tr('Menu Bar');
+  const b = theme.menuBar.buttons.find((x) => `button:${x.id}` === el);
+  return tr('Menu Button: {0}', { 0: b ? b.label || menuActionLabel(b.action) : '?' });
+}
+
+interface Props {
+  theme: Theme;
+  el: UiElementId | null;
+  edit: Edit;
+  onSelect: (el: UiElementId | null) => void;
+  /** Family set in Settings → Fonts (used when the theme has no font of its own). */
+  gameFont: string | null;
+}
+
+export function ThemeProps({ theme, el, edit, onSelect, gameFont }: Props) {
+  const surf = (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
+  const text = (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => edit((t) => fn(pick(t)), `${key}:${k}`);
+  const themeFontLabel = theme.fontFace ? theme.fontFace.family : gameFont ? tr('Game font ({0})', { 0: gameFont }) : tr('Theme font');
+
+  if (!el) return <ThemeGeneral theme={theme} edit={edit} gameFont={gameFont} />;
+
+  if (el === 'dialog') {
+    const d = theme.dialog;
+    return (
+      <>
+        <Section title={tr('Position & size')} testId="props-dialog-layout">
+          <AnchorPicker value={d.anchor} onChange={(a) => edit((t) => void (t.dialog.anchor = a), 'd:anchor')} testId="dialog-anchor" />
+          <div className="prop-grid">
+            <LengthInput label="X" value={d.x} onChange={(v) => edit((t) => void (t.dialog.x = v), 'd:x')} testId="dialog-x" />
+            <LengthInput label="Y" value={d.y} onChange={(v) => edit((t) => void (t.dialog.y = v), 'd:y')} testId="dialog-y" />
+            <LengthInput label={tr('Width')} value={d.width} onChange={(v) => edit((t) => void (t.dialog.width = v), 'd:w')} testId="dialog-width" />
+            <LengthInput label={tr('Height (minimum)')} value={d.height} onChange={(v) => edit((t) => void (t.dialog.height = v), 'd:h')} testId="dialog-height" />
+          </div>
+          <div className="prop-grid">
+            <Slider label={tr('Padding X')} value={d.padding.x} min={0} max={160} onChange={(v) => edit((t) => void (t.dialog.padding.x = v), 'd:px')} testId="dialog-padding-x" />
+            <Slider label={tr('Padding Y')} value={d.padding.y} min={0} max={120} onChange={(v) => edit((t) => void (t.dialog.padding.y = v), 'd:py')} testId="dialog-padding-y" />
+          </div>
+          <div className="small faint">{tr('px = pixels on a 1920×1080 screen, scaled to every screen size. % = share of the screen. The box never leaves the screen and grows (then scrolls) for long text.')}</div>
+        </Section>
+        <Section title={tr('Box style')}>
+          <SurfaceEditor s={d.surface} set={surf((t) => t.dialog.surface, 'd')} prefix="dialog" />
+        </Section>
+        <Section title={tr('Text')}>
+          <TextEditor x={d.text} set={text((t) => t.dialog.text, 'dt')} prefix="dialog-text" gameFontNote={themeFontLabel} />
+          <Field label={tr('Text speed')}>
+            <label className="check">
+              <input type="checkbox" checked={d.textSpeed === null} onChange={(e) => edit((t) => void (t.dialog.textSpeed = e.target.checked ? null : 40), 'd:speed')} data-testid="dialog-speed-default" />
+              {tr('Use the project’s text speed')}
+            </label>
+          </Field>
+          {d.textSpeed !== null && <Slider label={tr('Characters per second')} value={d.textSpeed} min={5} max={200} onChange={(v) => edit((t) => void (t.dialog.textSpeed = v), 'd:speed')} testId="dialog-speed" />}
+        </Section>
+      </>
+    );
+  }
+
+  if (el === 'name') {
+    const n = theme.nameBox;
+    return (
+      <>
+        <Section title={tr('Name box')}>
+          <label className="check">
+            <input type="checkbox" checked={n.enabled} onChange={(e) => edit((t) => void (t.nameBox.enabled = e.target.checked), 'n:on')} data-testid="name-enabled" /> {tr('Show the name box')}
+          </label>
+          <Field label={tr('Placement')}>
+            <select className="select" value={n.attach} onChange={(e) => edit((t) => void (t.nameBox.attach = e.target.value as 'inside' | 'outside'), 'n:attach')} data-testid="name-attach">
+              <option value="inside">{tr('Inside the dialogue box')}</option>
+              <option value="outside">{tr('On top of the dialogue box')}</option>
+            </select>
+          </Field>
+          <Field label={tr('Align')}>
+            <div className="seg">
+              {(['left', 'center', 'right'] as const).map((a) => (
+                <button key={a} type="button" className={n.align === a ? 'on' : ''} onClick={() => edit((t) => void (t.nameBox.align = a), 'n:align')}>
+                  {a === 'left' ? tr('Left') : a === 'center' ? tr('Center') : tr('Right')}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <div className="prop-grid">
+            <Slider label={tr('Offset X')} value={n.x} min={-400} max={400} onChange={(v) => edit((t) => void (t.nameBox.x = v), 'n:x')} testId="name-x" />
+            <Slider label={tr('Offset Y')} value={n.y} min={-200} max={200} onChange={(v) => edit((t) => void (t.nameBox.y = v), 'n:y')} testId="name-y" />
+            <Slider label={tr('Minimum width')} value={n.width} min={0} max={800} onChange={(v) => edit((t) => void (t.nameBox.width = v), 'n:w')} testId="name-width" />
+            <Slider label={tr('Minimum height')} value={n.height} min={0} max={200} onChange={(v) => edit((t) => void (t.nameBox.height = v), 'n:h')} testId="name-height" />
+            <Slider label={tr('Padding X')} value={n.padding.x} min={0} max={100} onChange={(v) => edit((t) => void (t.nameBox.padding.x = v), 'n:px')} />
+            <Slider label={tr('Padding Y')} value={n.padding.y} min={0} max={60} onChange={(v) => edit((t) => void (t.nameBox.padding.y = v), 'n:py')} />
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={n.speakerColor} onChange={(e) => edit((t) => void (t.nameBox.speakerColor = e.target.checked), 'n:sc')} /> {tr('Underline in the character’s color')}
+          </label>
+        </Section>
+        <Section title={tr('Box style')}>
+          <SurfaceEditor s={n.surface} set={surf((t) => t.nameBox.surface, 'n')} prefix="name" />
+        </Section>
+        <Section title={tr('Text')}>
+          <TextEditor x={n.text} set={text((t) => t.nameBox.text, 'nt')} prefix="name-text" gameFontNote={themeFontLabel} />
+        </Section>
+      </>
+    );
+  }
+
+  if (el === 'choices') return <ChoiceProps theme={theme} edit={edit} surf={surf} text={text} fontLabel={themeFontLabel} />;
+
+  // Menu bar or one of its buttons.
+  const m = theme.menuBar;
+  const btn = el.startsWith('button:') ? m.buttons.find((b) => `button:${b.id}` === el) : undefined;
+  return (
+    <>
+      {btn && (
+        <Section title={elementLabel(el, theme)} testId="props-menu-button">
+          <Field label={tr('Action')}>
+            <select className="select" value={btn.action} onChange={(e) => edit((t) => void (t.menuBar.buttons.find((b) => b.id === btn.id)!.action = e.target.value as MenuAction), `b:${btn.id}:a`)} data-testid="button-action">
+              {MENU_ACTIONS.map((a) => (
+                <option key={a} value={a}>
+                  {menuActionLabel(a)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={tr('Label (empty = default in the game’s language)')}>
+            <input className="input" value={btn.label} placeholder={menuActionLabel(btn.action)} onChange={(e) => edit((t) => void (t.menuBar.buttons.find((b) => b.id === btn.id)!.label = e.target.value), `b:${btn.id}:l`)} data-testid="button-label" />
+          </Field>
+          <label className="check">
+            <input type="checkbox" checked={btn.hideOnMobile} onChange={(e) => edit((t) => void (t.menuBar.buttons.find((b) => b.id === btn.id)!.hideOnMobile = e.target.checked), `b:${btn.id}:m`)} /> {tr('Hide on small screens (phones)')}
+          </label>
+          <div className="row wrap">
+            <button className="btn sm" onClick={() => edit((t) => moveMenuButton(t, btn.id, -1), `b:move`)}>
+              {tr('◀ Move earlier')}
+            </button>
+            <button className="btn sm" onClick={() => edit((t) => moveMenuButton(t, btn.id, 1), `b:move`)}>
+              {tr('Move later ▶')}
+            </button>
+          </div>
+        </Section>
+      )}
+      <Section title={tr('Menu bar')} testId="props-menubar">
+        <label className="check">
+          <input type="checkbox" checked={m.enabled} onChange={(e) => edit((t) => void (t.menuBar.enabled = e.target.checked), 'm:on')} data-testid="menubar-enabled" /> {tr('Show the menu bar')}
+        </label>
+        <AnchorPicker value={m.anchor} onChange={(a) => edit((t) => void (t.menuBar.anchor = a), 'm:anchor')} testId="menubar-anchor" />
+        <div className="prop-grid">
+          <LengthInput label="X" value={m.x} onChange={(v) => edit((t) => void (t.menuBar.x = v), 'm:x')} testId="menubar-x" />
+          <LengthInput label="Y" value={m.y} onChange={(v) => edit((t) => void (t.menuBar.y = v), 'm:y')} testId="menubar-y" />
+        </div>
+        <Field label={tr('Direction')}>
+          <select className="select" value={m.direction} onChange={(e) => edit((t) => void (t.menuBar.direction = e.target.value as 'row' | 'column'), 'm:dir')}>
+            <option value="row">{tr('Horizontal')}</option>
+            <option value="column">{tr('Vertical')}</option>
+          </select>
+        </Field>
+        <div className="prop-grid">
+          <Slider label={tr('Spacing')} value={m.spacing} min={0} max={60} onChange={(v) => edit((t) => void (t.menuBar.spacing = v), 'm:gap')} />
+          <Slider label={tr('Button height')} value={m.height} min={20} max={140} onChange={(v) => edit((t) => void (t.menuBar.height = v), 'm:h')} testId="menubar-height" />
+          <Slider label={tr('Minimum width')} value={m.minWidth} min={20} max={300} onChange={(v) => edit((t) => void (t.menuBar.minWidth = v), 'm:mw')} />
+          <Slider label={tr('Padding X')} value={m.padding.x} min={0} max={80} onChange={(v) => edit((t) => void (t.menuBar.padding.x = v), 'm:px')} />
+        </div>
+        <div className="section-title">{tr('Buttons')}</div>
+        <div className="col" style={{ gap: '0.3rem' }}>
+          {m.buttons.map((b) => (
+            <div key={b.id} className={`list-row ${el === `button:${b.id}` ? 'selected' : ''}`}>
+              <button className="btn ghost sm grow" style={{ justifyContent: 'flex-start' }} onClick={() => onSelect(`button:${b.id}`)} data-testid={`select-button-${b.action}`}>
+                {b.label || menuActionLabel(b.action)}
+              </button>
+              <button className="btn ghost sm icon" title={tr('Duplicate')} aria-label={tr('Duplicate')} onClick={() => edit((t) => void duplicateMenuButton(t, b.id), 'b:dup')}>
+                ⧉
+              </button>
+              <button className="btn ghost sm icon" title={tr('Delete')} aria-label={tr('Delete')} onClick={() => edit((t) => void deleteMenuButton(t, b.id), 'b:del')}>
+                ✕
+              </button>
+            </div>
+          ))}
+          <AddMenuButton onAdd={(a) => edit((t) => void t.menuBar.buttons.push({ id: newId('mb'), action: a, label: '', hideOnMobile: false }), 'b:add')} />
+        </div>
+      </Section>
+      <Section title={tr('Button style')}>
+        <SurfaceEditor s={m.surface} set={surf((t) => t.menuBar.surface, 'm')} prefix="menubar" />
+        <ColorField label={tr('Hover background')} value={m.hover.background} onChange={(v) => edit((t) => void (t.menuBar.hover.background = v), 'm:hbg')} />
+        <ColorField label={tr('Hover text color')} value={m.hover.color} onChange={(v) => edit((t) => void (t.menuBar.hover.color = v), 'm:hc')} />
+      </Section>
+      <Section title={tr('Text')}>
+        <TextEditor x={m.text} set={text((t) => t.menuBar.text, 'mt')} prefix="menubar-text" gameFontNote={themeFontLabel} />
+      </Section>
+    </>
+  );
+}
+
+function AddMenuButton({ onAdd }: { onAdd: (a: MenuAction) => void }) {
+  const [action, setAction] = useState<MenuAction>('skip');
+  return (
+    <div className="row">
+      <select className="select grow" value={action} onChange={(e) => setAction(e.target.value as MenuAction)} aria-label={tr('Action')} data-testid="new-button-action">
+        {MENU_ACTIONS.map((a) => (
+          <option key={a} value={a}>
+            {menuActionLabel(a)}
+          </option>
+        ))}
+      </select>
+      <button className="btn sm" onClick={() => onAdd(action)} data-testid="add-menu-button">
+        {tr('＋ Add button')}
+      </button>
+    </div>
+  );
+}
+
+function ChoiceProps({
+  theme,
+  edit,
+  surf,
+  text,
+  fontLabel,
+}: {
+  theme: Theme;
+  edit: Edit;
+  surf: (pick: (t: Theme) => UiSurface, key: string) => (fn: (s: UiSurface) => void, k: string) => void;
+  text: (pick: (t: Theme) => UiText, key: string) => (fn: (x: UiText) => void, k: string) => void;
+  fontLabel: string;
+}) {
+  const [state, setState] = useState<ChoiceState>('normal');
+  const c = theme.choice;
+  const s = c.states[state];
+  const stateName: Record<ChoiceState, string> = { normal: tr('Normal'), hover: tr('Hover'), pressed: tr('Pressed'), disabled: tr('Disabled') };
+  return (
+    <>
+      <Section title={tr('Position & size')}>
+        <AnchorPicker value={c.anchor} onChange={(a) => edit((t) => void (t.choice.anchor = a), 'c:anchor')} testId="choice-anchor" />
+        <div className="prop-grid">
+          <LengthInput label="X" value={c.x} onChange={(v) => edit((t) => void (t.choice.x = v), 'c:x')} testId="choice-x" />
+          <LengthInput label="Y" value={c.y} onChange={(v) => edit((t) => void (t.choice.y = v), 'c:y')} testId="choice-y" />
+          <LengthInput label={tr('Button width')} value={c.width} onChange={(v) => edit((t) => void (t.choice.width = v), 'c:w')} testId="choice-width" />
+        </div>
+        <div className="prop-grid">
+          <Slider label={tr('Minimum width')} value={c.minWidth} min={0} max={1200} onChange={(v) => edit((t) => void (t.choice.minWidth = v), 'c:mw')} testId="choice-min-width" />
+          <Slider label={tr('Button height (minimum)')} value={c.height} min={30} max={200} onChange={(v) => edit((t) => void (t.choice.height = v), 'c:h')} testId="choice-height" />
+          <Slider label={tr('Spacing')} value={c.spacing} min={0} max={80} onChange={(v) => edit((t) => void (t.choice.spacing = v), 'c:gap')} testId="choice-spacing" />
+          <Slider label={tr('Padding X')} value={c.padding.x} min={0} max={120} onChange={(v) => edit((t) => void (t.choice.padding.x = v), 'c:px')} />
+          <Slider label={tr('Padding Y')} value={c.padding.y} min={0} max={80} onChange={(v) => edit((t) => void (t.choice.padding.y = v), 'c:py')} />
+        </div>
+        <div className="small faint">{tr('Choices always use the free space next to the dialogue box, so they never cover it.')}</div>
+      </Section>
+      <Section title={tr('States')} testId="props-choice-states">
+        <div className="seg" role="tablist">
+          {(Object.keys(stateName) as ChoiceState[]).map((k) => (
+            <button key={k} type="button" role="tab" className={state === k ? 'on' : ''} aria-selected={state === k} onClick={() => setState(k)} data-testid={`choice-state-${k}`}>
+              {stateName[k]}
+            </button>
+          ))}
+        </div>
+        <ColorField label={tr('Background color')} value={s.background} onChange={(v) => edit((t) => void (t.choice.states[state].background = v), `c:${state}:bg`)} testId="choice-state-bg" />
+        <Slider label={tr('Background opacity')} value={s.opacity} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.states[state].opacity = v), `c:${state}:op`)} />
+        <ColorField label={tr('Text color')} value={s.color} onChange={(v) => edit((t) => void (t.choice.states[state].color = v), `c:${state}:c`)} testId="choice-state-color" />
+        <ColorField label={tr('Border color')} value={s.borderColor} onChange={(v) => edit((t) => void (t.choice.states[state].borderColor = v), `c:${state}:bc`)} />
+      </Section>
+      <Section title={tr('Animation')}>
+        <Field label={tr('Hover animation')}>
+          <select className="select" value={c.hoverAnimation} onChange={(e) => edit((t) => void (t.choice.hoverAnimation = e.target.value as Theme['choice']['hoverAnimation']), 'c:ha')} data-testid="choice-hover-anim">
+            <option value="none">{tr('None')}</option>
+            <option value="grow">{tr('Grow')}</option>
+            <option value="lift">{tr('Lift')}</option>
+            <option value="glow">{tr('Glow')}</option>
+            <option value="slide">{tr('Slide')}</option>
+          </select>
+        </Field>
+        <Field label={tr('Pressed animation')}>
+          <select className="select" value={c.pressAnimation} onChange={(e) => edit((t) => void (t.choice.pressAnimation = e.target.value as Theme['choice']['pressAnimation']), 'c:pa')} data-testid="choice-press-anim">
+            <option value="none">{tr('None')}</option>
+            <option value="shrink">{tr('Shrink')}</option>
+            <option value="sink">{tr('Sink')}</option>
+          </select>
+        </Field>
+        <Slider label={tr('Animation speed (seconds)')} value={c.animationSpeed} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.animationSpeed = v), 'c:speed')} />
+      </Section>
+      <Section title={tr('Button style')}>
+        <SurfaceEditor s={c.surface} set={surf((t) => t.choice.surface, 'c')} prefix="choice" colors={false} />
+      </Section>
+      <Section title={tr('Text')}>
+        <TextEditor x={c.text} set={text((t) => t.choice.text, 'ct')} prefix="choice-text" color={false} gameFontNote={fontLabel} />
+      </Section>
+    </>
+  );
+}
+
+function ThemeGeneral({ theme, edit, gameFont }: { theme: Theme; edit: Edit; gameFont: string | null }) {
+  const a = theme.accessibility;
+  return (
+    <>
+      <Section title={tr('Theme')} testId="props-theme">
+        <Field label={tr('Theme name')}>
+          <input className="input" value={theme.name} onChange={(e) => edit((t) => void (t.name = e.target.value), 'name')} data-testid="theme-name" />
+        </Field>
+        <FontField
+          label={tr('Theme font')}
+          value={theme.fontFace}
+          defaultLabel={tr('Built-in font')}
+          onChange={(f) => edit((t) => void (t.fontFace = f), 'fontFace')}
+          testId="theme-font"
+        />
+        {gameFont && <div className="small faint">{tr('Settings → Fonts sets the game font “{0}”; it replaces this theme font (fonts chosen for single elements still win).', { 0: gameFont })}</div>}
+        <Field label={tr('Fallback fonts')}>
+          <select className="select" value={theme.font} onChange={(e) => edit((t) => void (t.font = e.target.value), 'font')}>
+            {FALLBACK_FONTS.map((f) => (
+              <option key={f.label} value={f.value}>
+                {tr(f.label)}
+              </option>
+            ))}
+            {!FALLBACK_FONTS.some((f) => f.value === theme.font) && <option value={theme.font}>{tr('Current')}</option>}
+          </select>
+        </Field>
+        <Field label={tr('Dialogue box animation')}>
+          <select className="select" value={theme.animation} onChange={(e) => edit((t) => void (t.animation = e.target.value as Theme['animation']), 'anim')} data-testid="theme-animation">
+            <option value="fade">{tr('Fade')}</option>
+            <option value="slide">{tr('Slide up')}</option>
+            <option value="none">{tr('None')}</option>
+          </select>
+        </Field>
+      </Section>
+      <Section title={tr('Menus & title screen')}>
+        <ColorField label={tr('Background')} value={theme.menu.background} onChange={(v) => edit((t) => void (t.menu.background = v), 'mbg')} />
+        <Slider label={tr('Opacity')} value={theme.menu.opacity} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.menu.opacity = v), 'mop')} />
+        <ColorField label={tr('Text color')} value={theme.menu.color} onChange={(v) => edit((t) => void (t.menu.color = v), 'mc')} />
+        <ColorField label={tr('Accent')} value={theme.menu.accent} onChange={(v) => edit((t) => void (t.menu.accent = v), 'ma')} testId="theme-accent" />
+      </Section>
+      <Section title={tr('Accessibility')} testId="props-accessibility">
+        <Slider label={tr('Minimum text size')} suffix="px" value={a.minFontSize} min={10} max={24} onChange={(v) => edit((t) => void (t.accessibility.minFontSize = v), 'a:font')} testId="min-font-size" />
+        <Slider label={tr('Minimum touch target')} suffix="px" value={a.minTouchTarget} min={24} max={72} onChange={(v) => edit((t) => void (t.accessibility.minTouchTarget = v), 'a:touch')} testId="min-touch" />
+        <label className="check">
+          <input type="checkbox" checked={a.highContrast} onChange={(e) => edit((t) => void (t.accessibility.highContrast = e.target.checked), 'a:hc')} data-testid="high-contrast" /> {tr('High contrast by default')}
+        </label>
+        <div className="small faint">{tr('Players can also change the text size and turn high contrast on or off in the game’s Settings.')}</div>
+      </Section>
+    </>
+  );
+}

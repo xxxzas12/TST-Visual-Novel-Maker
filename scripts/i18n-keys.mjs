@@ -10,7 +10,7 @@ const DIRS = ['src/editor', 'src/shared'];
 const SKIP = new Set(['i18n.ts', 'i18n-th.ts', 'api.ts', 'types.ts']);
 
 /** Keys that come from data rather than literals in the code. */
-const EXTRA = ['Modern', 'Minimal', 'Classic', 'Dark', 'Fantasy', 'custom', 'if true', 'otherwise', 'next', 'if match'];
+const EXTRA = ['Modern', 'Minimal', 'Classic', 'Dark', 'Fantasy', 'Soft', 'RPG', 'Romance', 'Horror', 'custom', 'if true', 'otherwise', 'next', 'if match'];
 
 function unquote(q, body) {
   if (q === '"') return JSON.parse(`"${body}"`);

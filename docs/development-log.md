@@ -130,14 +130,77 @@
 - **Build/Release**: installer rebuilt, installed on this PC (upgrade), packaged test passed against the
   installed copy, and `TSTVN-Setup-1.0.0.exe` was copied to the Desktop.
 
+## Update — Game UI / Theme editor
+
+- **Theme model v2** (`shared/types.ts`, `shared/themes.ts`):
+  - **Dialogue box:** anchor, X/Y, width, minimum height, padding, surface, text, text speed.
+  - **Name box:** on/off, inside the box or on its edge, alignment, offset, minimum size.
+  - **Choices:** group position, width/min width/height, spacing, Normal/Hover/Pressed/Disabled styles,
+    hover/press animations.
+  - **Menu bar:** position, direction, and a list of buttons with actions (Auto, Skip, Save, Load,
+    Settings, Hide, Menu).
+  - **Shared:** menus, fonts (system or embedded per element), and accessibility limits. A surface is
+    color + image (stretch/cover/contain/tile) + opacity + border + radius + shadow + blur.
+  - Sizes are design px on a 1920×1080 canvas, or `%`/`vw`/`vh`.
+  - **Presets:** Modern, Minimal, Classic, Dark, Soft, RPG, Romance, Horror, Fantasy.
+- **Migration:**
+  - Version-1 themes are converted on load: sizes ×1.5 from 1280×720 "UI points", single colors
+    become state styles, `position` becomes an anchor.
+  - `ProjectSettings.uiVersion` stops a second migration of `dialogueFontSize`.
+  - `normalizeTheme` repairs damaged or hand-edited theme data by type-checked deep merge.
+- **Layout engine** (`shared/uilayout.ts`):
+  - The runtime and the editor share it: scale factor, unit conversion, readable font floor ×
+    player text size, and placement clamped to the safe area.
+  - Bottom-anchored boxes grow upwards and scroll instead of clipping. Choices get the free band next
+    to the dialogue box.
+  - The safe area is a CSS variable (`--tvn-safe-*`), so the editor can simulate notches.
+- **Runtime:**
+  - Every dialogue/name/choice/menu style comes from theme variables; `runtime.css` no longer hard-codes
+    them.
+  - Scene theme overrides switch through a new `RuntimeHost.sceneChanged`.
+  - Menu bar buttons are built from the theme; added a Skip toggle.
+  - Choice options can be shown disabled ("show when locked").
+  - Player settings gained **Text size** and **High contrast**.
+- **Editor** (`views/ThemesView.tsx`, `views/themes/*`):
+  - The real runtime runs in design mode (all elements and choice states at once) inside a
+    device-sized, scaled iframe.
+  - An overlay offers select, drag, resize handles, align, keyboard nudge, and duplicate/delete of
+    menu buttons. The properties panel covers each element.
+  - Device switcher (6 presets) and a layout check across all devices: overflow, overlap, contrast,
+    touch size.
+  - "Try it" mode, presets are read-only (Edit a copy / Save as Custom Preset), and theme rename and
+    delete.
+  - "Use for whole project" / "Use in scenes…" plus a 🎨 scene theme menu in the Scenes view.
+  - `.tsttheme` export/import (`main/themeIO.ts`): a zip with theme.json, images and fonts. Images are
+    imported as assets under `assets/UI/Themes/<name>/`, and identical images are reused.
+  - Theme images take part in asset usage, replace and remove; validation reports missing theme fonts
+    and missing scene themes.
+- **Errors → root cause → fix**:
+  - The layout check found that several new presets failed WCAG 4.5:1 (e.g. white on `#4f6bff`,
+    see-through menu bars). The colors were tuned, and a unit test now requires every preset to pass.
+  - Menu bar wrapped into 3 rows on desktop (seen in an E2E screenshot): the bar was measured while
+    still absolutely placed near the right edge, so it shrink-wrapped. It is now measured at the
+    top-left before placing.
+  - Intermittent "Thai template created in English" in the full E2E run: `app:setSettings` did an
+    unserialized read-modify-write, and it reset the main-process language from whatever it had read.
+    Writes are now queued, and the language only changes when the patch contains one.
+  - E2E races: the test measured the exported game before its first line appeared, and it assumed
+    the romance template had named speakers. The tests now wait for text and check the dialogue box
+    instead.
+- **Build/Release:**
+  - The installer was rebuilt and copied to the Desktop.
+  - A silent upgrade over the old install removed the old version but did not register the new one
+    (no shortcut or uninstall entry). A clean silent uninstall followed by a fresh install fixed it.
+  - The packaged test passed against the installed copy.
+
 ## Current status
 
 | Check | Result |
 | --- | --- |
 | `npm run lint` | ✅ 0 problems |
 | `npm run typecheck` | ✅ strict, 0 errors |
-| `npm test` | ✅ 50 / 50 |
-| `npm run test:e2e` | ✅ 8 / 8 (acceptance, recovery, backups/missing assets, templates/flow/package, Thai language, fonts, 2 000-asset gallery, packaged editor) |
+| `npm test` | ✅ 75 / 75 |
+| `npm run test:e2e` | ✅ 10 / 10 (acceptance, recovery, backups/missing assets, templates/flow/package, Thai language, fonts, 2 000-asset gallery, packaged editor, Game UI editor, exported themed game) |
 | `npm run build` / `npm run dist` | ✅ |
 
 ## Next steps
@@ -145,4 +208,4 @@
 - Native Android/iOS packaging (wrap the Web export with Capacitor; requires Android Studio / Xcode).
 - Backlog/history screen and rollback in the runtime.
 - Localization (multiple languages per project).
-- Git repository once Git is installed.
+- Git repository (Git is now installed on this PC).
