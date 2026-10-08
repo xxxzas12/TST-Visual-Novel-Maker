@@ -18,6 +18,7 @@ import { BackupsView } from './BackupsView';
 import { Onboarding } from './Onboarding';
 import { AppSettingsButton } from './AppSettings';
 import { AppBrand } from '../components/AppBrand';
+import { WorkspaceMenu } from '../components/WorkspaceMenu';
 
 const NAV: { view: View; icon: string; label: string; tip: string }[] = [
   { view: 'scenes', icon: '🎬', label: 'Scenes', tip: 'Scene editor (Ctrl+1)' },
@@ -148,6 +149,7 @@ export function Shell() {
   const missing = useProject((s) => s.missing);
   const view = useUi((s) => s.view);
   const setView = useUi((s) => s.setView);
+  const compactNav = useUi((s) => s.workspace.compactNav);
   useShortcuts();
   useAutosave();
 
@@ -169,6 +171,7 @@ export function Shell() {
           ↷
         </button>
         <span className="grow" />
+        <WorkspaceMenu />
         <button className="btn sm" onClick={() => void pickAndImportFolder()} title={tr("Import a folder of assets")}>
           {tr("⬆ Import")}
         </button>
@@ -187,11 +190,11 @@ export function Shell() {
         </button>
       </header>
       <div className="main">
-        <nav className="nav" aria-label={tr("Main")}>
+        <nav className={`nav ${compactNav ? 'compact' : ''}`} aria-label={tr("Main")}>
           {NAV.map((n) => (
-            <button key={n.view} className={view === n.view ? 'active' : ''} onClick={() => setView(n.view)} title={tr(n.tip)} data-testid={`nav-${n.view}`}>
-              <span className="ico">{n.icon}</span>
-              {tr(n.label)}
+            <button key={n.view} className={view === n.view ? 'active' : ''} onClick={() => setView(n.view)} title={tr(n.tip)} aria-label={tr(n.label)} data-testid={`nav-${n.view}`}>
+              <span className="ico" aria-hidden>{n.icon}</span>
+              <span className="nav-label">{tr(n.label)}</span>
             </button>
           ))}
         </nav>

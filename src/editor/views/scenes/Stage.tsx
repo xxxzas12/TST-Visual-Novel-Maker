@@ -30,7 +30,7 @@ function selectedTarget(a: Action | undefined): string | null {
 
 type DragMode = 'move' | 'scale' | 'rotate';
 
-export function Stage({ scene, state, sources, selectedAction }: { scene: Scene; state: VisualState; sources: Record<string, string>; selectedAction?: Action }) {
+export function Stage({ scene, state, sources, selectedAction, onFold }: { scene: Scene; state: VisualState; sources: Record<string, string>; selectedAction?: Action; onFold?: () => void }) {
   const project = useProject((s) => s.project)!;
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -39,6 +39,7 @@ export function Stage({ scene, state, sources, selectedAction }: { scene: Scene;
   const [guide, setGuide] = useState(false);
   const [dropping, setDropping] = useState(false);
   const res = project.settings.resolution;
+  const stageShare = useUi((s) => s.workspace.stageShare);
   const assetMap = useMemo(() => new Map(project.assets.map((a) => [a.id, a])), [project.assets]);
   const charMap = useMemo(() => new Map(project.characters.map((c) => [c.id, c])), [project.characters]);
   const target = selectedTarget(selectedAction);
@@ -48,13 +49,13 @@ export function Stage({ scene, state, sources, selectedAction }: { scene: Scene;
     const el = wrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
-      const maxH = Math.max(160, window.innerHeight * 0.38);
+      const maxH = Math.max(160, window.innerHeight * stageShare);
       const w = Math.min(el.clientWidth, (maxH * res.width) / res.height);
       setSize({ w, h: (w * res.height) / res.width });
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [res.width, res.height]);
+  }, [res.width, res.height, stageShare]);
 
   /** The action whose parameters control a stage element (what dragging edits). */
   const sourceAction = (key: string): Action | undefined => {
@@ -170,6 +171,11 @@ export function Stage({ scene, state, sources, selectedAction }: { scene: Scene;
         <button className="btn sm primary" onClick={playFromHere} title={tr("Play from the selected action (Shift+F5)")} data-testid="play-from-here">
           {tr("▶ Play From Here")}
         </button>
+        {onFold && (
+          <button className="btn ghost sm" onClick={onFold} title={tr("Fold the stage preview")} data-testid="fold-stage">
+            {tr("▴ Fold")}
+          </button>
+        )}
       </div>
       <div ref={wrapRef} style={{ width: '100%' }}>
         <div

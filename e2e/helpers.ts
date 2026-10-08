@@ -17,11 +17,11 @@ export function electronEnv(extra: Record<string, string> = {}): Record<string, 
   return { ...env, ...extra };
 }
 
-export async function launchEditor(): Promise<{ app: ElectronApplication; page: Page; errors: string[] }> {
+export async function launchEditor(opts: { userData?: string } = {}): Promise<{ app: ElectronApplication; page: Page; errors: string[] }> {
   const app = await electron.launch({
     args: [ROOT],
     cwd: ROOT,
-    env: electronEnv({ TSTVN_E2E: '1', TSTVN_USER_DATA: path.join(TMP, 'userdata') }),
+    env: electronEnv({ TSTVN_E2E: '1', TSTVN_USER_DATA: opts.userData ?? path.join(TMP, 'userdata') }),
   });
   const page = await app.firstWindow();
   const errors: string[] = [];

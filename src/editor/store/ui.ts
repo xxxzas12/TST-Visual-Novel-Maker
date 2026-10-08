@@ -7,6 +7,7 @@ import { DEFAULT_UI_FONT_SIZE, type Appearance } from '../appearance';
 import type { PluginContributions } from '../../shared/plugins';
 import { autosaveConfig, type AutosaveConfig } from '../../shared/autosave';
 import { api } from '../api';
+import { defaultLayout, workspaceLayout, type CustomWorkspace, type WorkspaceLayout } from '../../shared/workspace';
 
 export type AppSettingsSection = 'general' | 'interface' | 'logo' | 'plugins' | 'autosave' | 'about';
 
@@ -90,6 +91,9 @@ export interface UiState {
   plugins: PluginContributions;
   /** Autosave settings in effect (Application Settings → Autosave & recovery). */
   autosave: AutosaveConfig;
+  /** Scene editor layout (saved in Application Settings). */
+  workspace: WorkspaceLayout;
+  customWorkspaces: CustomWorkspace[];
   openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
@@ -138,6 +142,8 @@ export const useUi = create<UiState>((set, get) => ({
   appLogo: null,
   plugins: { themes: [], actionTemplates: [] },
   autosave: autosaveConfig({}),
+  workspace: defaultLayout(),
+  customWorkspaces: [],
   openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),
@@ -180,4 +186,25 @@ export function applyLanguage(lang: Lang) {
   setLanguage(lang);
   document.documentElement.lang = lang;
   useUi.setState({ language: lang });
+}
+
+let saveLayoutTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Changes the editor layout and remembers it (saved shortly after the last change, e.g. while dragging a splitter). */
+export function setWorkspace(patch: Partial<WorkspaceLayout>) {
+  const workspace = { ...useUi.getState().workspace, ...patch };
+  useUi.setState({ workspace });
+  clearTimeout(saveLayoutTimer);
+  saveLayoutTimer = setTimeout(() => void api.app.setSettings({ workspace: useUi.getState().workspace }).catch(() => undefined), 400);
+}
+
+/** Switches to a preset or saved workspace. */
+export function applyWorkspace(id: string) {
+  const layout = workspaceLayout(id, useUi.getState().customWorkspaces);
+  if (layout) setWorkspace(layout);
+}
+
+export function setCustomWorkspaces(customWorkspaces: CustomWorkspace[]) {
+  useUi.setState({ customWorkspaces });
+  void api.app.setSettings({ customWorkspaces }).catch(() => undefined);
 }

@@ -2,6 +2,14 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.12
+### Added
+- Editor workspace (UI/UX Phase 1): drag the dividers to resize the scene list, the properties panel and
+  the stage; fold panels into thin bars that reopen with one click; hide panels; put Properties on the left;
+  icon-only sidebar.
+- "🪟 Workspace" menu with presets — Default, Writing, Scene Design, Art / Assets — and "Save current layout
+  as a workspace…". The layout is remembered between sessions.
+
 ## v1.0.11
 ### Added
 - Story Flow: broken connections (jumps, choices, conditions, point & click objects pointing to a scene,

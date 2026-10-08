@@ -9,6 +9,7 @@ import { PreviewModal } from './views/PreviewModal';
 import { AppSettingsDialog } from './views/AppSettings';
 import { api } from './api';
 import { autosaveConfig } from '../shared/autosave';
+import { normalizeCustomWorkspaces, normalizeLayout } from '../shared/workspace';
 import { applyLook, DEFAULT_UI_FONT_SIZE, registerCustomFonts } from './appearance';
 
 export function App() {
@@ -37,6 +38,8 @@ export function App() {
         uiFontSize: s.uiFontSize ?? Math.round(DEFAULT_UI_FONT_SIZE * (s.uiScale ?? 1)),
         appearance: s.appearance ?? 'dark',
         autosave: autosaveConfig(s),
+        workspace: normalizeLayout(s.workspace),
+        customWorkspaces: normalizeCustomWorkspaces(s.customWorkspaces),
       });
       applyLanguage(s.language === 'th' ? 'th' : 'en');
     });

@@ -1,5 +1,6 @@
 // Contract between the Electron main process and the editor renderer.
 import type { Asset, AssetType, MediaKind, Project, Theme } from './types';
+import type { CustomWorkspace, WorkspaceLayout } from './workspace';
 import type { Issue } from './validate';
 import type { PluginContributions, PluginInfo } from './plugins';
 
@@ -23,6 +24,10 @@ export interface AppSettings {
   /** Editor UI base font size in px (default 14). */
   uiFontSize?: number;
   appearance?: 'dark' | 'light' | 'system';
+  /** Scene editor layout (panels, sizes, sides). */
+  workspace?: WorkspaceLayout;
+  /** Workspaces saved by the user. */
+  customWorkspaces?: CustomWorkspace[];
 }
 
 export interface SystemFont {

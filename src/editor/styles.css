@@ -794,10 +794,17 @@ h3 {
 
 /* ---------- scene editor ---------- */
 .scene-layout {
-  display: grid;
-  grid-template-columns: 17rem 1fr 22rem;
+  display: flex;
   height: 100%;
   min-height: 0;
+}
+.scene-layout > .left-pane,
+.scene-layout > .props {
+  flex: none;
+  min-width: 0;
+}
+.scene-layout > .center-pane {
+  flex: 1;
 }
 .left-pane {
   display: flex;
@@ -2021,3 +2028,168 @@ h3 {
   border-bottom: 1px solid var(--line);
   background: var(--bg1);
 }
+
+/* ---------- workspace: splitters, folded panels ---------- */
+.splitter {
+  flex: none;
+  position: relative;
+  background: var(--line);
+  z-index: 2;
+}
+.splitter-x {
+  width: 4px;
+  cursor: col-resize;
+}
+.splitter-y {
+  height: 4px;
+  cursor: row-resize;
+}
+.splitter:hover,
+.splitter:focus-visible {
+  background: var(--accent);
+  outline: none;
+}
+/* A larger invisible grab area. */
+.splitter::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+body.resizing-x,
+body.resizing-x * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+body.resizing-y,
+body.resizing-y * {
+  cursor: row-resize !important;
+  user-select: none;
+}
+.scene-layout > .left-pane,
+.scene-layout > .props {
+  border-left: 0;
+  border-right: 0;
+}
+.panel-rail {
+  flex: none;
+  width: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border: 0;
+  background: var(--bg1);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+.panel-rail-left {
+  border-right: 1px solid var(--line);
+}
+.panel-rail-right {
+  border-left: 1px solid var(--line);
+}
+.panel-rail:hover,
+.panel-rail:focus-visible {
+  background: var(--bg3);
+  color: var(--text);
+}
+.panel-rail-label {
+  writing-mode: vertical-rl;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.panel-head {
+  position: sticky;
+  top: -0.8rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.8rem -0.8rem 0.6rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.8rem;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.stage-folded {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg1);
+  color: var(--muted);
+  padding: 0.4rem 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+}
+.stage-folded:hover {
+  color: var(--text);
+  background: var(--bg3);
+}
+.nav.compact {
+  width: 3.2rem;
+}
+.nav.compact button {
+  padding: 0.55rem 0.2rem;
+}
+.nav.compact .nav-label {
+  display: none;
+}
+.menu-pop {
+  position: fixed;
+  z-index: 60;
+  min-width: 17rem;
+  max-height: 80vh;
+  overflow: auto;
+  padding: 0.35rem;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.menu-pop .menu-head {
+  padding: 0.45rem 0.6rem 0.2rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.menu-pop .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.menu-pop .menu-item:hover,
+.menu-pop .menu-item:focus-visible {
+  background: var(--bg3);
+  outline: none;
+}
+.menu-pop .menu-item .tick {
+  width: 1rem;
+  flex: none;
+  color: var(--accent);
+}
+.menu-pop .menu-item small {
+  display: block;
+  color: var(--faint);
+}
+.menu-pop hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0.3rem 0;
+}
+
