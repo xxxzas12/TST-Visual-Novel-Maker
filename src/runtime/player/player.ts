@@ -1,7 +1,7 @@
 import type { GameData, MenuAction, Theme } from '../../shared/types';
 import { choiceRegion, choiceWidth, layoutDialog, lengthPx, makeContext, placeBox, placeChoices, themeVars, type UiContext } from '../../shared/uilayout';
 import { charBoxStyle, fitStage, imageBoxStyle } from '../../shared/stage';
-import { Engine, type AnimateCommand, type AudioCommand, type ChoiceView, type DialogueView, type RuntimeHost } from '../core/engine';
+import { Engine, type AnimateCommand, type AudioCommand, type ChoiceView, type DialogueView, type HotspotView, type RuntimeHost } from '../core/engine';
 import { stateBeforeAction, type ChangeHint, type CharState, type ImageState, type VisualState } from '../core/state';
 import { AudioManager } from './audio';
 import { emphasisFrames, enterFrames, exitFrames, play, transitionInFrames, transitionOutFrames } from './animate';
@@ -480,7 +480,7 @@ export class Player implements RuntimeHost {
     if (inField || this.menu || this.screen !== 'game') return;
     if (this.choiceActive) {
       const n = parseInt(e.key, 10);
-      const btns = [...this.choicesEl.querySelectorAll('button')].filter((b) => !b.disabled);
+      const btns = [...this.root.querySelectorAll<HTMLButtonElement>('.tvn-choices button, .tvn-hotspots button')].filter((b) => !b.disabled);
       if (n >= 1 && n <= btns.length) btns[n - 1].click();
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -582,6 +582,7 @@ export class Player implements RuntimeHost {
   // ---------------------------------------------------------------- screens
 
   private clearStage() {
+    this.root.querySelectorAll('.tvn-hotspot-prompt').forEach((e) => e.remove());
     this.bgLayer.replaceChildren();
     this.stage.replaceChildren();
     this.cgLayer.replaceChildren();
@@ -604,6 +605,8 @@ export class Player implements RuntimeHost {
       this.choicesEl.classList.add('tvn-hidden');
     }
     this.screenEl.classList.toggle('tvn-hidden', inGame);
+    // The menu bar is measured to be placed; it has no size while hidden, so place it now that it shows.
+    if (inGame) this.layout();
   }
 
   showTitle() {
@@ -1131,6 +1134,49 @@ export class Player implements RuntimeHost {
       this.choicesEl.classList.remove('tvn-hidden');
       this.fitChoices();
       buttons.find((b) => !b.disabled)?.focus({ preventScroll: true });
+    });
+  }
+
+  /** Point & Click: clickable areas on the stage (positions in % of the game's stage). */
+  async hotspots(v: HotspotView): Promise<number> {
+    await this.liftBlackout();
+    this.skipMode = false;
+    this.updateQuickState();
+    this.choiceActive = true;
+    this.dialog.classList.add('tvn-hidden');
+    this.emit('hotspots', v);
+    return new Promise((resolve) => {
+      const layer = h('div', { class: 'tvn-hotspots', 'data-testid': 'tvn-hotspots' });
+      const prompt = v.prompt ? h('div', { class: 'tvn-hotspot-prompt', 'data-testid': 'tvn-hotspot-prompt', role: 'status' }, v.prompt) : null;
+      const done = (i: number) => {
+        this.choiceActive = false;
+        layer.remove();
+        prompt?.remove();
+        resolve(i);
+      };
+      v.hotspots.forEach((hs, i) => {
+        const url = this.assetUrl(hs.assetId);
+        const b = h(
+          'button',
+          {
+            class: `tvn-hotspot${url ? ' tvn-hotspot-image' : ''}`,
+            title: hs.label,
+            'aria-label': hs.label,
+            'data-testid': `tvn-hotspot-${i}`,
+            onclick: (e: Event) => {
+              e.stopPropagation();
+              done(i);
+            },
+          },
+          url ? h('img', { src: url, alt: '', draggable: 'false', crossorigin: this.opts.corsImages ? 'anonymous' : undefined }) : null,
+          h('span', { class: 'tvn-hotspot-label' }, hs.label),
+        );
+        applyStyle(b, { left: `${hs.x}%`, top: `${hs.y}%`, width: `${hs.w}%`, height: `${hs.h}%` });
+        layer.append(b);
+      });
+      this.stage.append(layer);
+      if (prompt) this.safe.append(prompt);
+      (layer.querySelector('button') as HTMLButtonElement | null)?.focus({ preventScroll: true });
     });
   }
 

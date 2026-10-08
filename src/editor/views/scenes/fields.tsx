@@ -1,6 +1,6 @@
 import { t as tr } from '../../../shared/i18n';
 import { useMemo, useState } from 'react';
-import type { AnimFrame, Asset, ChoiceOption, CompareOp, Condition, JumpTarget, Project, Scene, TextStyle, Variable } from '../../../shared/types';
+import type { AnimFrame, Asset, ChoiceOption, Hotspot, CompareOp, Condition, JumpTarget, Project, Scene, TextStyle, Variable } from '../../../shared/types';
 import type { FieldSpec } from '../../../shared/actions';
 import { getActionDef, isKnownActionType } from '../../../shared/actions';
 import { newId } from '../../../shared/ids';
@@ -324,6 +324,80 @@ function ChoiceOptionsEditor({ value, onChange, scene }: { value: ChoiceOption[]
   );
 }
 
+const HOTSPOT_IMAGE: Extract<FieldSpec, { kind: 'asset' }> = { key: 'assetId', label: 'Image (optional)', kind: 'asset', assetTypes: ['ui', 'cg', 'character', 'portrait', 'unknown'], media: 'image' };
+
+/** Point & Click objects: name, area (% of the stage — also draggable on the stage), image, target, condition, variable. */
+function HotspotsEditor({ value, onChange, scene }: { value: Hotspot[]; onChange: (v: Hotspot[]) => void; scene: Scene }) {
+  const list = value ?? [];
+  const vars = useProject((s) => s.project?.variables ?? []);
+  const set = (i: number, h: Hotspot) => onChange(list.map((x, j) => (j === i ? h : x)));
+  const num = (i: number, h: Hotspot, k: 'x' | 'y' | 'w' | 'h', label: string) => (
+    <label className="small" style={{ display: 'grid', gap: 2 }}>
+      {label}
+      <NumberInput value={h[k]} min={0} max={100} step={1} onChange={(v) => set(i, { ...h, [k]: Math.max(0, Math.min(100, v)) })} />
+    </label>
+  );
+  return (
+    <div className="col">
+      <div className="small faint">{tr("Drag the boxes on the stage to place them (drag the corner to resize).")}</div>
+      {list.map((h, i) => (
+        <div key={h.id} className="sub-card" data-testid={`hotspot-${i}`}>
+          <div className="row">
+            <b className="small">👆 {tr("Object {n}", { n: i + 1 })}</b>
+            <span className="grow" />
+            <button className="btn sm ghost icon" onClick={() => onChange(list.filter((_, j) => j !== i))} title={tr("Remove object")} aria-label={tr("Remove object")}>
+              ✕
+            </button>
+          </div>
+          <input className="input" value={h.label} onChange={(e) => set(i, { ...h, label: e.target.value })} placeholder={tr("Name shown on hover (e.g. Door)")} data-testid={`hotspot-label-${i}`} />
+          <div className="row" style={{ gap: '0.4rem' }}>
+            {num(i, h, 'x', 'X %')}
+            {num(i, h, 'y', 'Y %')}
+            {num(i, h, 'w', tr("Width %"))}
+            {num(i, h, 'h', tr("Height %"))}
+          </div>
+          <AssetField spec={HOTSPOT_IMAGE} value={h.assetId ?? ''} onChange={(assetId) => set(i, { ...h, assetId: assetId || undefined })} />
+          <span className="field-label">{tr("When clicked, go to")}</span>
+          <TargetEditor value={h.target} allowNext scene={scene} onChange={(target) => set(i, { ...h, target })} />
+          {h.variableId !== undefined ? (
+            <>
+              <span className="field-label">{tr("and set variable")}</span>
+              <div className="row" style={{ gap: '0.4rem' }}>
+                <VariableSelect value={h.variableId} onChange={(variableId) => set(i, { ...h, variableId })} />
+                <VarValueInput variable={vars.find((v) => v.id === h.variableId)} value={h.value} onChange={(value) => set(i, { ...h, value })} />
+                <button className="btn sm ghost icon" onClick={() => set(i, { ...h, variableId: undefined, value: undefined })} title={tr("Remove")} aria-label={tr("Remove")}>
+                  ✕
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => set(i, { ...h, variableId: vars[0]?.id ?? '', value: true })} data-testid={`hotspot-setvar-${i}`}>
+              {tr("＋ Also set a variable…")}
+            </button>
+          )}
+          {h.condition ? (
+            <>
+              <span className="field-label">{tr("Only clickable if")}</span>
+              <ConditionRow c={h.condition} onChange={(condition) => set(i, { ...h, condition })} onRemove={() => set(i, { ...h, condition: null })} />
+            </>
+          ) : (
+            <button className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => set(i, { ...h, condition: { variableId: '', op: '==', value: true } })}>
+              {tr("＋ Show only if…")}
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        className="btn sm"
+        onClick={() => onChange([...list, { id: newId('h'), label: tr("Object {n}", { n: list.length + 1 }), x: 40, y: 40, w: 20, h: 20, target: { kind: 'next' }, condition: null }])}
+        data-testid="add-hotspot"
+      >
+        {tr("＋ Add clickable object")}
+      </button>
+    </div>
+  );
+}
+
 function TextStyleEditor({ value, onChange }: { value: TextStyle; onChange: (v: TextStyle) => void }) {
   const s = value ?? {};
   return (
@@ -501,6 +575,12 @@ export function FieldRenderer({ spec, params, onPatch, scene }: { spec: FieldSpe
       return (
         <FieldRow label={tr(spec.label)}>
           <TargetEditor value={value} onChange={(t) => set(t)} allowNext={spec.allowNext} scene={scene} />
+        </FieldRow>
+      );
+    case 'hotspots':
+      return (
+        <FieldRow label={tr(spec.label)}>
+          <HotspotsEditor value={value} onChange={(v) => set(v, 'hotspots')} scene={scene} />
         </FieldRow>
       );
     case 'choiceOptions':

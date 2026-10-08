@@ -1,6 +1,6 @@
 import { t as tr } from '../../../shared/i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Action, Project, Scene } from '../../../shared/types';
+import type { Action, Project, Scene, Hotspot } from '../../../shared/types';
 import { charBoxStyle, imageBoxStyle, POSITION_X } from '../../../shared/stage';
 import { stateBeforeAction, type VisualState } from '../../../runtime/core/state';
 import { assetUrl } from '../../assetUrl';
@@ -243,6 +243,47 @@ export function Stage({ scene, state, sources, selectedAction }: { scene: Scene;
               <img src={assetUrl(assetMap.get(state.cg)!)} alt="CG" />
             </div>
           )}
+          {selectedAction?.type === 'pointAndClick' &&
+            ((selectedAction.params.hotspots ?? []) as Hotspot[]).map((h, i) => {
+              const img = h.assetId ? assetMap.get(h.assetId) : undefined;
+              const drag = (e: React.PointerEvent, mode: 'move' | 'size') => {
+                e.stopPropagation();
+                e.preventDefault();
+                const x0 = e.clientX;
+                const y0 = e.clientY;
+                const start = { ...h };
+                const onMove = (ev: PointerEvent) => {
+                  const dx = ((ev.clientX - x0) / size.w) * 100;
+                  const dy = ((ev.clientY - y0) / size.h) * 100;
+                  const next =
+                    mode === 'move'
+                      ? { x: Math.max(0, Math.min(100 - start.w, snapVal(start.x + dx, 1))), y: Math.max(0, Math.min(100 - start.h, snapVal(start.y + dy, 1))) }
+                      : { w: Math.max(2, Math.min(100 - start.x, snapVal(start.w + dx, 1))), h: Math.max(2, Math.min(100 - start.y, snapVal(start.h + dy, 1))) };
+                  const list = ((selectedAction.params.hotspots ?? []) as Hotspot[]).map((x) => (x.id === h.id ? { ...x, ...next } : x));
+                  updateActionParams(scene.id, selectedAction.id, { hotspots: list }, `hotspot:${h.id}`);
+                };
+                const onUp = () => {
+                  window.removeEventListener('pointermove', onMove);
+                  window.removeEventListener('pointerup', onUp);
+                };
+                window.addEventListener('pointermove', onMove);
+                window.addEventListener('pointerup', onUp);
+              };
+              return (
+                <div
+                  key={h.id}
+                  className="stage-hotspot"
+                  style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%` }}
+                  onPointerDown={(e) => drag(e, 'move')}
+                  title={tr("{0} — drag to move", { 0: h.label })}
+                  data-testid={`stage-hotspot-${i}`}
+                >
+                  {img && <img src={assetUrl(img)} alt="" draggable={false} />}
+                  <span className="stage-hotspot-label">{h.label || '?'}</span>
+                  <span className="stage-hotspot-size" onPointerDown={(e) => drag(e, 'size')} title={tr("Drag to resize")} data-testid={`stage-hotspot-size-${i}`} />
+                </div>
+              );
+            })}
           {guide && <div className="stage-guide" style={{ left: '50%' }} />}
           {dialogueText !== null && dialogueText !== undefined && (
             <div className="stage-dialog">

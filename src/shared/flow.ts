@@ -50,6 +50,9 @@ export function deriveFlowEdges(p: Project): FlowEdge[] {
         case 'choice':
           (a.params.options ?? []).forEach((o: any) => add(sceneOfTarget(p, s.id, o.target), o.text, 'choice', `:${o.id}`));
           break;
+        case 'pointAndClick':
+          (a.params.hotspots ?? []).forEach((h: any) => add(sceneOfTarget(p, s.id, h.target), h.label, 'choice', `:${h.id}`));
+          break;
         case 'conditional':
           add(sceneOfTarget(p, s.id, a.params.then), 'if true', 'condition', ':then');
           add(sceneOfTarget(p, s.id, a.params.else), 'otherwise', 'condition', ':else');

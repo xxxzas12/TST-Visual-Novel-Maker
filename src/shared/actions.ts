@@ -31,6 +31,7 @@ export type FieldSpec =
   | { key: string; label: string; kind: 'color' }
   | { key: string; label: string; kind: 'target'; allowNext?: boolean }
   | { key: string; label: string; kind: 'choiceOptions' }
+  | { key: string; label: string; kind: 'hotspots' }
   | { key: string; label: string; kind: 'conditions' }
   | { key: string; label: string; kind: 'textStyle' }
   | { key: string; label: string; kind: 'customAnimation' }
@@ -162,6 +163,30 @@ export const ACTION_DEFS: ActionDef[] = [
     summary: (p, ctx) =>
       `${p.question ? `${cut(p.question, 30)} ` : ''}[${(p.options ?? [])
         .map((o: any) => `${cut(o.text, 18)} → ${describeTarget(o.target, ctx)}`)
+        .join(' | ')}]`,
+  },
+  {
+    type: 'pointAndClick',
+    label: 'Point & Click',
+    category: 'story',
+    alsoIn: ['flow'],
+    icon: '👆',
+    description: 'Clickable objects on the stage: each one can go somewhere and set a variable.',
+    keywords: ['point and click', 'hotspot', 'click', 'investigate', 'interactive', 'object', 'explore'],
+    fields: [
+      { key: 'prompt', label: 'Hint shown to the player (optional)', kind: 'text', placeholder: 'Look around…' },
+      { key: 'hotspots', label: 'Clickable objects', kind: 'hotspots' },
+    ],
+    defaults: () => ({
+      prompt: '',
+      hotspots: [
+        { id: newId('h'), label: 'Door', x: 10, y: 20, w: 20, h: 55, target: { kind: 'next' }, condition: null },
+        { id: newId('h'), label: 'Window', x: 60, y: 15, w: 25, h: 30, target: { kind: 'next' }, condition: null },
+      ],
+    }),
+    summary: (p, ctx) =>
+      `${p.prompt ? `${cut(p.prompt, 30)} ` : ''}[${(p.hotspots ?? [])
+        .map((h: any) => `${cut(h.label, 16)} → ${describeTarget(h.target, ctx)}`)
         .join(' | ')}]`,
   },
   {
@@ -647,6 +672,9 @@ export function cloneActions(actions: Action[]): Action[] {
     copy.id = newId('a');
     if (copy.type === 'choice' && Array.isArray(copy.params.options)) {
       copy.params.options = copy.params.options.map((o: any) => ({ ...o, id: newId('o') }));
+    }
+    if (copy.type === 'pointAndClick' && Array.isArray(copy.params.hotspots)) {
+      copy.params.hotspots = copy.params.hotspots.map((h: any) => ({ ...h, id: newId('h') }));
     }
     return copy;
   });

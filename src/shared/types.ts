@@ -78,6 +78,24 @@ export interface ChoiceOption {
   showLocked?: boolean;
 }
 
+/** A clickable area of a Point & Click action (position and size in % of the stage). */
+export interface Hotspot {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Optional image drawn in the area (an object to click, e.g. a key). */
+  assetId?: string;
+  target: JumpTarget;
+  /** Only clickable (and visible) while the condition holds. */
+  condition?: Condition | null;
+  /** Optional: set a variable when clicked (e.g. has_key = true). */
+  variableId?: string;
+  value?: string | number | boolean;
+}
+
 export interface TextStyle {
   bold?: boolean;
   italic?: boolean;
@@ -104,6 +122,7 @@ export type ActionType =
   | 'dialogue'
   | 'narration'
   | 'choice'
+  | 'pointAndClick'
   | 'jumpScene'
   | 'endGame'
   // visual

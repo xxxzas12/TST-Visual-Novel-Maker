@@ -2,6 +2,7 @@ import type { Action, GameData, GameScene, JumpTarget, TextStyle } from '../../s
 import {
   applyStateAction,
   applyVarAction,
+  coerceValue,
   emptyVisualState,
   initialVars,
   stateBeforeAction,
@@ -27,6 +28,12 @@ export interface ChoiceView {
   question: string;
   /** disabled = condition not met, shown greyed out ("show when locked"). */
   options: { text: string; disabled?: boolean }[];
+}
+
+/** Point & Click: clickable areas in % of the stage. */
+export interface HotspotView {
+  prompt: string;
+  hotspots: { label: string; x: number; y: number; w: number; h: number; assetId?: string }[];
 }
 
 export type AudioCommand =
@@ -58,6 +65,8 @@ export interface RuntimeHost {
   /** endingId = the End Game action (for the Ending gallery); absent when the story simply runs out. */
   end(message: string, endingId?: string): Promise<void>;
   error(message: string): void;
+  /** Point & Click; returns the index of the clicked hotspot. Hosts without it get a Choice instead. */
+  hotspots?(view: HotspotView): Promise<number>;
   /** The story entered another scene (scene themes). */
   sceneChanged?(sceneId: string): void;
 }
@@ -290,6 +299,22 @@ export class Engine {
         let opt = visible[Math.max(0, Math.min(pick, visible.length - 1))];
         if (!met(opt)) opt = visible.find(met)!;
         return this.jumpOrNext(opt.target, scene) ?? 'blocked';
+      }
+      case 'pointAndClick': {
+        const visible = ((p.hotspots ?? []) as any[]).filter((h) => !h.condition || evalCondition(h.condition, this.vars, this.game.variables));
+        if (!visible.length) return undefined;
+        this.lastText = p.prompt ?? this.lastText;
+        await host.saveMenu('auto');
+        const view: HotspotView = {
+          prompt: interpolate(p.prompt ?? '', this.vars, this.game.variables),
+          hotspots: visible.map((h) => ({ label: interpolate(h.label ?? '', this.vars, this.game.variables), x: h.x, y: h.y, w: h.w, h: h.h, assetId: h.assetId || undefined })),
+        };
+        const pick = host.hotspots ? await host.hotspots(view) : await host.choice({ question: view.prompt, options: view.hotspots.map((h) => ({ text: h.label })) });
+        if (id !== this.runId) return 'stop';
+        const hs = visible[Math.max(0, Math.min(pick, visible.length - 1))];
+        const v = hs.variableId ? this.game.variables.find((x) => x.id === hs.variableId) : undefined;
+        if (v) this.vars = { ...this.vars, [v.id]: coerceValue(v.type, hs.value) };
+        return this.jumpOrNext(hs.target, scene) ?? 'blocked';
       }
       case 'jumpScene':
         if (!p.sceneId || !this.sceneMap.has(p.sceneId)) throw new Error(`“${scene.name}” jumps to a scene that no longer exists.`);

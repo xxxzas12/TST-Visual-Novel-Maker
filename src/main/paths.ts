@@ -58,12 +58,30 @@ export function safeName(name: string, fallback = 'Untitled'): string {
   return cleaned.slice(0, 120);
 }
 
-/** Atomic write: write to a temp file then rename over the target. */
-export async function writeFileAtomic(file: string, data: string | Uint8Array): Promise<void> {
+const TRANSIENT_FS_ERRORS = new Set(['EPERM', 'EACCES', 'EBUSY']);
+
+/**
+ * Atomic write: write to a temp file then rename over the target. On Windows the rename fails for a
+ * moment while another reader (our own reads, antivirus, the indexer) has the target open, so a
+ * transient lock is retried briefly instead of failing the save.
+ */
+export async function writeFileAtomic(file: string, data: string | Uint8Array, retries = 8): Promise<void> {
   await fs.mkdir(path.dirname(file), { recursive: true });
-  const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
+  const tmp = `${file}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
   await fs.writeFile(tmp, data);
-  await fs.rename(tmp, file);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await fs.rename(tmp, file);
+      return;
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code ?? '';
+      if (!TRANSIENT_FS_ERRORS.has(code) || attempt >= retries) {
+        await fs.rm(tmp, { force: true });
+        throw e;
+      }
+      await new Promise((r) => setTimeout(r, 25 * (attempt + 1)));
+    }
+  }
 }
 
 /** Recursively list files under a directory (absolute paths). */

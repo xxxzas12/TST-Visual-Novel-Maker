@@ -157,10 +157,12 @@ function registerIpc() {
   // while the user picks a language) must not overwrite each other with stale data.
   let settingsQueue: Promise<unknown> = Promise.resolve();
   handle('app:setSettings', (_e, patch: Partial<AppSettings>) => {
+    // Apply the language at once, before any disk I/O: requests are handled in the order they arrive,
+    // so a "create project" sent right after switching language always sees the new language.
+    if (patch.language) setLanguage(patch.language);
     const job = settingsQueue.then(async () => {
       const next = { ...DEFAULT_SETTINGS, ...(await store.readJson<Partial<AppSettings>>('settings.json', {})), ...patch };
       await store.writeJson('settings.json', next);
-      if (patch.language) setLanguage(patch.language);
       return next;
     });
     settingsQueue = job.catch(() => undefined);

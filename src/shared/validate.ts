@@ -1,4 +1,4 @@
-import type { Action, JumpTarget, Project, Theme } from './types';
+import type { Action, Hotspot, JumpTarget, Project, Theme } from './types';
 import { getActionDef, isKnownActionType } from './actions';
 import { t } from './i18n';
 import { forEachThemeImage, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
@@ -11,6 +11,11 @@ export interface Issue {
   sceneId?: string;
   actionId?: string;
   assetId?: string;
+}
+
+/** Hotspots of a Point & Click action (empty for other actions). */
+export function hotspotsOf(a: Action): Hotspot[] {
+  return a.type === 'pointAndClick' && Array.isArray(a.params?.hotspots) ? a.params.hotspots : [];
 }
 
 /** Asset ids directly referenced by an action's params. */
@@ -31,6 +36,7 @@ export function collectUsedAssetIds(p: Project, includeDisabled = false): Set<st
     for (const a of s.actions) {
       if (a.disabled && !includeDisabled) continue;
       directAssetRefs(a).forEach((id) => used.add(id));
+      for (const h of hotspotsOf(a)) if (h.assetId) used.add(h.assetId);
       const cid = a.params?.characterId ?? a.params?.speaker;
       if (cid && charMap.has(cid)) {
         // The runtime may show any expression of a character on stage, so include them all.
@@ -64,7 +70,7 @@ export function findAssetUsages(p: Project, assetId: string): AssetUsage[] {
   const out: AssetUsage[] = [];
   for (const s of p.scenes) {
     s.actions.forEach((a, i) => {
-      if (directAssetRefs(a).includes(assetId)) {
+      if (directAssetRefs(a).includes(assetId) || hotspotsOf(a).some((h) => h.assetId === assetId)) {
         out.push({ where: 'action', sceneId: s.id, sceneName: s.name, actionId: a.id, label: `${s.name} › #${i + 1} ${isKnownActionType(a.type) ? t(getActionDef(a.type).label) : a.type}` });
       }
     });
@@ -91,6 +97,12 @@ export function replaceAssetReferences(p: Project, fromId: string, toId: string)
       for (const k of ASSET_PARAM_KEYS) {
         if (a.params?.[k] === fromId) {
           a.params[k] = toId;
+          n++;
+        }
+      }
+      for (const h of hotspotsOf(a)) {
+        if (h.assetId === fromId) {
+          h.assetId = toId;
           n++;
         }
       }
@@ -126,6 +138,12 @@ export function removeAssetReferences(p: Project, assetId: string): number {
       for (const k of ASSET_PARAM_KEYS) {
         if (a.params?.[k] === assetId) {
           a.params[k] = '';
+          n++;
+        }
+      }
+      for (const h of hotspotsOf(a)) {
+        if (h.assetId === assetId) {
+          h.assetId = undefined;
           n++;
         }
       }
@@ -255,6 +273,19 @@ export function validateProject(p: Project, fileExists?: (relPath: string) => bo
           if (!String(o.text ?? '').trim()) push(t('Choice option {n} has no text.', { n: i + 1 }), 'warning');
           checkTarget(p, o.target, (m) => push(`${t('Choice option {n}', { n: i + 1 })}: ${m}`), true);
           if (o.condition && !varMap.has(o.condition.variableId)) push(t('Choice option {n}: condition variable is missing.', { n: i + 1 }));
+        });
+      }
+      if (a.type === 'pointAndClick') {
+        const hs = hotspotsOf(a);
+        if (hs.length === 0) push(t('Point & Click has no clickable objects.'));
+        hs.forEach((h, i) => {
+          const name = h.label?.trim() || t('Object {n}', { n: i + 1 });
+          if (!h.label?.trim()) push(t('Point & Click object {n} has no name.', { n: i + 1 }), 'warning');
+          if (!(h.w > 0 && h.h > 0)) push(t('{name}: the clickable area has no size.', { name }));
+          checkTarget(p, h.target, (m) => push(`${name}: ${m}`), true);
+          if (h.condition && !varMap.has(h.condition.variableId)) push(t('{name}: condition variable is missing.', { name }));
+          if (h.variableId && !varMap.has(h.variableId)) push(t('{name}: the variable to set is missing.', { name }));
+          if (h.assetId && !assetMap.has(h.assetId)) push(t('{name}: the image was removed.', { name }));
         });
       }
       if (a.type === 'conditional') {

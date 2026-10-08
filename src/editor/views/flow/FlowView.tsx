@@ -172,6 +172,10 @@ export function FlowView() {
             const optId = d.id.split(':')[1];
             const o = a.params.options.find((x: any) => x.id === optId);
             if (o) o.target = { kind: 'next' };
+          } else if (a.type === 'pointAndClick') {
+            const hid = d.id.split(':')[1];
+            const h = a.params.hotspots.find((x: any) => x.id === hid);
+            if (h) h.target = { kind: 'next' };
           } else if (a.type === 'conditional') {
             const side = d.id.endsWith(':then') ? 'then' : 'else';
             a.params[side] = { kind: 'next' };

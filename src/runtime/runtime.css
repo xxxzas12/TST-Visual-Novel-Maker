@@ -814,3 +814,81 @@ button.tvn-gallery-item:focus-visible {
   font: 14px system-ui, sans-serif;
   color: #fff;
 }
+
+/* ---------- point & click ---------- */
+.tvn-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+}
+.tvn-hotspot {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font: 600 14px system-ui, sans-serif;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.tvn-hotspot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+.tvn-hotspot:hover,
+.tvn-hotspot:focus-visible {
+  border-color: var(--tvn-accent, #4f6bff);
+  background-color: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+.tvn-hotspot-image:hover,
+.tvn-hotspot-image:focus-visible {
+  background-color: transparent;
+  filter: drop-shadow(0 0 8px var(--tvn-accent, #4f6bff));
+}
+.tvn-hotspot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -4px);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.tvn-hotspot:hover .tvn-hotspot-label,
+.tvn-hotspot:focus-visible .tvn-hotspot-label {
+  opacity: 1;
+}
+/* Touch screens have no hover: show where to tap. */
+@media (hover: none) {
+  .tvn-hotspot {
+    border-color: rgba(255, 255, 255, 0.55);
+  }
+  .tvn-hotspot-label {
+    opacity: 1;
+  }
+}
+.tvn-hotspot-prompt {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--tvn-d-bg, rgba(0, 0, 0, 0.7));
+  color: var(--tvn-d-color, #fff);
+  font-family: var(--tvn-d-font, system-ui, sans-serif);
+  font-size: max(14px, calc(var(--tvn-d-size, 20px) * 0.75));
+  pointer-events: none;
+  text-align: center;
+}

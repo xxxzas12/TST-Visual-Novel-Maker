@@ -2,6 +2,21 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.8
+### Added
+- Optional **Point & Click** action (👆): clickable objects on the stage (area in %, optional image, name
+  shown on hover), each going to a scene/label and optionally setting a variable, with show-conditions.
+  Drag/resize the objects on the editor stage; shown in Story Flow; validated; hosts without support fall
+  back to a normal choice. The Visual Novel system is unchanged.
+
+### Fixed
+- In-game menu bar could be squeezed against the right edge after the title screen (it was measured
+  while hidden).
+- Switching the editor language and creating a project right away could build the template in the old
+  language (the language was applied only after writing settings.json).
+- Saving settings (and other atomic writes) could fail with EPERM on Windows when the file was briefly
+  open elsewhere; the rename is now retried.
+
 ## v1.0.7
 ### Added
 - In-game **Gallery** for games made with TSTVN (title screen → Gallery): CG, Characters, Music and Endings
