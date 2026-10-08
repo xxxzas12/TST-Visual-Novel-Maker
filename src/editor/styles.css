@@ -2460,3 +2460,10 @@ body.resizing-y * {
 .cb-thumb[data-shape='tag'] .cb-btn {
   clip-path: polygon(6px 0, 100% 0, 100% 100%, 6px 100%, 0 50%);
 }
+
+/* ---------- animation controls: advanced block ---------- */
+.anim-advanced {
+  margin: -0.2rem 0 0.8rem;
+  padding: 0.5rem 0 0.1rem 0.7rem;
+  border-left: 2px solid var(--line2);
+}

@@ -61,3 +61,17 @@ describe('animation presets', () => {
     expect(normalizeAnimations({ choicesIn: { kind: 'pop' } }, 'fade').choicesIn).toMatchObject({ kind: 'pop', scale: 0.6, easing: 'back' });
   });
 });
+
+describe('advanced animation values', () => {
+  it('reach the keyframes: direction, distance, start rotation, size and opacity', () => {
+    const s = { ...animPreset('slide-up'), direction: 'right' as const, distance: 200, rotate: 15, opacity: 0.5 };
+    const f = animFrames(s, 'in', 1)!;
+    expect(f[0]).toEqual({ transform: 'translateX(-200px) rotate(15deg)', opacity: 0.5 });
+    expect(f.at(-1)).toEqual({ transform: 'none', opacity: 1 });
+    const pop = animFrames({ ...animPreset('pop'), scale: 1.4 }, 'in')!;
+    expect(pop[0].transform).toBe('scale(1.4)');
+    // Changing the direction of a slide changes which preset it shows as.
+    expect(presetValue(s)).toBe('slide-right');
+    expect(presetValue({ ...s, direction: 'left' })).toBe('slide-left');
+  });
+});

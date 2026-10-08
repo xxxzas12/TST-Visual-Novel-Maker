@@ -153,8 +153,8 @@ export function ThemeProps({ theme, el, edit, onSelect, gameFont, advanced, onRe
           {d.textSpeed !== null && <Slider label={tr('Characters per second')} value={d.textSpeed} min={5} max={200} onChange={(v) => edit((t) => void (t.dialog.textSpeed = v), 'd:speed')} testId="dialog-speed" />}
         </Section>
         <Section title={tr('Animation')} testId="props-dialog-anim">
-          <AnimControl label={tr('Appear')} spec={theme.anim.dialogIn} onChange={(v, k) => anim((a) => void (a.dialogIn = v), `in:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} testId="anim-dialog-in" />
-          <AnimControl label={tr('Disappear')} list={EXIT_PRESETS} spec={theme.anim.dialogOut} onChange={(v, k) => anim((a) => void (a.dialogOut = v), `out:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} testId="anim-dialog-out" />
+          <AnimControl label={tr('Appear')} spec={theme.anim.dialogIn} onChange={(v, k) => anim((a) => void (a.dialogIn = v), `in:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} advanced={advanced} testId="anim-dialog-in" />
+          <AnimControl label={tr('Disappear')} list={EXIT_PRESETS} spec={theme.anim.dialogOut} onChange={(v, k) => anim((a) => void (a.dialogOut = v), `out:${k}`)} onPreview={onReplay && (() => onReplay('dialog'))} advanced={advanced} testId="anim-dialog-out" />
           <Field label={tr('Text appears')}>
             <div className="row" style={{ gap: '0.3rem' }}>
               <select className="select grow" value={theme.anim.text} onChange={(e) => anim((a) => void (a.text = e.target.value as TextReveal), 'text')} data-testid="anim-text">
@@ -469,6 +469,7 @@ function ChoiceProps({
           spec={theme.anim.choicesIn}
           onChange={(v, k) => animEdit(edit)((a) => void (a.choicesIn = v), `choices:${k}`)}
           onPreview={onReplay && (() => onReplay('choices'))}
+          advanced={advanced}
           testId="anim-choices-in"
         />
         {theme.anim.choicesIn.kind !== 'none' && (
@@ -481,6 +482,17 @@ function ChoiceProps({
             />{' '}
             {tr('One after another')}
           </label>
+        )}
+        {advanced && theme.anim.choicesIn.kind !== 'none' && theme.anim.choiceStagger > 0 && (
+          <Slider
+            label={tr('Time between buttons (seconds)')}
+            value={theme.anim.choiceStagger}
+            min={0.02}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => animEdit(edit)((a) => void (a.choiceStagger = v), 'stagger')}
+            testId="anim-choices-stagger-time"
+          />
         )}
       </Section>
     </>
@@ -520,6 +532,7 @@ function ThemeGeneral({ theme, edit, gameFont, advanced, onReplay }: { theme: Th
           spec={theme.anim.dialogIn}
           onChange={(v, k) => animEdit(edit)((a) => void (a.dialogIn = v), `in:${k}`)}
           onPreview={onReplay && (() => onReplay('dialog'))}
+          advanced={advanced}
           testId="theme-animation"
         />
       </Section>

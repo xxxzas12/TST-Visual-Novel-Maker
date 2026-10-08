@@ -1400,4 +1400,18 @@ export const TH: Record<string, string> = {
   "“Continue” mark": "เครื่องหมาย “ไปต่อ”",
   // Animation preset names (shared/uianim.ts)
   "Pop": "เด้งออกมา",
+  "0 = starts invisible, 1 = starts fully visible.": "0 = เริ่มแบบมองไม่เห็น, 1 = เริ่มแบบมองเห็นเต็มที่",
+  "1 = normal size. Smaller grows in, larger shrinks in.": "1 = ขนาดปกติ ค่าน้อยกว่าจะขยายเข้ามา ค่ามากกว่าจะหดเข้ามา",
+  "Delay (seconds)": "หน่วงเวลา (วินาที)",
+  "Distance": "ระยะทาง",
+  "How far it moves, in pixels of a 1920×1080 screen.": "ระยะที่เคลื่อนที่ เป็นพิกเซลบนจอขนาด 1920×1080",
+  "Start opacity": "ความทึบตอนเริ่ม",
+  "Start rotation": "การหมุนตอนเริ่ม",
+  "Start size": "ขนาดตอนเริ่ม",
+  "Time between buttons (seconds)": "เวลาห่างระหว่างปุ่ม (วินาที)",
+  "← Left": "← ซ้าย",
+  "↑ Up": "↑ ขึ้น",
+  "→ Right": "→ ขวา",
+  "↓ Down": "↓ ลง",
+  "⟲ Back to the preset’s values": "⟲ กลับไปใช้ค่าของชุดสำเร็จรูป",
 };

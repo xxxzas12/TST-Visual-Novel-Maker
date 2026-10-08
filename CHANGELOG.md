@@ -2,6 +2,12 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.17
+### Added
+- Advanced animation controls (UI/UX Phase 6, Advanced mode): delay, direction, distance, start size, start
+  rotation and start opacity for every Game UI animation, time between choice buttons, and "Back to the
+  preset's values".
+
 ## v1.0.16
 ### Added
 - Game UI animations (UI/UX Phase 5): the dialogue box can appear and disappear with Fade, Slide, Pop, Scale,
