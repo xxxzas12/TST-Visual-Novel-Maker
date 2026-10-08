@@ -28,6 +28,11 @@ export const PreviewFrame = forwardRef<
     safeArea?: { top: number; right: number; bottom: number; left: number };
     /** Applied live (no restart) whenever it changes. */
     liveTheme?: Theme;
+    /**
+     * Give keyboard focus to the game when it (re)starts — only for the Play window. Embedded previews
+     * must not: they restart while the user edits, and would steal focus from the input being typed in.
+     */
+    autoFocus?: boolean;
   }
 >(function PreviewFrame(props, ref) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -54,10 +59,10 @@ export const PreviewFrame = forwardRef<
       '*',
     );
     if (props.liveTheme) frame.current?.contentWindow?.postMessage({ type: 'tstvn:theme', theme: props.liveTheme }, '*');
-    if (!props.design) frame.current?.focus();
+    if (props.autoFocus) frame.current?.focus();
     // liveTheme is sent by its own effect below; a theme edit must not restart the game.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, props.game, props.sceneId, props.index, props.skipTitle, props.namespace, props.design, props.safeArea, runKey]);
+  }, [ready, props.game, props.sceneId, props.index, props.skipTitle, props.namespace, props.design, props.safeArea, props.autoFocus, runKey]);
 
   useEffect(() => {
     if (ready && props.liveTheme) frame.current?.contentWindow?.postMessage({ type: 'tstvn:theme', theme: props.liveTheme }, '*');

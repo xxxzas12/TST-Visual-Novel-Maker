@@ -21,7 +21,8 @@ cites the code that implements (or lacks) the feature.
   Root cause: `components/PreviewFrame.tsx` calls `frame.focus()` every time it sends a new game to the
   preview iframe; the Settings page contains the font preview (`FontSettings`), whose game is rebuilt on
   every project change, so every keystroke moves focus into the iframe. Existing E2E tests use
-  `fill()` (sets the whole value at once) and therefore never caught it.
+  `fill()` (sets the whole value at once) and therefore never caught it. Confirmed in v1.0.3: the new
+  key-by-key E2E test fails with the original behavior and passes with the fix.
 
 ## Plan (in the requested order)
 

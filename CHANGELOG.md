@@ -2,6 +2,16 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.3
+### Fixed
+- Text inputs (Project name, Game title, Author and others next to a live game preview) lost focus after
+  one character. Embedded game previews no longer take keyboard focus when they restart; only the Play
+  window does.
+
+### Added
+- `e2e/typing.spec.ts`: real keystrokes (continuous typing, arrows, editing in the middle, Backspace,
+  select + replace, paste, Thai input) in the Welcome, Project Settings, scene and theme text fields.
+
 ## v1.0.2
 ### Added
 - Application Settings window (General, Interface & fonts, Autosave & recovery, About), reachable from

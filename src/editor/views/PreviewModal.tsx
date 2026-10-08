@@ -80,6 +80,7 @@ export function PreviewModal() {
       <div className="preview-stage" ref={stageRef}>
         <PreviewFrame
           ref={frame}
+          autoFocus
           game={game}
           sceneId={req.sceneId}
           index={req.index}

@@ -51,7 +51,7 @@ export function SettingsView() {
             </div>
             <div className="field">
               <span className="field-label">{tr("Author")}</span>
-              <input className="input" value={s.author} onChange={(e) => set({ author: e.target.value }, 'author')} />
+              <input className="input" value={s.author} onChange={(e) => set({ author: e.target.value }, 'author')} data-testid="settings-author" />
             </div>
             <div className="field">
               <span className="field-label">{tr("Start scene")}</span>
