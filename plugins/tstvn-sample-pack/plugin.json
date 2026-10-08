@@ -1,0 +1,11 @@
+{
+  "id": "tstvn.sample-pack",
+  "name": "TSTVN Sample Pack",
+  "version": "1.0.0",
+  "author": "TSTVN",
+  "description": "A warm 'Sunset Glow' game UI theme and a 'Dramatic Entrance' action template.",
+  "contributes": {
+    "themes": ["themes/sunset-glow.json"],
+    "actionTemplates": ["templates/dramatic-entrance.json"]
+  }
+}

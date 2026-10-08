@@ -1,6 +1,6 @@
 import { Fragment, useEffect } from 'react';
 import { useProject } from './store/project';
-import { applyLanguage, useUi } from './store/ui';
+import { applyLanguage, refreshPlugins, useUi } from './store/ui';
 import { DialogHost, Toasts } from './components/Modal';
 import { Welcome } from './views/Welcome';
 import { Shell } from './views/Shell';
@@ -28,6 +28,7 @@ export function App() {
     window.addEventListener('drop', stop);
     void api.fonts.custom().then(registerCustomFonts).catch(() => undefined);
     void api.app.logo().then((appLogo) => useUi.setState({ appLogo })).catch(() => undefined);
+    void refreshPlugins();
     void api.app.getSettings().then((s) => {
       useUi.setState({
         uiFont: s.uiFont ?? '',

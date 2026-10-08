@@ -1,6 +1,7 @@
 // Contract between the Electron main process and the editor renderer.
 import type { Asset, AssetType, MediaKind, Project, Theme } from './types';
 import type { Issue } from './validate';
+import type { PluginContributions, PluginInfo } from './plugins';
 
 export interface RecentProject {
   path: string;
@@ -217,6 +218,16 @@ export interface TstvnApi {
     remove(id: string): Promise<CustomFont[]>;
     /** Copy a custom font into the project (fonts/…) so exported games include it. */
     embed(dir: string, id: string): Promise<{ family: string; file: string }>;
+  };
+  plugins: {
+    list(): Promise<PluginInfo[]>;
+    /** Install or update from a plugin folder or a .tstplugin/.zip file. */
+    install(source: string): Promise<PluginInfo>;
+    remove(id: string): Promise<PluginInfo[]>;
+    setEnabled(id: string, enabled: boolean): Promise<PluginInfo[]>;
+    /** Themes and action templates of all enabled plugins. */
+    contributions(): Promise<PluginContributions>;
+    openFolder(): Promise<void>;
   };
   themes: {
     /** Writes a .tsttheme file (theme + its images and fonts). */

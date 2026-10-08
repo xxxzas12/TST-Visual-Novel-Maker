@@ -79,6 +79,14 @@ const api: TstvnApi = {
     remove: call('fonts:remove') as TstvnApi['fonts']['remove'],
     embed: call('fonts:embed') as TstvnApi['fonts']['embed'],
   },
+  plugins: {
+    list: call('plugins:list') as TstvnApi['plugins']['list'],
+    install: call('plugins:install') as TstvnApi['plugins']['install'],
+    remove: call('plugins:remove') as TstvnApi['plugins']['remove'],
+    setEnabled: call('plugins:setEnabled') as TstvnApi['plugins']['setEnabled'],
+    contributions: call('plugins:contributions') as TstvnApi['plugins']['contributions'],
+    openFolder: call('plugins:openFolder') as TstvnApi['plugins']['openFolder'],
+  },
   themes: {
     exportFile: call('themes:export') as TstvnApi['themes']['exportFile'],
     importFile: call('themes:import') as TstvnApi['themes']['importFile'],

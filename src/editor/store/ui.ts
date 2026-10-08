@@ -4,8 +4,10 @@ import type { AssetSort } from '../../shared/search';
 import type { ImportPlan, ImportReport } from '../../shared/api';
 import { getLanguage, setLanguage, type Lang } from '../../shared/i18n';
 import { DEFAULT_UI_FONT_SIZE, type Appearance } from '../appearance';
+import type { PluginContributions } from '../../shared/plugins';
+import { api } from '../api';
 
-export type AppSettingsSection = 'general' | 'interface' | 'logo' | 'autosave' | 'about';
+export type AppSettingsSection = 'general' | 'interface' | 'logo' | 'plugins' | 'autosave' | 'about';
 
 export type View = 'assets' | 'scenes' | 'flow' | 'characters' | 'variables' | 'themes' | 'settings' | 'export' | 'backups';
 
@@ -83,6 +85,8 @@ export interface UiState {
   appSettings: AppSettingsSection | null;
   /** Custom application logo (data URL), null = default. */
   appLogo: string | null;
+  /** Themes and action templates of the enabled plugins. */
+  plugins: PluginContributions;
   openAppSettings(section: AppSettingsSection): void;
   setView(v: View): void;
   selectScene(id: string | null): void;
@@ -129,6 +133,7 @@ export const useUi = create<UiState>((set, get) => ({
   language: getLanguage(),
   appSettings: null,
   appLogo: null,
+  plugins: { themes: [], actionTemplates: [] },
   openAppSettings: (appSettings) => set({ appSettings }),
   setView: (view) => set({ view }),
   selectScene: (sceneId) => set({ sceneId, actionIds: [], actionAnchor: null }),
@@ -155,6 +160,15 @@ export function confirmDialog(opts: Omit<ConfirmRequest, 'resolve'>): Promise<bo
 
 export function promptDialog(opts: Omit<PromptRequest, 'resolve'>): Promise<string | null> {
   return new Promise((resolve) => useUi.setState({ prompt: { ...opts, resolve } }));
+}
+
+/** Reload the content of enabled plugins (after install, remove, enable or disable). */
+export async function refreshPlugins() {
+  try {
+    useUi.setState({ plugins: await api.plugins.contributions() });
+  } catch (e) {
+    console.warn('[TSTVN] plugins could not be loaded', e);
+  }
 }
 
 /** Switch the editor language (re-renders the whole UI) and remember it. */

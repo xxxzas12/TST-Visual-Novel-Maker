@@ -2,6 +2,14 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.6
+### Added
+- Plugin system and **Plugin Manager** (⚙ Settings → Plugins): Installed Plugins, Enable/Disable,
+  Remove, Install from file (`.tstplugin`/`.zip`) or folder, Open Plugin Folder.
+- Plugins are declarative content packs: game UI themes (Themes → From plugins) and action templates
+  (＋ Action → Templates). Sample plugin `plugins/tstvn-sample-pack`, format docs `plugins/README.md`,
+  `scripts/pack-plugin.mjs`.
+
 ## v1.0.5
 ### Added
 - Application Settings → **Application logo**: Choose Image, Preview, Reset. Shown on the Welcome screen,

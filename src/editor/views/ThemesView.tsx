@@ -8,7 +8,7 @@ import { newId, deepClone } from '../../shared/ids';
 import { makeContext } from '../../shared/uilayout';
 import { DEVICES, alignElement, canAlign, checkAllDevices, deleteMenuButton, duplicateMenuButton, moveElement, positioned, type AlignEdge, type UiElementId } from '../../shared/uicheck';
 import { useProject, getDir } from '../store/project';
-import { confirmDialog, toast } from '../store/ui';
+import { confirmDialog, toast, useUi } from '../store/ui';
 import { api } from '../api';
 import { run } from '../ops';
 import { Modal } from '../components/Modal';
@@ -120,9 +120,12 @@ export function ThemesView() {
   const [scenesOpen, setScenesOpen] = useState(false);
   const [showChecks, setShowChecks] = useState(true);
   const device = DEVICES.find((d) => d.id === deviceId) ?? DEVICES[0];
-  const sel = resolveTheme(selId, project.themes);
+  const pluginThemes = useUi((s) => s.plugins.themes);
+  const pluginTheme = pluginThemes.find((t) => t.id === selId);
+  const sel: Theme = pluginTheme ?? resolveTheme(selId, project.themes);
   const isCustom = project.themes.some((t) => t.id === selId);
-  const live = useMemo(() => gameTheme(project, sel.id), [project, sel.id]);
+  // Plugin themes are previewed as if they were in the project (they are copied in when used).
+  const live = useMemo(() => gameTheme(pluginTheme ? { ...project, themes: [...project.themes, pluginTheme] } : project, sel.id), [project, sel.id, pluginTheme]);
   const sceneUses = project.scenes.filter((s) => s.themeId === selId).length;
 
   // The demo game only restarts when its content changes (fonts, assets, characters), not on every style edit.
@@ -168,7 +171,9 @@ export function ThemesView() {
   };
 
   const copyOf = (apply: boolean, name?: string) => {
-    const copy = deepClone(sel);
+    const { pluginName: _source, ...theme } = sel as Theme & { pluginName?: string };
+    void _source;
+    const copy = deepClone(theme);
     copy.id = newId('th');
     copy.name = name ?? `${tr(sel.name)} (${tr('custom')})`;
     copy.preset = undefined;
@@ -311,6 +316,14 @@ export function ThemesView() {
           </div>
           {project.themes.length === 0 && <div className="small faint">{tr('Click “Edit a copy” on a preset to make your own theme.')}</div>}
           {list(project.themes)}
+          {pluginThemes.length > 0 && (
+            <>
+              <div className="section-title" style={{ marginTop: '0.8rem' }}>
+                {tr('From plugins')} ({pluginThemes.length})
+              </div>
+              {list(pluginThemes)}
+            </>
+          )}
         </aside>
 
         <section className="ui-main">
@@ -318,15 +331,32 @@ export function ThemesView() {
             <h3 className="ellipsis" style={{ margin: 0, maxWidth: '16rem' }} data-testid="theme-title">
               {tr(sel.name)}
             </h3>
-            {!isCustom && <span className="badge">{tr('preset (read-only)')}</span>}
+            {!isCustom && <span className="badge">{pluginTheme ? tr('plugin: {0} (read-only)', { 0: pluginTheme.pluginName }) : tr('preset (read-only)')}</span>}
             {selId !== activeId ? (
-              <button className="btn primary sm" onClick={() => useProject.getState().update((p) => void (p.settings.themeId = selId))} data-testid="use-theme">
+              <button
+                className="btn primary sm"
+                onClick={() => {
+                  // A plugin theme is copied into the project, so the game never depends on the plugin.
+                  if (pluginTheme) {
+                    copyOf(true, tr(sel.name));
+                    toast(tr('“{0}” was added to this project and is now used by the game', { 0: tr(sel.name) }), 'success');
+                  } else useProject.getState().update((p) => void (p.settings.themeId = selId));
+                }}
+                data-testid="use-theme"
+              >
                 {tr('✓ Use for whole project')}
               </button>
             ) : (
               <span className="badge ok">{tr('Project theme')}</span>
             )}
-            <button className="btn sm" onClick={() => setScenesOpen(true)} data-testid="theme-scenes">
+            <button
+              className="btn sm"
+              onClick={() => {
+                if (pluginTheme) copyOf(false, tr(sel.name));
+                setScenesOpen(true);
+              }}
+              data-testid="theme-scenes"
+            >
               {tr('🎬 Use in scenes…')} {sceneUses ? `(${sceneUses})` : ''}
             </button>
             {!isCustom && (

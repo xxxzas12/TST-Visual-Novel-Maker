@@ -1,0 +1,8 @@
+{
+  "name": "Dramatic Entrance",
+  "actions": [
+    { "type": "screenEffect", "params": { "effect": "flash", "duration": 0.4 } },
+    { "type": "screenEffect", "params": { "effect": "shake", "duration": 0.5 } },
+    { "type": "narration", "params": { "text": "Suddenly, everything changed." } }
+  ]
+}

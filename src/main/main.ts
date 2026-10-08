@@ -21,6 +21,7 @@ import { FontStore, listSystemFonts } from './fonts';
 import { readImageSize } from './imageSize';
 import { exportThemeFile, importThemeFile } from './themeIO';
 import { LogoStore, type ImageLoader } from './branding';
+import { PluginStore } from './plugins';
 import { extOf } from '../shared/classify';
 import { getLanguage, setLanguage } from '../shared/i18n';
 
@@ -46,6 +47,7 @@ const loadImage: ImageLoader = async (file, max) => {
   const k = Math.min(1, max / Math.max(width, height));
   return (k < 1 ? img.resize({ width: Math.round(width * k), height: Math.round(height * k), quality: 'best' }) : img).toDataURL();
 };
+const pluginStore = new PluginStore(path.join(app.getPath('userData'), 'plugins'));
 const logoStore = new LogoStore(path.join(app.getPath('userData'), 'branding'), loadImage);
 
 /** TSTVN's own window/taskbar icon: the custom application logo, or the default icon. */
@@ -294,6 +296,17 @@ function registerIpc() {
   handle('fonts:import', (_e, file: string) => fontStore.import(file));
   handle('fonts:remove', (_e, id: string) => fontStore.remove(id));
   handle('fonts:embed', (_e, dir: string, id: string) => fontStore.embedInProject(dir, id));
+
+  // ---------- plugins ----------
+  handle('plugins:list', () => pluginStore.list());
+  handle('plugins:install', (_e, source: string) => pluginStore.install(source));
+  handle('plugins:remove', (_e, id: string) => pluginStore.remove(id));
+  handle('plugins:setEnabled', (_e, id: string, enabled: boolean) => pluginStore.setEnabled(id, enabled));
+  handle('plugins:contributions', () => pluginStore.contributions());
+  handle('plugins:openFolder', async () => {
+    await fs.mkdir(pluginStore.dir, { recursive: true });
+    await shell.openPath(pluginStore.dir);
+  });
 
   // ---------- game UI themes ----------
   handle('themes:export', (_e, dir: string, theme: Theme, assets: Asset[], file: string) => exportThemeFile(dir, theme, assets, file));

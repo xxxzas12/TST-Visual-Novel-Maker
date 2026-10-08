@@ -70,6 +70,14 @@ by `tests/appearance.test.ts`.
 Everything is saved in the project, and the exported game reads the same theme data — what you design is
 what players get.
 
+## Plugins
+
+**⚙ Settings → Plugins** manages plugins: Installed Plugins, Enable/Disable, Remove, Install from
+file (`.tstplugin`) or folder, and Open Plugin Folder. Plugins are content packs (no code runs): game UI
+themes appear in **Themes → From plugins** and action templates in **＋ Action → Templates**. Using a
+plugin theme copies it into the project, so games never depend on an installed plugin. Format and a
+working example: [plugins/README.md](plugins/README.md).
+
 ## Quick start (users)
 
 1. Start TSTVN (Desktop shortcut, `release/win-unpacked/TSTVN.exe`, or `npm start` from source).

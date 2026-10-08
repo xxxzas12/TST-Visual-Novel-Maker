@@ -3,10 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionType } from '../../../shared/types';
 import { CATEGORIES, actionsInCategory, searchActions, type ActionCategory } from '../../../shared/actions';
 import { useProject } from '../../store/project';
+import { useUi } from '../../store/ui';
 
 /** Categorized "Add Action" menu with search (e.g. typing "background" finds Change Background). */
 export function ActionMenu(props: { x: number; y: number; onPick: (type: ActionType) => void; onPickTemplate: (id: string) => void; onClose: () => void }) {
-  const templates = useProject((s) => s.project?.actionTemplates ?? []);
+  const projectTemplates = useProject((s) => s.project?.actionTemplates);
+  const pluginTemplates = useUi((s) => s.plugins.actionTemplates);
+  const templates = useMemo(() => [...(projectTemplates ?? []).map((t) => ({ ...t, pluginName: '' })), ...pluginTemplates], [projectTemplates, pluginTemplates]);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<ActionCategory | 'templates'>('story');
   const [hot, setHot] = useState(0);
@@ -72,10 +75,10 @@ export function ActionMenu(props: { x: number; y: number; onPick: (type: ActionT
           ) : (
             templates.map((t) => (
               <button key={t.id} className="menu-item" onClick={() => props.onPickTemplate(t.id)} data-testid={`template-item-${t.name}`}>
-                <span>⭐</span>
+                <span>{t.pluginName ? '🧩' : '⭐'}</span>
                 <span>
                   <b>{t.name}</b>
-                  <div className="d">{tr("{0} actions", { 0: t.actions.length })}</div>
+                  <div className="d">{t.pluginName ? tr("{0} actions · plugin: {1}", { 0: t.actions.length, 1: t.pluginName }) : tr("{0} actions", { 0: t.actions.length })}</div>
                 </span>
               </button>
             ))

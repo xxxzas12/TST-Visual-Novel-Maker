@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "id": "sunset-glow",
+  "name": "Sunset Glow",
+  "font": "Georgia, \"Times New Roman\", \"Noto Serif Thai\", serif",
+  "dialog": {
+    "surface": { "background": "#2b1238", "opacity": 0.86, "borderColor": "#ffb36b", "borderWidth": 2, "radius": 28, "blur": 4 },
+    "text": { "color": "#fff3e6" }
+  },
+  "nameBox": {
+    "attach": "outside", "x": 40, "y": 18, "padding": { "x": 30, "y": 8 },
+    "surface": { "background": "#b8461f", "radius": 999 },
+    "text": { "color": "#ffffff" },
+    "speakerColor": false
+  },
+  "choice": {
+    "surface": { "borderWidth": 2, "radius": 999 },
+    "text": { "color": "#fff3e6" },
+    "states": {
+      "normal": { "background": "#2b1238", "color": "#fff3e6", "borderColor": "#ffb36b", "opacity": 0.9 },
+      "hover": { "background": "#b8461f", "color": "#ffffff", "borderColor": "#ffd9a8", "opacity": 1 },
+      "pressed": { "background": "#8f3416", "color": "#ffffff", "borderColor": "#ffd9a8", "opacity": 1 },
+      "disabled": { "background": "#2b1238", "color": "#a0899a", "borderColor": "#6b4a3a", "opacity": 0.65 }
+    },
+    "hoverAnimation": "glow"
+  },
+  "menuBar": { "surface": { "background": "#2b1238", "opacity": 0.8, "borderColor": "#ffb36b" }, "hover": { "background": "#b8461f", "color": "#ffffff" } },
+  "menu": { "background": "#1d0b26", "color": "#fff3e6", "accent": "#b8461f", "opacity": 0.95 }
+}

@@ -309,8 +309,9 @@ export function saveActionTemplate(sceneId: string, ids: string[], name: string)
   toast(tr("Saved template “{0}” ({1} actions)", { 0: name, 1: actions.length }), 'success');
 }
 
+/** Inserts a copy of a project template or of a template contributed by an enabled plugin. */
 export function insertActionTemplate(sceneId: string, templateId: string) {
-  const t = getProject().actionTemplates.find((x) => x.id === templateId);
+  const t = getProject().actionTemplates.find((x) => x.id === templateId) ?? useUi.getState().plugins.actionTemplates.find((x) => x.id === templateId);
   if (!t) return;
   insertActions(sceneId, cloneActions(t.actions));
 }

@@ -11,6 +11,7 @@ import { useUi, type AppSettingsSection } from '../store/ui';
 import { NumberInput } from './scenes/fields';
 import { UiFontSettings } from './FontSettings';
 import { AppBrand } from '../components/AppBrand';
+import { PluginManager } from './PluginManager';
 import { run } from '../ops';
 import { toast } from '../store/ui';
 
@@ -66,6 +67,7 @@ const SECTIONS: { id: AppSettingsSection; icon: string; label: string }[] = [
   { id: 'general', icon: '🌐', label: 'General' },
   { id: 'interface', icon: '🔤', label: 'Interface & fonts' },
   { id: 'logo', icon: '🖼️', label: 'Application logo' },
+  { id: 'plugins', icon: '🧩', label: 'Plugins' },
   { id: 'autosave', icon: '💾', label: 'Autosave & recovery' },
   { id: 'about', icon: 'ℹ️', label: 'About' },
 ];
@@ -130,6 +132,7 @@ export function AppSettingsDialog() {
           )}
           {section === 'interface' && <UiFontSettings />}
           {section === 'logo' && <LogoSettings />}
+          {section === 'plugins' && <PluginManager />}
           {section === 'autosave' && app && (
             <div className="col">
               <div className="section-title">{tr('Autosave & recovery')}</div>
