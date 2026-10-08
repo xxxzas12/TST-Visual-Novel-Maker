@@ -164,7 +164,7 @@ export function ScenesView() {
           </button>
           <span className="grow" />
           <select
-            className="select"
+            className="select sm"
             style={{ width: 'auto', maxWidth: '11rem' }}
             value={scene.themeId ?? ''}
             onChange={(e) => useProject.getState().update((p) => void (findScene(p, scene.id)!.themeId = e.target.value || null))}

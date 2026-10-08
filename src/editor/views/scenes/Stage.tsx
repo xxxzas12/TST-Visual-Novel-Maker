@@ -172,8 +172,8 @@ export function Stage({ scene, state, sources, selectedAction, onFold }: { scene
           {tr("▶ Play From Here")}
         </button>
         {onFold && (
-          <button className="btn ghost sm" onClick={onFold} title={tr("Fold the stage preview")} data-testid="fold-stage">
-            {tr("▴ Fold")}
+          <button className="btn ghost sm icon" onClick={onFold} title={tr("Fold the stage preview")} aria-label={tr("Fold the stage preview")} data-testid="fold-stage">
+            ▴
           </button>
         )}
       </div>

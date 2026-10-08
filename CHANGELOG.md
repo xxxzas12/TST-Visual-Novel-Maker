@@ -2,6 +2,12 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.19
+### Changed
+- UI polish: compact getting-started checklist that folds out of the way (remembered, shows the next step,
+  progress bar); one-line stage toolbar; compact toolbar selects; folder tools on one row; active-view marker
+  in the sidebar; consistent view headers, section spacing, button alignment and keyboard focus rings.
+
 ## v1.0.18
 ### Added
 - Style Library (UI/UX Phase 7): save a textbox or choice style once and reuse it in any theme; editing it

@@ -2480,3 +2480,206 @@ body.resizing-y * {
   gap: 0.35rem;
   padding: 0.5rem;
 }
+
+/* =====================================================================
+   UI polish pass: consistent spacing, alignment and hierarchy.
+   Visual only — no layout model or feature changes.
+   ===================================================================== */
+
+/* Buttons: icons and text share one baseline; emoji glyphs don't push the height. */
+.btn {
+  line-height: 1.2;
+  font-weight: 500;
+}
+.btn.sm {
+  gap: 0.3rem;
+}
+.btn:focus-visible,
+.select:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* Compact selects to sit in toolbars next to small buttons. */
+.select.sm {
+  min-height: 1.75rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.9rem;
+}
+
+/* Top bar: a clear separation of identity (left) and commands (right). */
+.topbar {
+  min-height: 2.9rem;
+  gap: 0.45rem;
+}
+.topbar .project-name {
+  padding-left: 0.6rem;
+  margin-left: 0.2rem;
+  border-left: 1px solid var(--line);
+}
+
+/* Main sidebar: an accent marker on the active view, even spacing. */
+.nav {
+  gap: 0.15rem;
+}
+.nav button {
+  position: relative;
+  padding: 0.55rem 0.2rem 0.5rem;
+}
+.nav button.active::before {
+  content: '';
+  position: absolute;
+  left: -0.4rem;
+  top: 22%;
+  bottom: 22%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+.nav button .ico {
+  line-height: 1;
+}
+
+/* View headers: one height and one title style everywhere. */
+.view-header {
+  min-height: 3.1rem;
+  padding: 0.55rem 1rem;
+  background: var(--bg1);
+}
+.view-header h2 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Section titles: same rhythm in every panel. */
+.section-title {
+  margin: 0.35rem 0 0.45rem;
+  line-height: 1.3;
+}
+
+/* Scene editor toolbars: one line, tidy groups. */
+.stage-toolbar {
+  gap: 0.3rem;
+}
+.quickbar {
+  gap: 0.3rem;
+  row-gap: 0.4rem;
+  background: var(--bg1);
+}
+.quickbar > .faint {
+  margin: 0 0.15rem;
+}
+
+/* Inspector header bar matches the panel title style of other views. */
+.panel-head {
+  min-height: 2.1rem;
+}
+
+/* Assets: folder tools fit on one row at any panel width. */
+.folder-tools {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.folder-tools .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 0.2rem;
+}
+
+/* Cards: consistent radius and a gentle lift on hover. */
+.card {
+  transition: border-color 0.12s, background 0.12s;
+}
+.card:hover {
+  background: var(--bg2);
+}
+
+/* Status bar: quieter, aligned separators. */
+.statusbar {
+  min-height: 1.9rem;
+  gap: 0.9rem;
+}
+.statusbar .btn.ghost.sm {
+  min-height: 1.45rem;
+  padding: 0 0.35rem;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ---------- Getting-started checklist: compact, never in the way ---------- */
+.onboarding {
+  right: 0.9rem;
+  bottom: 2.5rem;
+  width: 16.5rem;
+  border-radius: 12px;
+}
+.onboarding-head {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.55rem 0.7rem;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+}
+.onboarding-head:hover {
+  filter: brightness(1.08);
+}
+.onboarding-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.onboarding-caret {
+  width: 1rem;
+  text-align: center;
+  color: var(--muted);
+}
+.onboarding-progress {
+  height: 3px;
+  background: var(--bg3);
+}
+.onboarding-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--ok));
+  transition: width 0.3s ease;
+}
+.onboarding ol {
+  padding: 0.35rem 0.45rem 0.3rem;
+  gap: 0.05rem;
+}
+.onboarding li button {
+  padding: 0.24rem 0.4rem;
+  font-size: 0.9rem;
+  color: inherit;
+}
+.onboarding li.next button {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.onboarding li.next .step-dot {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.onboarding .step-dot {
+  width: 1.15rem;
+  height: 1.15rem;
+  font-size: 0.68rem;
+}
+.onboarding-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.7rem 0.55rem;
+}
+.onboarding.collapsed {
+  width: 15rem;
+}
+.onboarding.collapsed .onboarding-head {
+  padding: 0.45rem 0.7rem;
+}

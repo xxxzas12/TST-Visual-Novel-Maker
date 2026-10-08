@@ -134,7 +134,7 @@ export function AssetsView() {
             {tr("Files…")}
           </button>
         </div>
-        <div className="row" style={{ marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+        <div className="row folder-tools">
           <button
             className="btn sm"
             title={tr("New folder")}

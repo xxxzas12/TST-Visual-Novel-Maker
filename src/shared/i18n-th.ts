@@ -1279,7 +1279,6 @@ export const TH: Record<string, string> = {
   "Workspace name": "ชื่อพื้นที่ทำงาน",
   "Workspace “{0}” saved": "บันทึกพื้นที่ทำงาน “{0}” แล้ว",
   "Workspace: layout presets and panels": "พื้นที่ทำงาน: เลย์เอาต์สำเร็จรูปและแผงต่าง ๆ",
-  "▴ Fold": "▴ พับ",
   "🖼 Stage preview is folded — click to show it": "🖼 ตัวอย่างเวทีถูกพับไว้ — คลิกเพื่อแสดง",
   // Workspace preset names (shared/workspace.ts)
   "Writing": "เขียนบท",
@@ -1445,4 +1444,5 @@ export const TH: Record<string, string> = {
   "⭐ Save these choices as a style…": "⭐ บันทึกตัวเลือกนี้เป็นสไตล์…",
   "⭐ Save this textbox as a style…": "⭐ บันทึกกล่องข้อความนี้เป็นสไตล์…",
   "📚 Style Library": "📚 คลังสไตล์",
+  "🎓 Next: {0}": "🎓 ถัดไป: {0}",
 };
