@@ -221,6 +221,7 @@ export class Player implements RuntimeHost {
     r.hoverAnim = theme.choice.hoverAnimation;
     r.dFrame = theme.dialog.frame;
     r.nShape = theme.nameBox.shape;
+    r.cShape = theme.choice.shape;
     this.applyContrast();
     if (theme.nameBox.attach === 'outside') this.dialog.insertBefore(this.nameRow, this.dialogBody);
     else this.dialogBody.insertBefore(this.nameRow, this.textEl);
@@ -426,7 +427,11 @@ export class Player implements RuntimeHost {
     this.indicator.classList.add('tvn-show');
     const states = ['normal', 'hover', 'pressed', 'disabled'];
     const buttons = sample.choices.map((text, i) =>
-      h('button', { class: `tvn-choice tvn-state-${states[i] ?? 'normal'}`, disabled: states[i] === 'disabled', 'data-testid': `tvn-choice-${i}`, 'data-ui': `choice:${i}`, tabindex: -1 }, text),
+      h(
+        'button',
+        { class: `tvn-choice tvn-state-${states[i] ?? 'normal'}`, disabled: states[i] === 'disabled', 'data-testid': `tvn-choice-${i}`, 'data-ui': `choice:${i}`, tabindex: -1 },
+        h('span', { class: 'tvn-choice-label' }, text),
+      ),
     );
     this.choicesEl.replaceChildren(...buttons);
     this.choicesEl.classList.remove('tvn-hidden');
@@ -1163,7 +1168,7 @@ export class Player implements RuntimeHost {
               resolve(i);
             },
           },
-          o.text,
+          h('span', { class: 'tvn-choice-label' }, o.text),
         ),
       );
       this.choicesEl.replaceChildren(...buttons);

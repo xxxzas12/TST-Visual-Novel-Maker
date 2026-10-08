@@ -16,6 +16,8 @@ import { UiCanvas } from './themes/UiCanvas';
 import { ThemeProps, elementLabel, menuActionLabel } from './themes/ThemeProps';
 import { TextboxPresets } from './themes/TextboxPresets';
 import { applyTextboxPreset, getTextboxPreset } from '../../shared/textbox';
+import { ChoicePresets } from './themes/ChoicePresets';
+import { applyChoicePreset, getChoicePreset } from '../../shared/choicestyle';
 
 function Swatches({ t }: { t: Theme }) {
   return (
@@ -123,6 +125,8 @@ export function ThemesView() {
   const [showChecks, setShowChecks] = useState(true);
   /** Textbox preset shown in the canvas while the pointer is over its card (not applied yet). */
   const [previewPreset, setPreviewPreset] = useState<string | null>(null);
+  /** Choice preset shown in the canvas while the pointer is over its card. */
+  const [previewChoice, setPreviewChoice] = useState<string | null>(null);
   const device = DEVICES.find((d) => d.id === deviceId) ?? DEVICES[0];
   const pluginThemes = useUi((s) => s.plugins.themes);
   const advanced = useUi((s) => s.themeEditorAdvanced);
@@ -133,11 +137,12 @@ export function ThemesView() {
   const live = useMemo(() => gameTheme(pluginTheme ? { ...project, themes: [...project.themes, pluginTheme] } : project, sel.id), [project, sel.id, pluginTheme]);
   const sceneUses = project.scenes.filter((s) => s.themeId === selId).length;
   const shown = useMemo(() => {
-    if (!previewPreset) return live;
+    if (!previewPreset && !previewChoice) return live;
     const t = deepClone(live);
-    applyTextboxPreset(t, previewPreset);
+    if (previewPreset) applyTextboxPreset(t, previewPreset);
+    if (previewChoice) applyChoicePreset(t, previewChoice);
     return t;
-  }, [live, previewPreset]);
+  }, [live, previewPreset, previewChoice]);
 
   // The demo game only restarts when its content changes (fonts, assets, characters), not on every style edit.
   const liveRef = useRef(live);
@@ -213,6 +218,14 @@ export function ThemesView() {
     // Each pick is its own undo step (a shared key would merge consecutive picks).
     if (isCustom) return edit((t) => void applyTextboxPreset(t, id), `textbox-preset:${Date.now()}`);
     const copy = copyOf(selId === activeId, undefined, (t) => void applyTextboxPreset(t, id));
+    toast(tr('“{0}” was created from the preset so it can be changed', { 0: copy.name }), 'success');
+  };
+
+  /** Applies a choice preset; a preset theme is copied first. */
+  const pickChoice = (id: string) => {
+    setPreviewChoice(null);
+    if (isCustom) return edit((t) => void applyChoicePreset(t, id), `choice-preset:${Date.now()}`);
+    const copy = copyOf(selId === activeId, undefined, (t) => void applyChoicePreset(t, id));
     toast(tr('“{0}” was created from the preset so it can be changed', { 0: copy.name }), 'success');
   };
 
@@ -563,6 +576,22 @@ export function ThemesView() {
                 {previewPreset
                   ? tr('Previewing “{0}” — click to use it', { 0: tr(getTextboxPreset(previewPreset)!.name) })
                   : tr('Point at a style to preview it, click to use it. Changes the dialogue box and name box only.')}
+              </div>
+            </div>
+          )}
+          {el === 'choices' && (
+            <div className="ui-props-body" style={{ paddingBottom: 0 }} data-testid="choice-style">
+              <div className="section-title">{tr('Choice style')}</div>
+              <ChoicePresets current={sel.choice.preset} onPreview={setPreviewChoice} onPick={pickChoice} />
+              {isCustom && sel.choice.preset && getChoicePreset(sel.choice.preset) && (
+                <button className="btn sm" style={{ marginTop: '0.4rem' }} onClick={() => pickChoice(sel.choice.preset!)} title={tr('Undo your changes to the choice buttons')} data-testid="choice-reset">
+                  {tr('⟲ Reset to “{0}”', { 0: tr(getChoicePreset(sel.choice.preset)!.name) })}
+                </button>
+              )}
+              <div className="small faint" style={{ marginTop: '0.4rem' }}>
+                {previewChoice
+                  ? tr('Previewing “{0}” — click to use it', { 0: tr(getChoicePreset(previewChoice)!.name) })
+                  : tr('Point at a style to preview it, click to use it. Changes the choice buttons only.')}
               </div>
             </div>
           )}

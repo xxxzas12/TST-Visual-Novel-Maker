@@ -1,5 +1,5 @@
 // Game UI themes: presets, migration of older theme files, and helpers shared by editor and runtime.
-import type { ChoiceStateStyle, DialogFrame, NameShape, FontRef, MenuAction, MenuButtonDef, Theme, UiAnchor, UiLength, UiShadow, UiSurface, UiText } from './types';
+import type { ChoiceShape, ChoiceStateStyle, DialogFrame, NameShape, FontRef, MenuAction, MenuButtonDef, Theme, UiAnchor, UiLength, UiShadow, UiSurface, UiText } from './types';
 
 export const SANS = '"Segoe UI", "Leelawadee UI", "Noto Sans Thai", "Noto Sans", system-ui, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", "Noto Serif Thai", serif';
@@ -10,6 +10,7 @@ const MONO = '"Courier New", Consolas, "Leelawadee UI", monospace';
 export const MENU_ACTIONS: MenuAction[] = ['auto', 'skip', 'save', 'load', 'settings', 'hide', 'menu'];
 export const DIALOG_FRAMES: DialogFrame[] = ['box', 'bubble', 'band', 'ornate', 'tech', 'torn', 'window', 'pixel'];
 export const NAME_SHAPES: NameShape[] = ['box', 'tab', 'ribbon', 'plain', 'slant', 'pixel'];
+export const CHOICE_SHAPES: ChoiceShape[] = ['box', 'pill', 'bubble', 'banner', 'underline', 'cut', 'tag'];
 export const UI_ANCHORS: UiAnchor[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
 export const px = (value: number): UiLength => ({ value, unit: 'px' });
@@ -42,7 +43,7 @@ function text(p: Partial<UiText>): UiText {
   return { font: null, size: 38, color: '#ffffff', lineHeight: 1.55, letterSpacing: 0, align: 'left', bold: false, shadow: false, shadowColor: '#000000', outline: 0, outlineColor: '#000000', ...p };
 }
 
-const st = (background: string, color: string, borderColor: string, opacity = 1): ChoiceStateStyle => ({ background, color, borderColor, opacity });
+const st = (background: string, color: string, borderColor: string, opacity = 1): ChoiceStateStyle => ({ background, color, borderColor, opacity, image: null });
 
 export function defaultMenuButtons(): MenuButtonDef[] {
   return [
@@ -91,6 +92,9 @@ function modern(): Theme {
       speakerColor: true,
     },
     choice: {
+      preset: null,
+      shape: 'box',
+      icon: '',
       anchor: 'center',
       x: px(0),
       y: px(0),
@@ -432,6 +436,8 @@ export function normalizeTheme(raw: unknown): Theme {
   if (!UI_ANCHORS.includes(t.dialog.anchor)) t.dialog.anchor = 'bottom';
   if (!DIALOG_FRAMES.includes(t.dialog.frame)) t.dialog.frame = 'box';
   if (!NAME_SHAPES.includes(t.nameBox.shape)) t.nameBox.shape = 'box';
+  if (!CHOICE_SHAPES.includes(t.choice.shape)) t.choice.shape = 'box';
+  t.choice.icon = [...String(t.choice.icon ?? '')].slice(0, 4).join('');
   if (!UI_ANCHORS.includes(t.choice.anchor)) t.choice.anchor = 'center';
   if (!UI_ANCHORS.includes(t.menuBar.anchor)) t.menuBar.anchor = 'top-right';
   return t;
@@ -444,9 +450,7 @@ const textsOf = (t: Theme): UiText[] => [t.dialog.text, t.nameBox.text, t.choice
 
 /** Image assets a theme uses (backgrounds, textures, frame images). */
 export function themeAssetIds(t: Theme): string[] {
-  return surfacesOf(t)
-    .flatMap((s) => [s.image, s.texture, s.frameImage])
-    .filter((x): x is string => !!x);
+  return [...surfacesOf(t).flatMap((s) => [s.image, s.texture, s.frameImage]), ...Object.values(t.choice.states).map((x) => x.image)].filter((x): x is string => !!x);
 }
 
 /** Every font a theme refers to (main font + per-element fonts). */
@@ -467,6 +471,11 @@ export function mapThemeImages(t: Theme, fn: (assetId: string) => string | null)
       const next = fn(id);
       if (next !== id) s[k] = next;
     }
+  for (const x of Object.values(t.choice.states)) {
+    if (!x.image) continue;
+    const next = fn(x.image);
+    if (next !== x.image) x.image = next;
+  }
 }
 
 /** Quote a font family for CSS. */

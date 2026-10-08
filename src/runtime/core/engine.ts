@@ -1,4 +1,4 @@
-import type { Action, GameData, GameScene, JumpTarget, TextStyle } from '../../shared/types';
+import type { Action, ChoiceEffect, GameData, GameScene, JumpTarget, TextStyle } from '../../shared/types';
 import {
   applyStateAction,
   applyVarAction,
@@ -242,6 +242,22 @@ export class Engine {
     }
   }
 
+  /** What a chosen option does before the story goes on: variables, a sound, a character animation, a screen effect. */
+  private async choiceEffects(effects: ChoiceEffect[] | undefined, host: RuntimeHost) {
+    for (const e of effects ?? []) {
+      if (e.kind === 'setVariable' || e.kind === 'addVariable') {
+        const v = this.game.variables.find((x) => x.id === e.variableId);
+        if (!v) continue;
+        const next = e.kind === 'setVariable' ? coerceValue(v.type, e.value) : (coerceValue('number', this.vars[v.id]) as number) + (Number(e.amount) || 0);
+        this.vars = { ...this.vars, [v.id]: next };
+      } else if (e.kind === 'playSound') {
+        if (e.assetId) host.audio({ kind: 'sfx', assetId: e.assetId, volume: 100, loop: false });
+      } else if (e.kind === 'animateCharacter') {
+        if (e.characterId) await host.animate({ target: `char:${e.characterId}`, animation: e.animation || 'bounce', duration: 0.5 });
+      } else if (e.kind === 'screenEffect') await host.screenEffect(e.effect || 'shake', 0.5);
+    }
+  }
+
   private jumpOrNext(t: JumpTarget | undefined, scene: GameScene): Pointer | undefined {
     const r = this.resolveTarget(t, scene.id);
     if (r === 'invalid') throw new Error(`A jump in “${scene.name}” points to something that no longer exists.`);
@@ -298,6 +314,8 @@ export class Engine {
         if (id !== this.runId) return 'stop';
         let opt = visible[Math.max(0, Math.min(pick, visible.length - 1))];
         if (!met(opt)) opt = visible.find(met)!;
+        await this.choiceEffects(opt.effects, host);
+        if (id !== this.runId) return 'stop';
         return this.jumpOrNext(opt.target, scene) ?? 'blocked';
       }
       case 'pointAndClick': {

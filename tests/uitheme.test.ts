@@ -79,7 +79,7 @@ describe('presets & theme model', () => {
     expect(t.dialog.width).toEqual({ value: 1500, unit: 'px' });
     expect(t.dialog.padding).toEqual({ x: 39, y: 39 });
     expect(t.nameBox.surface.background).toBe('#9b1c31');
-    expect(t.choice.states.normal).toEqual({ background: '#050507', color: '#e8e8f0', borderColor: '#9b1c31', opacity: 0.92 });
+    expect(t.choice.states.normal).toEqual({ background: '#050507', color: '#e8e8f0', borderColor: '#9b1c31', opacity: 0.92, image: null });
     expect(t.choice.states.hover.background).toBe('#9b1c31');
     expect(t.animation).toBe('slide');
   });

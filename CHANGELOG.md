@@ -2,6 +2,14 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.15
+### Added
+- Choice button styles (UI/UX Phase 4): Classic, Modern, Minimal, RPG, Fantasy, Bubble and Image Button
+  presets with hover preview; shapes (pill, speech bubble, banner, underline, cut corners, tag); an icon in
+  front of every option; your own button picture for Normal, Hover, Pressed and Disabled.
+- Choice behaviour: each option can also set a variable, add to a number variable, play a sound, animate a
+  character or shake/flash the screen when chosen — chosen from menus, no code. Checked before export.
+
 ## v1.0.14
 ### Added
 - Game UI editor: Basic / Advanced switch (Basic by default, remembered). Basic shows only the essentials.

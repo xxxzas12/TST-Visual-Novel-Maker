@@ -1,10 +1,10 @@
 // Properties panel of the Game UI editor: shows the settings of the selected element.
 import { t as tr } from '../../../shared/i18n';
-import type { ChoiceState, DialogFrame, MenuAction, NameShape, Theme, UiSurface, UiText } from '../../../shared/types';
-import { DIALOG_FRAMES, MENU_ACTIONS, NAME_SHAPES, SANS } from '../../../shared/themes';
+import type { ChoiceShape, ChoiceState, DialogFrame, MenuAction, NameShape, Theme, UiSurface, UiText } from '../../../shared/types';
+import { CHOICE_SHAPES, DIALOG_FRAMES, MENU_ACTIONS, NAME_SHAPES, SANS } from '../../../shared/themes';
 import { deleteMenuButton, duplicateMenuButton, moveMenuButton, type UiElementId } from '../../../shared/uicheck';
 import { newId } from '../../../shared/ids';
-import { AnchorPicker, ColorField, Field, FontField, LengthInput, Section, Slider, SurfaceEditor, TextEditor, type Edit } from './controls';
+import { AnchorPicker, ColorField, Field, FontField, ImageField, LengthInput, Section, Slider, SurfaceEditor, TextEditor, type Edit } from './controls';
 import { useState } from 'react';
 
 const FALLBACK_FONTS = [
@@ -50,6 +50,20 @@ export function frameLabel(f: DialogFrame): string {
 
 export function shapeLabel(x: NameShape): string {
   return { box: tr('Box'), tab: tr('Tab joined to the box'), ribbon: tr('Ribbon'), plain: tr('Text only'), slant: tr('Slanted'), pixel: tr('Pixel art') }[x];
+}
+
+const CHOICE_ICONS = ['▶', '◆', '✦', '♥', '★', '➤'];
+
+export function choiceShapeLabel(x: ChoiceShape): string {
+  return {
+    box: tr('Box'),
+    pill: tr('Pill (fully rounded)'),
+    bubble: tr('Speech bubble'),
+    banner: tr('Banner (notched ends)'),
+    underline: tr('Text with a line underneath'),
+    cut: tr('Cut corners'),
+    tag: tr('Tag (pointed left end)'),
+  }[x];
 }
 
 export function elementLabel(el: UiElementId | null, theme: Theme): string {
@@ -313,19 +327,42 @@ function ChoiceProps({
       <Section title={tr('Position & size')}>
         <AnchorPicker value={c.anchor} onChange={(a) => edit((t) => void (t.choice.anchor = a), 'c:anchor')} testId="choice-anchor" />
         <div className="prop-grid">
-          <LengthInput label="X" value={c.x} onChange={(v) => edit((t) => void (t.choice.x = v), 'c:x')} testId="choice-x" />
-          <LengthInput label="Y" value={c.y} onChange={(v) => edit((t) => void (t.choice.y = v), 'c:y')} testId="choice-y" />
+          {advanced && <LengthInput label="X" value={c.x} onChange={(v) => edit((t) => void (t.choice.x = v), 'c:x')} testId="choice-x" />}
+          {advanced && <LengthInput label="Y" value={c.y} onChange={(v) => edit((t) => void (t.choice.y = v), 'c:y')} testId="choice-y" />}
           <LengthInput label={tr('Button width')} value={c.width} onChange={(v) => edit((t) => void (t.choice.width = v), 'c:w')} testId="choice-width" />
         </div>
         <div className="prop-grid">
-          <Slider label={tr('Minimum width')} value={c.minWidth} min={0} max={1200} onChange={(v) => edit((t) => void (t.choice.minWidth = v), 'c:mw')} testId="choice-min-width" />
-          <Slider label={tr('Button height (minimum)')} value={c.height} min={30} max={200} onChange={(v) => edit((t) => void (t.choice.height = v), 'c:h')} testId="choice-height" />
+          {advanced && <Slider label={tr('Minimum width')} value={c.minWidth} min={0} max={1200} onChange={(v) => edit((t) => void (t.choice.minWidth = v), 'c:mw')} testId="choice-min-width" />}
+          {advanced && <Slider label={tr('Button height (minimum)')} value={c.height} min={30} max={200} onChange={(v) => edit((t) => void (t.choice.height = v), 'c:h')} testId="choice-height" />}
           <Slider label={tr('Spacing')} value={c.spacing} min={0} max={80} onChange={(v) => edit((t) => void (t.choice.spacing = v), 'c:gap')} testId="choice-spacing" />
-          <Slider label={tr('Padding X')} value={c.padding.x} min={0} max={120} onChange={(v) => edit((t) => void (t.choice.padding.x = v), 'c:px')} />
-          <Slider label={tr('Padding Y')} value={c.padding.y} min={0} max={80} onChange={(v) => edit((t) => void (t.choice.padding.y = v), 'c:py')} />
+          {advanced && <Slider label={tr('Padding X')} value={c.padding.x} min={0} max={120} onChange={(v) => edit((t) => void (t.choice.padding.x = v), 'c:px')} />}
+          {advanced && <Slider label={tr('Padding Y')} value={c.padding.y} min={0} max={80} onChange={(v) => edit((t) => void (t.choice.padding.y = v), 'c:py')} />}
         </div>
         <div className="small faint">{tr('Choices always use the free space next to the dialogue box, so they never cover it.')}</div>
       </Section>
+      {advanced && (
+        <Section title={tr('Shape & icon')} testId="props-choice-shape">
+          <Field label={tr('Shape')}>
+            <select className="select" value={c.shape} onChange={(e) => edit((t) => void (t.choice.shape = e.target.value as ChoiceShape), 'c:shape')} data-testid="choice-shape">
+              {CHOICE_SHAPES.map((x) => (
+                <option key={x} value={x}>
+                  {choiceShapeLabel(x)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={tr('Icon in front of each option')} tip={tr('A symbol or emoji shown before the text of every option, e.g. ▶ ◆ ♥ ★. Leave empty for none.')}>
+            <div className="row" style={{ gap: '0.3rem' }}>
+              <input className="input" style={{ width: '5rem' }} value={c.icon} maxLength={4} onChange={(e) => edit((t) => void (t.choice.icon = e.target.value), 'c:icon')} placeholder={tr('none')} data-testid="choice-icon" />
+              {CHOICE_ICONS.map((i) => (
+                <button key={i} type="button" className={`btn sm ${c.icon === i ? 'active' : ''}`} onClick={() => edit((t) => void (t.choice.icon = c.icon === i ? '' : i), 'c:icon')} aria-pressed={c.icon === i} data-testid={`choice-icon-${i}`}>
+                  {i}
+                </button>
+              ))}
+            </div>
+          </Field>
+        </Section>
+      )}
       <Section title={tr('States')} testId="props-choice-states">
         <div className="seg" role="tablist">
           {(Object.keys(stateName) as ChoiceState[]).map((k) => (
@@ -335,32 +372,49 @@ function ChoiceProps({
           ))}
         </div>
         <ColorField label={tr('Background color')} value={s.background} onChange={(v) => edit((t) => void (t.choice.states[state].background = v), `c:${state}:bg`)} testId="choice-state-bg" />
-        <Slider label={tr('Background opacity')} value={s.opacity} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.states[state].opacity = v), `c:${state}:op`)} />
         <ColorField label={tr('Text color')} value={s.color} onChange={(v) => edit((t) => void (t.choice.states[state].color = v), `c:${state}:c`)} testId="choice-state-color" />
-        <ColorField label={tr('Border color')} value={s.borderColor} onChange={(v) => edit((t) => void (t.choice.states[state].borderColor = v), `c:${state}:bc`)} />
+        {advanced && (
+          <>
+            <Slider label={tr('Background opacity')} value={s.opacity} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.states[state].opacity = v), `c:${state}:op`)} testId="choice-state-opacity" />
+            <ColorField label={tr('Border color')} value={s.borderColor} onChange={(v) => edit((t) => void (t.choice.states[state].borderColor = v), `c:${state}:bc`)} />
+          </>
+        )}
+        {(advanced || c.preset === 'image') && (
+          <ImageField
+            label={tr('Button picture ({0})', { 0: stateName[state] })}
+            tip={tr('Your own picture for this state of the button (Image Button). Empty states use the Normal picture.')}
+            value={s.image}
+            onChange={(v) => edit((t) => void (t.choice.states[state].image = v), `c:${state}:img`)}
+            testId="choice-state-image"
+          />
+        )}
       </Section>
-      <Section title={tr('Animation')}>
-        <Field label={tr('Hover animation')}>
-          <select className="select" value={c.hoverAnimation} onChange={(e) => edit((t) => void (t.choice.hoverAnimation = e.target.value as Theme['choice']['hoverAnimation']), 'c:ha')} data-testid="choice-hover-anim">
-            <option value="none">{tr('None')}</option>
-            <option value="grow">{tr('Grow')}</option>
-            <option value="lift">{tr('Lift')}</option>
-            <option value="glow">{tr('Glow')}</option>
-            <option value="slide">{tr('Slide')}</option>
-          </select>
-        </Field>
-        <Field label={tr('Pressed animation')}>
-          <select className="select" value={c.pressAnimation} onChange={(e) => edit((t) => void (t.choice.pressAnimation = e.target.value as Theme['choice']['pressAnimation']), 'c:pa')} data-testid="choice-press-anim">
-            <option value="none">{tr('None')}</option>
-            <option value="shrink">{tr('Shrink')}</option>
-            <option value="sink">{tr('Sink')}</option>
-          </select>
-        </Field>
-        <Slider label={tr('Animation speed (seconds)')} value={c.animationSpeed} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.animationSpeed = v), 'c:speed')} />
-      </Section>
-      <Section title={tr('Button style')}>
-        <SurfaceEditor s={c.surface} set={surf((t) => t.choice.surface, 'c')} prefix="choice" colors={false} advanced={advanced} />
-      </Section>
+      {advanced && (
+        <Section title={tr('Hover & press feedback')}>
+          <Field label={tr('Hover animation')}>
+            <select className="select" value={c.hoverAnimation} onChange={(e) => edit((t) => void (t.choice.hoverAnimation = e.target.value as Theme['choice']['hoverAnimation']), 'c:ha')} data-testid="choice-hover-anim">
+              <option value="none">{tr('None')}</option>
+              <option value="grow">{tr('Grow')}</option>
+              <option value="lift">{tr('Lift')}</option>
+              <option value="glow">{tr('Glow')}</option>
+              <option value="slide">{tr('Slide')}</option>
+            </select>
+          </Field>
+          <Field label={tr('Pressed animation')}>
+            <select className="select" value={c.pressAnimation} onChange={(e) => edit((t) => void (t.choice.pressAnimation = e.target.value as Theme['choice']['pressAnimation']), 'c:pa')} data-testid="choice-press-anim">
+              <option value="none">{tr('None')}</option>
+              <option value="shrink">{tr('Shrink')}</option>
+              <option value="sink">{tr('Sink')}</option>
+            </select>
+          </Field>
+          <Slider label={tr('Animation speed (seconds)')} value={c.animationSpeed} min={0} max={1} step={0.05} onChange={(v) => edit((t) => void (t.choice.animationSpeed = v), 'c:speed')} />
+        </Section>
+      )}
+      {advanced && (
+        <Section title={tr('Button style')}>
+          <SurfaceEditor s={c.surface} set={surf((t) => t.choice.surface, 'c')} prefix="choice" colors={false} advanced={advanced} />
+        </Section>
+      )}
       <Section title={tr('Text')}>
         <TextEditor x={c.text} set={text((t) => t.choice.text, 'ct')} prefix="choice-text" color={false} gameFontNote={fontLabel} advanced={advanced} />
       </Section>

@@ -1,4 +1,4 @@
-import type { Action, Condition, Hotspot, JumpTarget, Project, Theme, Variable } from './types';
+import type { Action, ChoiceEffect, ChoiceOption, Condition, Hotspot, JumpTarget, Project, Theme, Variable } from './types';
 import { getActionDef, isKnownActionType } from './actions';
 import { t } from './i18n';
 import { mapThemeImages, resolveTheme, themeAssetIds, themeExists, themeFontRefs } from './themes';
@@ -16,6 +16,12 @@ export interface Issue {
 /** Hotspots of a Point & Click action (empty for other actions). */
 export function hotspotsOf(a: Action): Hotspot[] {
   return a.type === 'pointAndClick' && Array.isArray(a.params?.hotspots) ? a.params.hotspots : [];
+}
+
+/** Choice option sounds ("when chosen: play a sound"), which point at assets. */
+export function choiceSounds(a: Action): Extract<ChoiceEffect, { kind: 'playSound' }>[] {
+  if (a.type !== 'choice' || !Array.isArray(a.params?.options)) return [];
+  return (a.params.options as ChoiceOption[]).flatMap((o) => (o.effects ?? []).filter((e): e is Extract<ChoiceEffect, { kind: 'playSound' }> => e.kind === 'playSound'));
 }
 
 /** Asset ids directly referenced by an action's params. */
@@ -37,6 +43,7 @@ export function collectUsedAssetIds(p: Project, includeDisabled = false): Set<st
       if (a.disabled && !includeDisabled) continue;
       directAssetRefs(a).forEach((id) => used.add(id));
       for (const h of hotspotsOf(a)) if (h.assetId) used.add(h.assetId);
+      for (const e of choiceSounds(a)) if (e.assetId) used.add(e.assetId);
       const cid = a.params?.characterId ?? a.params?.speaker;
       if (cid && charMap.has(cid)) {
         // The runtime may show any expression of a character on stage, so include them all.
@@ -70,7 +77,7 @@ export function findAssetUsages(p: Project, assetId: string): AssetUsage[] {
   const out: AssetUsage[] = [];
   for (const s of p.scenes) {
     s.actions.forEach((a, i) => {
-      if (directAssetRefs(a).includes(assetId) || hotspotsOf(a).some((h) => h.assetId === assetId)) {
+      if (directAssetRefs(a).includes(assetId) || hotspotsOf(a).some((h) => h.assetId === assetId) || choiceSounds(a).some((e) => e.assetId === assetId)) {
         out.push({ where: 'action', sceneId: s.id, sceneName: s.name, actionId: a.id, label: `${s.name} › #${i + 1} ${isKnownActionType(a.type) ? t(getActionDef(a.type).label) : a.type}` });
       }
     });
@@ -103,6 +110,12 @@ export function replaceAssetReferences(p: Project, fromId: string, toId: string)
       for (const h of hotspotsOf(a)) {
         if (h.assetId === fromId) {
           h.assetId = toId;
+          n++;
+        }
+      }
+      for (const e of choiceSounds(a)) {
+        if (e.assetId === fromId) {
+          e.assetId = toId;
           n++;
         }
       }
@@ -139,6 +152,12 @@ export function removeAssetReferences(p: Project, assetId: string): number {
       for (const h of hotspotsOf(a)) {
         if (h.assetId === assetId) {
           h.assetId = undefined;
+          n++;
+        }
+      }
+      for (const e of choiceSounds(a)) {
+        if (e.assetId === assetId) {
+          e.assetId = '';
           n++;
         }
       }
@@ -282,6 +301,21 @@ export function validateProject(p: Project, fileExists?: (relPath: string) => bo
           if (o.condition && !varMap.has(o.condition.variableId)) push(t('Choice option {n}: condition variable is missing.', { n: i + 1 }));
           const cp = o.condition && varMap.has(o.condition.variableId) ? conditionProblem(o.condition, varMap.get(o.condition.variableId)!) : null;
           if (cp) push(`${t('Choice option {n}', { n: i + 1 })}: ${cp}`);
+          const opt = t('Choice option {n}', { n: i + 1 });
+          for (const e of (o.effects ?? []) as ChoiceEffect[]) {
+            if (e.kind === 'setVariable' || e.kind === 'addVariable') {
+              const v = varMap.get(e.variableId);
+              if (!v) push(`${opt}: ${t('the variable to change is missing.')}`);
+              else if (e.kind === 'addVariable' && v.type !== 'number') push(`${opt}: ${t('only Number variables can be added to (“{var}” is a {type} variable).', { var: v.name, type: t(TYPE_NAME[v.type]) })}`);
+              else if (e.kind === 'setVariable' && !valueFits(v.type, e.value))
+                push(`${opt}: ${t('“{var}” is a {type} variable but would be set to “{value}”.', { var: v.name, type: t(TYPE_NAME[v.type]), value: String(e.value ?? '') })}`);
+            } else if (e.kind === 'playSound') {
+              if (!e.assetId) push(`${opt}: ${t('choose a sound to play.')}`, 'warning');
+              else if (!assetMap.has(e.assetId)) push(`${opt}: ${t('the sound file is missing.')}`);
+            } else if (e.kind === 'animateCharacter') {
+              if (!e.characterId || !charMap.has(e.characterId)) push(`${opt}: ${t('choose a character to animate.')}`, 'warning');
+            }
+          }
         });
       }
       if (a.type === 'pointAndClick') {

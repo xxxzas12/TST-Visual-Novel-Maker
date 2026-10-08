@@ -282,6 +282,9 @@ export function themeVars(t: Theme, c: UiContext, img: (assetId: string) => stri
     vars[`--tvn-c-${state}-bg`] = withAlpha(s.background, s.opacity);
     vars[`--tvn-c-${state}-color`] = s.color;
     vars[`--tvn-c-${state}-bc`] = s.borderColor;
+    vars[`--tvn-c-${state}-img`] = cssUrl(s.image ? img(s.image) : null);
   }
+  // Icon in front of every option (a CSS string), or none.
+  vars['--tvn-c-icon'] = ch.icon ? JSON.stringify(ch.icon) : 'none';
   return vars;
 }

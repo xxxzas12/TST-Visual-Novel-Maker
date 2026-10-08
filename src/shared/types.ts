@@ -76,7 +76,18 @@ export interface ChoiceOption {
   condition?: Condition | null;
   /** When the condition fails: show the option disabled instead of hiding it. */
   showLocked?: boolean;
+  /** Things that happen when the option is chosen, in order, before going to the target. */
+  effects?: ChoiceEffect[];
 }
+
+/** Something a choice option does when chosen (no code needed: set a variable, play a sound, animate…). */
+export type ChoiceEffect =
+  | { kind: 'setVariable'; variableId: string; value: string | number | boolean }
+  /** Adds (or, with a negative amount, subtracts) a number. */
+  | { kind: 'addVariable'; variableId: string; amount: number }
+  | { kind: 'playSound'; assetId: string }
+  | { kind: 'animateCharacter'; characterId: string; animation: string }
+  | { kind: 'screenEffect'; effect: string };
 
 /** A clickable area of a Point & Click action (position and size in % of the stage). */
 export interface Hotspot {
@@ -347,11 +358,21 @@ export interface ChoiceStateStyle {
   color: string;
   borderColor: string;
   opacity: number;
+  /** Button picture for this state (Image Button), asset id; drawn over the background colour. */
+  image: string | null;
 }
+
+/** Outline of a choice button. */
+export type ChoiceShape = 'box' | 'pill' | 'bubble' | 'banner' | 'underline' | 'cut' | 'tag';
 
 export type ChoiceState = 'normal' | 'hover' | 'pressed' | 'disabled';
 
 export interface ThemeChoices {
+  /** Choice style preset last applied (shown as selected in the editor); null = none. */
+  preset: string | null;
+  shape: ChoiceShape;
+  /** Small symbol in front of every option (e.g. ▶, ◆, ♥); '' = none. */
+  icon: string;
   /** Where the group of buttons sits (inside the space not covered by the dialogue box). */
   anchor: UiAnchor;
   x: UiLength;

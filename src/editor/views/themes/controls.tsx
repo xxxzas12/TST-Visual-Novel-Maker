@@ -114,7 +114,7 @@ export function AnchorPicker({ value, onChange, testId }: { value: UiAnchor; onC
   );
 }
 
-function ImageField({ value, onChange, testId, label = tr('Background image'), tip }: { value: string | null; onChange: (id: string | null) => void; testId?: string; label?: string; tip?: string }) {
+export function ImageField({ value, onChange, testId, label = tr('Background image'), tip }: { value: string | null; onChange: (id: string | null) => void; testId?: string; label?: string; tip?: string }) {
   const asset = useProject((s) => (value ? s.project?.assets.find((a) => a.id === value) : undefined));
   const [open, setOpen] = useState(false);
   return (

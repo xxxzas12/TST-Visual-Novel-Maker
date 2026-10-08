@@ -307,9 +307,9 @@
   overflow-wrap: anywhere;
 }
 .tvn-choice::before {
-  background-image: var(--tvn-c-img);
-  background-size: var(--tvn-c-img-size);
-  background-repeat: var(--tvn-c-img-repeat);
+  background-image: var(--tvn-c-tex), var(--tvn-c-normal-img), var(--tvn-c-img);
+  background-size: auto, var(--tvn-c-img-size), var(--tvn-c-img-size);
+  background-repeat: repeat, var(--tvn-c-img-repeat), var(--tvn-c-img-repeat);
   opacity: var(--tvn-c-img-op);
 }
 .tvn-choice:hover:not(:disabled),
@@ -429,7 +429,11 @@
   --tvn-m-bw: 2px;
   --tvn-m-hover-bg: #ffd400;
   --tvn-m-hover-color: #000;
-  /* plain surfaces: no gradients, textures, frame images or outlines */
+  /* plain surfaces: no gradients, textures, frame images, button pictures or outlines */
+  --tvn-c-normal-img: none;
+  --tvn-c-hover-img: none;
+  --tvn-c-pressed-img: none;
+  --tvn-c-disabled-img: none;
   --tvn-d-grad: none;
   --tvn-d-tex: none;
   --tvn-d-fimg: none;
@@ -1105,4 +1109,70 @@ button.tvn-gallery-item:focus-visible {
 }
 .tvn-root[data-d-frame='torn'] .tvn-dialog::after {
   background: var(--tvn-d-grad), var(--tvn-d-bg);
+}
+
+/* ---------- choice buttons: per-state pictures, icon, shapes (data-c-shape) ---------- */
+.tvn-choice:hover:not(:disabled)::before,
+.tvn-choice:focus-visible:not(:disabled)::before,
+.tvn-choice.tvn-state-hover::before {
+  background-image: var(--tvn-c-tex), var(--tvn-c-hover-img), var(--tvn-c-normal-img), var(--tvn-c-img);
+  background-size: auto, var(--tvn-c-img-size), var(--tvn-c-img-size), var(--tvn-c-img-size);
+  background-repeat: repeat, var(--tvn-c-img-repeat), var(--tvn-c-img-repeat), var(--tvn-c-img-repeat);
+}
+.tvn-choice:active:not(:disabled)::before,
+.tvn-choice.tvn-state-pressed::before {
+  background-image: var(--tvn-c-tex), var(--tvn-c-pressed-img), var(--tvn-c-hover-img), var(--tvn-c-normal-img), var(--tvn-c-img);
+  background-size: auto, var(--tvn-c-img-size), var(--tvn-c-img-size), var(--tvn-c-img-size), var(--tvn-c-img-size);
+  background-repeat: repeat, var(--tvn-c-img-repeat), var(--tvn-c-img-repeat), var(--tvn-c-img-repeat), var(--tvn-c-img-repeat);
+}
+.tvn-choice:disabled::before {
+  background-image: var(--tvn-c-tex), var(--tvn-c-disabled-img), var(--tvn-c-normal-img), var(--tvn-c-img);
+  background-size: auto, var(--tvn-c-img-size), var(--tvn-c-img-size), var(--tvn-c-img-size);
+  background-repeat: repeat, var(--tvn-c-img-repeat), var(--tvn-c-img-repeat), var(--tvn-c-img-repeat);
+}
+.tvn-choice {
+  -webkit-text-stroke: var(--tvn-c-stroke);
+  paint-order: stroke fill;
+}
+.tvn-choice-label::before {
+  content: var(--tvn-c-icon);
+  margin-inline-end: 0.5em;
+  display: inline-block;
+}
+.tvn-root[data-c-shape='pill'] .tvn-choice {
+  border-radius: 999px;
+}
+/* Bubble: rounded, with a small tail at the bottom left in the button's own colours. */
+.tvn-root[data-c-shape='bubble'] .tvn-choice::after {
+  content: '';
+  position: absolute;
+  left: 2.2em;
+  bottom: 0;
+  width: 0.9em;
+  height: 0.9em;
+  background-color: inherit;
+  border: inherit;
+  transform: translate(-50%, 50%) rotate(45deg);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+.tvn-root[data-c-shape='banner'] .tvn-choice {
+  border-radius: 0;
+  border-color: transparent;
+  padding-inline: max(1.6em, var(--tvn-c-padx, 1.6em));
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.9em) 50%, 100% 100%, 0 100%, 0.9em 50%);
+}
+.tvn-root[data-c-shape='underline'] .tvn-choice {
+  border-width: 0 0 var(--tvn-c-bw) 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.tvn-root[data-c-shape='cut'] .tvn-choice {
+  border-radius: 0;
+  clip-path: polygon(0.8em 0, 100% 0, 100% calc(100% - 0.8em), calc(100% - 0.8em) 100%, 0 100%, 0 0.8em);
+}
+.tvn-root[data-c-shape='tag'] .tvn-choice {
+  border-radius: 0 0.4em 0.4em 0;
+  padding-left: 1.6em;
+  clip-path: polygon(1em 0, 100% 0, 100% 100%, 1em 100%, 0 50%);
 }

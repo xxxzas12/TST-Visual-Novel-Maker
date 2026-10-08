@@ -2391,3 +2391,72 @@ body.resizing-y * {
   border-color: var(--accent);
   outline: none;
 }
+
+/* ---------- choice style presets (thumbnails approximate the runtime shapes) ---------- */
+.cb-thumb {
+  height: 3.4rem;
+  border-radius: 5px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #5b6f9e, #2b3352);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14%;
+}
+.cb-thumb[data-anchor='right'] {
+  align-items: flex-end;
+  padding-right: 6%;
+}
+.cb-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  height: 0.95rem;
+  padding: 0 6px;
+  background: var(--cb-bg);
+  border: var(--cb-bw) solid var(--cb-bc);
+  border-radius: var(--cb-r);
+  color: var(--cb-color);
+  font-size: 0.5rem;
+  font-style: normal;
+}
+.cb-thumb[data-anchor='right'] .cb-btn {
+  width: 70%;
+}
+.cb-btn i {
+  font-style: normal;
+}
+.cb-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 18%;
+  border-radius: 1px;
+  background: var(--cb-color);
+  opacity: 0.85;
+}
+.cb-thumb[data-shape='pill'] .cb-btn {
+  border-radius: 999px;
+}
+.cb-thumb[data-shape='bubble'] .cb-btn {
+  border-radius: 8px;
+}
+.cb-thumb[data-shape='banner'] .cb-btn {
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%, 5px 50%);
+}
+.cb-thumb[data-shape='underline'] .cb-btn {
+  border-width: 0 0 var(--cb-bw) 0;
+  border-radius: 0;
+}
+.cb-thumb[data-shape='cut'] .cb-btn {
+  border-radius: 0;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+.cb-thumb[data-shape='tag'] .cb-btn {
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 6px 100%, 0 50%);
+}

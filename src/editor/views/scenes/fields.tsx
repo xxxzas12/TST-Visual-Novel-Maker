@@ -1,8 +1,9 @@
 import { t as tr } from '../../../shared/i18n';
 import { useMemo, useState } from 'react';
-import type { AnimFrame, Asset, ChoiceOption, Hotspot, CompareOp, Condition, JumpTarget, Project, Scene, TextStyle, Variable } from '../../../shared/types';
+import type { AnimFrame, Asset, ChoiceEffect, ChoiceOption, Hotspot, CompareOp, Condition, JumpTarget, Project, Scene, TextStyle, Variable } from '../../../shared/types';
 import type { FieldSpec } from '../../../shared/actions';
 import { getActionDef, isKnownActionType } from '../../../shared/actions';
+import { EMPHASIS_ANIMATIONS, SCREEN_EFFECTS } from '../../../shared/animations';
 import { newId } from '../../../shared/ids';
 import { AssetPicker } from '../../components/AssetPicker';
 import { AssetThumb, TYPE_ICON } from '../../components/AssetThumb';
@@ -301,6 +302,7 @@ function ChoiceOptionsEditor({ value, onChange, scene }: { value: ChoiceOption[]
           <input className="input" value={o.text} onChange={(e) => set(i, { ...o, text: e.target.value })} placeholder={tr("Option text")} data-testid={`choice-text-${i}`} />
           <span className="field-label">{tr("Goes to")}</span>
           <TargetEditor value={o.target} allowNext scene={scene} onChange={(target) => set(i, { ...o, target })} />
+          <ChoiceEffectsEditor value={o.effects ?? []} onChange={(effects) => set(i, { ...o, effects: effects.length ? effects : undefined })} index={i} />
           {o.condition ? (
             <>
               <span className="field-label">{tr("Only show if")}</span>
@@ -320,6 +322,113 @@ function ChoiceOptionsEditor({ value, onChange, scene }: { value: ChoiceOption[]
       <button className="btn sm" onClick={() => onChange([...opts, { id: newId('o'), text: `Option ${String.fromCharCode(65 + opts.length)}`, target: { kind: 'next' }, condition: null }])} data-testid="add-choice-option">
         {tr("＋ Add option")}
       </button>
+    </div>
+  );
+}
+
+const EFFECT_SOUND: Extract<FieldSpec, { kind: 'asset' }> = { key: 'assetId', label: 'Sound', kind: 'asset', assetTypes: ['sfx', 'voice', 'music', 'unknown'], media: 'audio' };
+
+const EFFECT_KINDS: { kind: ChoiceEffect['kind']; label: string }[] = [
+  { kind: 'setVariable', label: 'Set a variable' },
+  { kind: 'addVariable', label: 'Add to a number variable' },
+  { kind: 'playSound', label: 'Play a sound' },
+  { kind: 'animateCharacter', label: 'Animate a character' },
+  { kind: 'screenEffect', label: 'Screen effect' },
+];
+
+function newEffect(kind: ChoiceEffect['kind'], firstVar: Variable | undefined, firstChar: string): ChoiceEffect {
+  switch (kind) {
+    case 'setVariable':
+      return { kind, variableId: firstVar?.id ?? '', value: firstVar?.type === 'number' ? 1 : firstVar?.type === 'string' ? '' : true };
+    case 'addVariable':
+      return { kind, variableId: firstVar?.type === 'number' ? firstVar.id : '', amount: 1 };
+    case 'playSound':
+      return { kind, assetId: '' };
+    case 'animateCharacter':
+      return { kind, characterId: firstChar, animation: 'bounce' };
+    default:
+      return { kind: 'screenEffect', effect: 'shake' };
+  }
+}
+
+/** "When chosen": things an option does before the story goes on, built from simple menus (no code). */
+function ChoiceEffectsEditor({ value, onChange, index }: { value: ChoiceEffect[]; onChange: (v: ChoiceEffect[]) => void; index: number }) {
+  const vars = useProject((s) => s.project?.variables ?? []);
+  const firstChar = useProject((s) => s.project?.characters[0]?.id ?? '');
+  const [adding, setAdding] = useState('');
+  const set = (i: number, e: ChoiceEffect) => onChange(value.map((x, j) => (j === i ? e : x)));
+  return (
+    <div className="col" style={{ gap: '0.3rem' }} data-testid={`choice-effects-${index}`}>
+      {value.length > 0 && <span className="field-label">{tr("When chosen")}</span>}
+      {value.map((e, i) => (
+        <div key={i} className="row wrap" style={{ gap: '0.3rem' }} data-testid={`choice-effect-${index}-${i}`}>
+          <span className="small muted" style={{ minWidth: '6.5rem' }}>
+            {tr(EFFECT_KINDS.find((k) => k.kind === e.kind)?.label ?? e.kind)}
+          </span>
+          {e.kind === 'setVariable' && (
+            <>
+              <VariableSelect value={e.variableId} onChange={(variableId) => set(i, { ...e, variableId })} />
+              <span className="small">=</span>
+              <VarValueInput variable={vars.find((v) => v.id === e.variableId)} value={e.value} onChange={(v) => set(i, { ...e, value: v })} />
+            </>
+          )}
+          {e.kind === 'addVariable' && (
+            <>
+              <VariableSelect value={e.variableId} onChange={(variableId) => set(i, { ...e, variableId })} />
+              <span className="small">+</span>
+              <NumberInput value={e.amount} step={1} onChange={(amount) => set(i, { ...e, amount })} />
+            </>
+          )}
+          {e.kind === 'playSound' && (
+            <div className="grow">
+              <AssetField spec={EFFECT_SOUND} value={e.assetId} onChange={(assetId) => set(i, { ...e, assetId })} />
+            </div>
+          )}
+          {e.kind === 'animateCharacter' && (
+            <>
+              <CharacterSelect value={e.characterId} onChange={(characterId) => set(i, { ...e, characterId })} />
+              <select className="select" style={{ width: 'auto' }} value={e.animation} onChange={(ev) => set(i, { ...e, animation: ev.target.value })} aria-label={tr("Animation")}>
+                {EMPHASIS_ANIMATIONS.filter((a) => a.value !== 'custom').map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {tr(a.label)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          {e.kind === 'screenEffect' && (
+            <select className="select" style={{ width: 'auto' }} value={e.effect} onChange={(ev) => set(i, { ...e, effect: ev.target.value })} aria-label={tr("Screen effect")}>
+              {SCREEN_EFFECTS.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {tr(a.label)}
+                </option>
+              ))}
+            </select>
+          )}
+          <button className="btn sm ghost icon" onClick={() => onChange(value.filter((_, j) => j !== i))} title={tr("Remove")} aria-label={tr("Remove")}>
+            ✕
+          </button>
+        </div>
+      ))}
+      <select
+        className="select"
+        style={{ alignSelf: 'flex-start', width: 'auto' }}
+        value={adding}
+        onChange={(ev) => {
+          const kind = ev.target.value as ChoiceEffect['kind'];
+          setAdding('');
+          if (kind) onChange([...value, newEffect(kind, vars[0], firstChar)]);
+        }}
+        aria-label={tr("＋ When chosen, also…")}
+        data-testid={`choice-add-effect-${index}`}
+      >
+        <option value="">{tr("＋ When chosen, also…")}</option>
+        {EFFECT_KINDS.map((k) => (
+          <option key={k.kind} value={k.kind}>
+            {tr(k.label)}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
