@@ -1,4 +1,4 @@
-# TSTVN 1.0.19 — Release Notes (release candidate)
+# TSTVN 1.0.20 — Release Notes (release candidate)
 
 TSTVN (TST Visual Novel Maker) is a Windows desktop app for making visual novels without writing
 code. You import art and music, build scenes visually, preview the real game, and export it for
@@ -9,7 +9,9 @@ This release candidate contains everything since the initial release (1.0.0). Pe
 [docs/updates/](docs/updates/).
 
 ## Install
-- Run `TSTVN-Setup-1.0.19.exe` on Windows 10/11 x64.
+- Run `TSTVN-Setup-1.0.20.exe` on Windows 10/11 x64.
+- The installer is not code-signed yet. Windows SmartScreen may show "Windows protected your PC"; click
+  **More info → Run anyway**.
 - Two steps: **Install TSTVN** (Desktop shortcut and Start Menu icon options), then **✓ Installed
   successfully** (**Launch TSTVN**).
 - It installs for the current user (no administrator needed) into `%LOCALAPPDATA%\Programs\TSTVN`.
@@ -71,6 +73,10 @@ This release candidate contains everything since the initial release (1.0.0). Pe
 - In-game Gallery (CG, characters, music, endings) with unlocking.
 - Accessibility: minimum text size, touch targets, high contrast.
 
+### Fixes in this release candidate (1.0.20)
+- Preventive fix: editor preferences changed right after launch are no longer put back by the settings that are still
+  loading.
+
 ### Plugins
 - Plugin Manager with install from `.tstplugin` or a folder, enable/disable and remove.
 - Plugins are data-only content packs: themes and action templates. They never run code.
@@ -81,17 +87,17 @@ This release candidate contains everything since the initial release (1.0.0). Pe
 - The project format and export format are unchanged by the UI work. New theme fields are optional
   and ignored by older versions.
 
-## Verification of this release candidate
+## Verification of this release candidate (1.0.20)
 - `npm run build` ✔
 - lint ✔
 - `npm test`: 131/131 ✔
-- `npm run test:e2e`: 26/26 ✔. This includes:
+- `npm run test:e2e`: 26/26 ✔, in two full runs in a row. This includes:
   - New → Edit → Save → Close → Reopen → Preview → Export, with the exported Windows and Web games
     launched;
   - the packaged TSTVN.exe;
   - plugins, autosave, backup, crash recovery and validation.
 - Real installer test (`scripts/test-installer.ps1`): all checks passed, including the upgrade from
-  1.0.11.
+  1.0.19.
 
 ## Known issues
 See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).

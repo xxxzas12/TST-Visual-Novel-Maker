@@ -1,4 +1,4 @@
-# Known Issues — TSTVN 1.0.19
+# Known Issues — TSTVN 1.0.20
 
 None of these block normal use. Each was recorded when the related feature was built; details are in
 [docs/updates](docs/updates/).

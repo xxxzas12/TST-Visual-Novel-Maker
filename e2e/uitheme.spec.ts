@@ -92,6 +92,15 @@ test('game UI editor: design, responsive check, export/import, scene override, p
   await expect.poll(async () => Math.round((await rectOf(design, 'tvn-dialog')).width)).toBe(960);
   await page.getByTestId('dialog-width-unit').selectOption('px');
   await page.getByTestId('dialog-width').fill('1600');
+  // Wait until the selection box on the canvas shows the new size: under load it is re-measured a moment
+  // later, and a drag started on the old box landed on the choice buttons instead.
+  await expect
+    .poll(async () => {
+      const box = (await page.getByTestId('ui-el-dialog').boundingBox())!;
+      const frame = (await page.getByTestId('ui-design-frame').boundingBox())!;
+      return Math.round((box.width / frame.width) * 1920);
+    })
+    .toBe(1600);
 
   // drag to move, handle to resize, align
   const before = await rectOf(design, 'tvn-dialog');

@@ -1,6 +1,6 @@
 import { Fragment, useEffect } from 'react';
 import { useProject } from './store/project';
-import { applyLanguage, refreshPlugins, useUi } from './store/ui';
+import { applyLanguage, changedPrefs, refreshPlugins, useUi } from './store/ui';
 import { DialogHost, Toasts } from './components/Modal';
 import { Welcome } from './views/Welcome';
 import { Shell } from './views/Shell';
@@ -38,9 +38,10 @@ export function App() {
         uiFontSize: s.uiFontSize ?? Math.round(DEFAULT_UI_FONT_SIZE * (s.uiScale ?? 1)),
         appearance: s.appearance ?? 'dark',
         autosave: autosaveConfig(s),
-        workspace: normalizeLayout(s.workspace),
-        customWorkspaces: normalizeCustomWorkspaces(s.customWorkspaces),
-        themeEditorAdvanced: !!s.themeEditorAdvanced,
+        // Preferences changed before these settings arrived keep the user's choice.
+        ...(changedPrefs.has('workspace') ? {} : { workspace: normalizeLayout(s.workspace) }),
+        ...(changedPrefs.has('customWorkspaces') ? {} : { customWorkspaces: normalizeCustomWorkspaces(s.customWorkspaces) }),
+        ...(changedPrefs.has('themeEditorAdvanced') ? {} : { themeEditorAdvanced: !!s.themeEditorAdvanced }),
       });
       applyLanguage(s.language === 'th' ? 'th' : 'en');
     });

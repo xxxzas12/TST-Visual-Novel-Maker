@@ -14,8 +14,11 @@ async function drag(page: Page, id: string, dx: number, dy: number) {
   const b = await box(page, id);
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
-  await page.mouse.move(b.x + b.width / 2 + dx / 2, b.y + b.height / 2 + dy / 2, { steps: 4 });
-  await page.mouse.move(b.x + b.width / 2 + dx, b.y + b.height / 2 + dy, { steps: 4 });
+  // Let the divider take the pointer before moving (under load the first moves could be missed).
+  await page.waitForTimeout(60);
+  await page.mouse.move(b.x + b.width / 2 + dx / 2, b.y + b.height / 2 + dy / 2, { steps: 8 });
+  await page.mouse.move(b.x + b.width / 2 + dx, b.y + b.height / 2 + dy, { steps: 8 });
+  await page.waitForTimeout(60);
   await page.mouse.up();
 }
 

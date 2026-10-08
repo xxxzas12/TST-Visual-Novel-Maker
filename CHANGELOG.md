@@ -2,6 +2,15 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.20
+### Fixed
+- Editor preferences changed right after launch (panel sizes, workspace, Basic/Advanced) could be put back by the
+  settings still loading in the background (startup race found while investigating intermittent E2E failures).
+
+### Changed
+- README: the bilingual GitHub README, extended with the features up to 1.0.19; the detailed guide moved to
+  docs/GUIDE.md. MIT LICENSE added (from GitHub).
+
 ## v1.0.19
 ### Changed
 - UI polish: compact getting-started checklist that folds out of the way (remembered, shows the next step,

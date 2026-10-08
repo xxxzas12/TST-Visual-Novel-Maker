@@ -191,11 +191,18 @@ export function applyLanguage(lang: Lang) {
   useUi.setState({ language: lang });
 }
 
+/**
+ * Editor preferences the user changed during this session. The settings read at startup arrive a moment
+ * later and must not overwrite a choice the user already made (e.g. a panel dragged right after launch).
+ */
+export const changedPrefs = new Set<'workspace' | 'customWorkspaces' | 'themeEditorAdvanced'>();
+
 let saveLayoutTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Changes the editor layout and remembers it (saved shortly after the last change, e.g. while dragging a splitter). */
 export function setWorkspace(patch: Partial<WorkspaceLayout>) {
   const workspace = { ...useUi.getState().workspace, ...patch };
+  changedPrefs.add('workspace');
   useUi.setState({ workspace });
   clearTimeout(saveLayoutTimer);
   saveLayoutTimer = setTimeout(() => void api.app.setSettings({ workspace: useUi.getState().workspace }).catch(() => undefined), 400);
@@ -208,11 +215,13 @@ export function applyWorkspace(id: string) {
 }
 
 export function setCustomWorkspaces(customWorkspaces: CustomWorkspace[]) {
+  changedPrefs.add('customWorkspaces');
   useUi.setState({ customWorkspaces });
   void api.app.setSettings({ customWorkspaces }).catch(() => undefined);
 }
 
 export function setThemeEditorAdvanced(themeEditorAdvanced: boolean) {
+  changedPrefs.add('themeEditorAdvanced');
   useUi.setState({ themeEditorAdvanced });
   void api.app.setSettings({ themeEditorAdvanced }).catch(() => undefined);
 }
