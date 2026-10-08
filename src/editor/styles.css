@@ -2009,3 +2009,15 @@ h3 {
   border: 2px solid #000;
   cursor: nwse-resize;
 }
+
+/* ---------- story flow: broken connections ---------- */
+.flow-broken {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg1);
+}

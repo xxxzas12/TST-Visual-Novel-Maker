@@ -19,13 +19,13 @@ import {
 } from '@xyflow/react';
 import type { Project } from '../../../shared/types';
 import { createAction } from '../../../shared/actions';
-import { deriveFlowEdges, type FlowEdge } from '../../../shared/flow';
+import { brokenLinks, deriveFlowEdges, type FlowEdge } from '../../../shared/flow';
 import { useProject } from '../../store/project';
 import { resolveAppearance } from '../../appearance';
 import { toast, useUi } from '../../store/ui';
 import { addScene, findScene } from '../../sceneOps';
 
-type SceneNodeData = { name: string; chapter: string; actions: number; isStart: boolean; isEnding: boolean };
+type SceneNodeData = { id: string; name: string; chapter: string; actions: number; isStart: boolean; isEnding: boolean; broken: number };
 type StartNodeData = Record<string, never>;
 
 function SceneNode({ data, selected }: NodeProps<Node<SceneNodeData>>) {
@@ -37,7 +37,25 @@ function SceneNode({ data, selected }: NodeProps<Node<SceneNodeData>>) {
         {data.isStart ? '🚩 ' : data.isEnding ? '🏁 ' : '🎬 '}
         {data.name}
       </b>
-      <div className="small faint">{tr("{0} actions", { 0: data.actions })}</div>
+      <div className="row" style={{ gap: '0.3rem' }}>
+        <span className="small faint grow">{tr("{0} actions", { 0: data.actions })}</span>
+        {data.broken > 0 && (
+          <span className="badge danger" title={tr("{0} connection(s) point to something that no longer exists", { 0: data.broken })} data-testid={`flow-node-broken-${data.name}`}>
+            ⚠ {data.broken}
+          </span>
+        )}
+        <button
+          className="btn ghost sm nodrag"
+          onClick={(e) => {
+            e.stopPropagation();
+            openScene(data.id);
+          }}
+          title={tr("Open this scene in the scene editor")}
+          data-testid={`flow-open-${data.name}`}
+        >
+          {tr("Open")}
+        </button>
+      </div>
       <Handle type="source" position={Position.Right} />
     </div>
   );
@@ -54,6 +72,13 @@ function StartNode() {
 
 const nodeTypes = { scene: SceneNode, start: StartNode };
 
+/** Opens a scene in the scene editor (optionally selecting one of its actions). */
+function openScene(sceneId: string, actionId?: string) {
+  useUi.getState().selectScene(sceneId);
+  if (actionId) useUi.getState().selectActions([actionId]);
+  useUi.getState().setView('scenes');
+}
+
 function chapterName(p: Project, sceneId: string) {
   return p.chapters.find((c) => c.sceneIds.includes(sceneId))?.name ?? '';
 }
@@ -63,6 +88,8 @@ export function FlowView() {
   const [mode, setMode] = useState<'flow' | 'list'>('flow');
   const appearance = useUi((s) => s.appearance);
   const flowEdges = useMemo(() => deriveFlowEdges(project), [project]);
+  const broken = useMemo(() => brokenLinks(project), [project]);
+  const [showBroken, setShowBroken] = useState(false);
   const startId = project.settings.startSceneId;
 
   const nodes: Node[] = useMemo(() => {
@@ -71,6 +98,8 @@ export function FlowView() {
       type: 'scene',
       position: s.flowPos ?? { x: 80 + (i % 5) * 260, y: 80 + Math.floor(i / 5) * 160 },
       data: {
+        id: s.id,
+        broken: broken.filter((b) => b.sceneId === s.id).length,
         name: s.name,
         chapter: chapterName(project, s.id),
         actions: s.actions.length,
@@ -82,7 +111,7 @@ export function FlowView() {
     const sp = start?.flowPos ?? { x: 80, y: 80 };
     out.push({ id: '__start', type: 'start', position: { x: sp.x - 170, y: sp.y + 14 }, data: {} satisfies StartNodeData, draggable: false });
     return out;
-  }, [project, startId]);
+  }, [project, startId, broken]);
 
   const edges: Edge[] = useMemo(() => {
     const out: Edge[] = flowEdges.map((e) => ({
@@ -198,10 +227,7 @@ export function FlowView() {
       );
     });
 
-  const open = (sceneId: string) => {
-    useUi.getState().selectScene(sceneId);
-    useUi.getState().setView('scenes');
-  };
+  const open = (sceneId: string) => openScene(sceneId);
 
   return (
     <>
@@ -216,6 +242,11 @@ export function FlowView() {
           </button>
         </div>
         <span className="grow" />
+        {broken.length > 0 && (
+          <button className="btn sm danger" onClick={() => setShowBroken(!showBroken)} data-testid="flow-broken-count">
+            {tr("⚠ {0} broken connection(s)", { 0: broken.length })}
+          </button>
+        )}
         {mode === 'flow' && (
           <>
             <span className="small muted">{tr("Drag from a scene’s right dot to another scene to connect · select an arrow + Delete to remove · double-click to edit")}</span>
@@ -228,6 +259,16 @@ export function FlowView() {
           {tr("＋ Scene")}
         </button>
       </div>
+      {showBroken && broken.length > 0 && (
+        <div className="flow-broken" data-testid="flow-broken-list">
+          <div className="small muted">{tr("These connections point to a scene, label or action that no longer exists. Click one to fix it.")}</div>
+          {broken.map((b, i) => (
+            <button key={i} className="issue-box" style={{ textAlign: 'left', marginBottom: 0 }} onClick={() => openScene(b.sceneId, b.actionId)} data-testid={`flow-broken-${i}`}>
+              ⛔ <b>{findScene(project, b.sceneId)?.name}</b> · {b.what} → {tr("missing destination")}
+            </button>
+          ))}
+        </div>
+      )}
       {mode === 'flow' ? (
         <div className="flow-wrap" data-testid="flow-canvas">
           <ReactFlow

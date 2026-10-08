@@ -26,6 +26,7 @@ const api: TstvnApi = {
   project: {
     create: call('project:create') as TstvnApi['project']['create'],
     open: call('project:open') as TstvnApi['project']['open'],
+    duplicate: call('project:duplicate') as TstvnApi['project']['duplicate'],
     save: call('project:save') as TstvnApi['project']['save'],
     writeRecovery: call('project:writeRecovery') as TstvnApi['project']['writeRecovery'],
     discardRecovery: call('project:discardRecovery') as TstvnApi['project']['discardRecovery'],

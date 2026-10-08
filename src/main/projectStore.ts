@@ -144,3 +144,18 @@ export class UserStore {
     await fs.rm(this.file(`templates/${path.basename(id)}.json`), { force: true });
   }
 }
+
+/**
+ * Copies a project (saved files, assets, fonts, thumbnails) into a new folder next to it, with a new id
+ * and name. The original's backups and unsaved-work recovery file stay with the original.
+ */
+export async function duplicateProject(dir: string, newName: string): Promise<OpenProjectResult> {
+  const { project } = await openProject(dir);
+  const name = newName.trim() || `${project.name} copy`;
+  const target = await uniquePath(path.join(path.dirname(path.resolve(dir)), safeName(name, 'Project copy')));
+  const skip = new Set([path.resolve(dir, META_DIR, 'backups'), recoveryFile(path.resolve(dir))]);
+  await fs.cp(dir, target, { recursive: true, filter: (src) => !skip.has(path.resolve(src)) });
+  const copy: Project = { ...project, id: newId('p'), name, createdAt: Date.now(), settings: { ...project.settings, title: project.settings.title === project.name ? name : project.settings.title } };
+  await saveProject(target, copy);
+  return { dir: target, project: copy };
+}

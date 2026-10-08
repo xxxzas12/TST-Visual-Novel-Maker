@@ -5,7 +5,7 @@ import type { Asset, AssetType, Project } from '../shared/types';
 import type { DuplicateDecision, PathMove } from '../shared/api';
 import { api, errorMessage } from './api';
 import { getDir, getProject, useProject } from './store/project';
-import { confirmDialog, toast, useUi } from './store/ui';
+import { confirmDialog, promptDialog, toast, useUi } from './store/ui';
 import { detectCharacters, mergeDetectedCharacters, charactersFromFolder } from '../shared/characters';
 import { findAssetUsages, removeAssetReferences, replaceAssetReferences } from '../shared/validate';
 import { newId } from '../shared/ids';
@@ -46,6 +46,22 @@ export async function loadProjectResult(r: { dir: string; project: Project; reco
   useUi.setState({ view: 'scenes', sceneId: firstScene, actionIds: [], gallery: { ...useUi.getState().gallery, selected: [], folder: null } });
   void api.app.setTitle(`${project.name} — TSTVN`);
   void refreshMissing();
+}
+
+/**
+ * Duplicate Project: asks for a name, saves the open project first if it is the one being copied, then
+ * copies it next to the original and opens the copy.
+ */
+export async function duplicateProjectFlow(dir: string, currentName: string): Promise<boolean> {
+  const name = await promptDialog({ title: tr("Duplicate project"), label: tr("Name of the copy"), value: tr("{0} copy", { 0: currentName }), confirmLabel: tr("Duplicate") });
+  if (!name?.trim()) return false;
+  const open = useProject.getState();
+  if (open.dir === dir && open.dirty && !(await saveNow(true))) return false;
+  const r = await run(() => api.project.duplicate(dir, name.trim()), tr("Could not duplicate the project"));
+  if (!r) return false;
+  await loadProjectResult(r);
+  toast(tr("Now editing the copy “{0}”", { 0: r.project.name }), 'success');
+  return true;
 }
 
 export async function openProjectDir(dir: string) {

@@ -172,6 +172,8 @@ export interface TstvnApi {
   project: {
     create(parentDir: string, name: string, template: string): Promise<OpenProjectResult>;
     open(dir: string): Promise<OpenProjectResult>;
+    /** Copies a project into a new folder next to it (new id and name) and opens the copy. */
+    duplicate(dir: string, name: string): Promise<OpenProjectResult>;
     save(dir: string, project: Project): Promise<number>;
     writeRecovery(dir: string, project: Project): Promise<void>;
     discardRecovery(dir: string): Promise<void>;

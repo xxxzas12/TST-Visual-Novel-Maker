@@ -1,5 +1,6 @@
 import type { JumpTarget, Project } from './types';
 import { orderedSceneIds } from './project';
+import { t } from './i18n';
 
 export interface FlowEdge {
   id: string;
@@ -71,4 +72,42 @@ export function deriveFlowEdges(p: Project): FlowEdge[] {
     }
   }
   return edges;
+}
+
+export interface BrokenLink {
+  sceneId: string;
+  actionId: string;
+  /** What points nowhere, e.g. "Choice “Go left”" or "Jump to Scene". */
+  what: string;
+}
+
+/** True when a jump target points to something that does not exist ("continue" is never broken). */
+function targetBroken(p: Project, t: JumpTarget | undefined): boolean {
+  if (!t || t.kind === 'next') return false;
+  if (t.kind === 'scene') return !t.sceneId || !p.scenes.some((s) => s.id === t.sceneId);
+  if (t.kind === 'label') return !t.label || !p.scenes.some((s) => s.actions.some((a) => a.type === 'label' && !a.disabled && a.params.name === t.label));
+  if (t.kind === 'action') return !t.actionId || !p.scenes.some((s) => s.actions.some((a) => a.id === t.actionId));
+  return true;
+}
+
+/** Connections that point to a scene, label or action that no longer exists (shown in red on the map). */
+export function brokenLinks(p: Project): BrokenLink[] {
+  const out: BrokenLink[] = [];
+  const sceneIds = new Set(p.scenes.map((s) => s.id));
+  for (const s of p.scenes) {
+    for (const a of s.actions) {
+      if (a.disabled) continue;
+      const add = (what: string) => out.push({ sceneId: s.id, actionId: a.id, what });
+      const pr = a.params ?? {};
+      if ((a.type === 'jumpScene' || a.type === 'changeScene') && (!pr.sceneId || !sceneIds.has(pr.sceneId))) add(a.type === 'jumpScene' ? t('Jump to Scene') : t('Change Scene'));
+      if ((a.type === 'jump' || a.type === 'checkVariable') && targetBroken(p, pr.target)) add(a.type === 'jump' ? t('Jump') : t('Check Variable'));
+      if (a.type === 'conditional') {
+        if (targetBroken(p, pr.then)) add(t('Conditional Branch (if true)'));
+        if (targetBroken(p, pr.else)) add(t('Conditional Branch (otherwise)'));
+      }
+      if (a.type === 'choice') for (const o of pr.options ?? []) if (targetBroken(p, o.target)) add(t('Choice “{0}”', { 0: o.text }));
+      if (a.type === 'pointAndClick') for (const h of pr.hotspots ?? []) if (targetBroken(p, h.target)) add(t('Point & Click “{0}”', { 0: h.label }));
+    }
+  }
+  return out;
 }

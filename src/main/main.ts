@@ -15,7 +15,7 @@ import { hashFile } from './hash';
 import { executeImport, scanImport, thumbPath } from './importer';
 import { importPackage, exportPackage } from './packageIO';
 import { exists, resolveInside, toPosix, uniquePath } from './paths';
-import { createProject, discardRecovery, openProject, saveProject, UserStore, writeRecovery } from './projectStore';
+import { createProject, discardRecovery, duplicateProject, openProject, saveProject, UserStore, writeRecovery } from './projectStore';
 import { electronThumbnailer } from './thumbnails';
 import { FontStore, listSystemFonts } from './fonts';
 import { readImageSize } from './imageSize';
@@ -192,6 +192,12 @@ function registerIpc() {
     await fs.mkdir(parentDir, { recursive: true });
     const userTemplate = template.startsWith('user:') ? await store.loadTemplate(template.slice(5)) : undefined;
     const r = await createProject(parentDir, name, template, userTemplate);
+    setProject(r.dir);
+    await store.addRecent(r.dir, r.project.name);
+    return r;
+  });
+  handle('project:duplicate', async (_e, dir: string, name: string) => {
+    const r = await duplicateProject(dir, name);
     setProject(r.dir);
     await store.addRecent(r.dir, r.project.name);
     return r;

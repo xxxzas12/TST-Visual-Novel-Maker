@@ -2,6 +2,16 @@
 
 All notable changes to TSTVN. Each version has a detailed report in [docs/updates](docs/updates/).
 
+## v1.0.11
+### Added
+- Story Flow: broken connections (jumps, choices, conditions, point & click objects pointing to a scene,
+  label or action that no longer exists) are detected — "⚠ N broken connection(s)" button with a clickable
+  list that opens the scene with the broken action selected, and a red ⚠ badge on the affected scene.
+- Story Flow: an "Open" button on every scene node (double-click still works).
+- **Duplicate Project**: from Project Settings (saves first, opens the copy) and from the Welcome screen's
+  recent list. Copies assets, fonts and thumbnails, with a new id and name; the original's backups and
+  recovery file are not copied.
+
 ## v1.0.10
 ### Added
 - Autosave on/off switch and interval (minutes after the first unsaved change) in Application Settings →

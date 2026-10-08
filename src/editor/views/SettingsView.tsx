@@ -8,7 +8,7 @@ import { api } from '../api';
 import { SceneSelect, NumberInput } from './scenes/fields';
 import { AssetPicker } from '../components/AssetPicker';
 import { AssetThumb } from '../components/AssetThumb';
-import { run } from '../ops';
+import { duplicateProjectFlow, run } from '../ops';
 import { GameFontSettings } from './FontSettings';
 import { GallerySettings } from './GallerySettings';
 
@@ -173,6 +173,9 @@ export function SettingsView() {
                 data-testid="save-as-template"
               >
                 {tr("⭐ Save project as Template")}
+              </button>
+              <button className="btn sm" onClick={() => void duplicateProjectFlow(dir, project.name)} data-testid="duplicate-project">
+                {tr("⧉ Duplicate project…")}
               </button>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { LanguageSelect } from '../components/LanguageSelect';
 import type { AppInfo, RecentProject, UserTemplateInfo } from '../../shared/api';
 import { BUILTIN_TEMPLATES } from '../../shared/project';
 import { api } from '../api';
-import { loadProjectResult, openProjectDir, run } from '../ops';
+import { duplicateProjectFlow, loadProjectResult, openProjectDir, run } from '../ops';
 import { confirmDialog, toast } from '../store/ui';
 import { AppSettingsButton } from './AppSettings';
 import { AppBrand } from '../components/AppBrand';
@@ -159,6 +159,18 @@ export function Welcome() {
                     <div className="small faint ellipsis">{r.path}</div>
                   </div>
                   <span className="small faint">{new Date(r.openedAt).toLocaleDateString()}</span>
+                  <button
+                    className="btn ghost sm"
+                    title={tr("Duplicate project")}
+                    aria-label={tr("Duplicate project")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void duplicateProjectFlow(r.path, r.name);
+                    }}
+                    data-testid="recent-duplicate"
+                  >
+                    ⧉
+                  </button>
                   <button
                     className="btn ghost sm"
                     title={tr("Remove from list (files are not deleted)")}
