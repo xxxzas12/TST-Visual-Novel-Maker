@@ -1,0 +1,95 @@
+name: 🐞 Bug report | แจ้งบั๊ก
+description: Something in TSTVN doesn't work as expected. | มีบางอย่างใน TSTVN ทำงานไม่ถูกต้อง
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting! Please fill in what you can. You may write in Thai or English.
+        ขอบคุณที่แจ้งปัญหา! กรอกเท่าที่ทำได้ เขียนเป็นภาษาไทยหรืออังกฤษก็ได้
+
+        > ⚠️ **Do not include passwords, API keys, tokens, personal data or other secrets** in text, screenshots, logs or attached files. This page is public.
+        > ⚠️ **ห้ามใส่รหัสผ่าน, API key, token, ข้อมูลส่วนตัว หรือข้อมูลลับอื่น ๆ** ในข้อความ ภาพหน้าจอ log หรือไฟล์แนบ หน้านี้เป็นสาธารณะ
+
+        Before reporting, please check [KNOWN_ISSUES.md](https://github.com/xxxzas12/TST-Visual-Novel-Maker/blob/main/KNOWN_ISSUES.md).
+        ก่อนแจ้ง โปรดดู [KNOWN_ISSUES.md](https://github.com/xxxzas12/TST-Visual-Novel-Maker/blob/main/KNOWN_ISSUES.md)
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary | สรุปปัญหา
+      description: What went wrong, in one or two sentences. | เกิดอะไรขึ้น สั้น ๆ หนึ่งหรือสองประโยค
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce | ขั้นตอนที่ทำให้เกิดปัญหา
+      description: Exact steps, including buttons and views. | ขั้นตอนทีละข้อ รวมถึงปุ่มและหน้าที่ใช้
+      placeholder: |
+        1. Open Scenes
+        2. Click Choice
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior | สิ่งที่ควรเกิดขึ้น
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior | สิ่งที่เกิดขึ้นจริง
+      description: Include any error message exactly as shown. | ใส่ข้อความแจ้งข้อผิดพลาดตามที่เห็น
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: TSTVN version | เวอร์ชัน TSTVN
+      description: Shown at the bottom of the welcome screen, e.g. "TSTVN 1.1.0". | ดูได้ที่ด้านล่างของหน้าเริ่มต้น
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version | เวอร์ชัน Windows
+      description: Settings → System → About. | Settings → System → About
+      placeholder: "Windows 11 23H2"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen? | เกิดที่ส่วนไหน
+      options:
+        - Installer | ตัวติดตั้ง
+        - Editor | ตัวแก้ไข (TSTVN)
+        - Preview / Play | ทดลองเล่น
+        - Exported Windows game | เกมที่ส่งออกแบบ Windows
+        - Exported Web game | เกมที่ส่งออกแบบ Web
+        - Other | อื่น ๆ
+    validations:
+      required: true
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: Does it happen every time? | เกิดทุกครั้งไหม
+      options:
+        - Every time | ทุกครั้ง
+        - Sometimes | บางครั้ง
+        - Only once | ครั้งเดียว
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots or logs | ภาพหน้าจอหรือ log
+      description: |
+        Drag images or files here. Remove any private information first.
+        ลากภาพหรือไฟล์มาวางที่นี่ ลบข้อมูลส่วนตัวออกก่อน
+    validations:
+      required: false

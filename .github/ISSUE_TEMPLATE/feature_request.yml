@@ -1,0 +1,48 @@
+name: ✨ Feature request | ขอฟีเจอร์
+description: Suggest a new feature or an improvement. | เสนอฟีเจอร์ใหม่หรือสิ่งที่ควรปรับปรุง
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the idea! You may write in Thai or English.
+        ขอบคุณสำหรับไอเดีย! เขียนเป็นภาษาไทยหรืออังกฤษก็ได้
+
+        > ⚠️ **Do not include passwords, API keys, tokens, personal data or other secrets.** This page is public.
+        > ⚠️ **ห้ามใส่รหัสผ่าน, API key, token, ข้อมูลส่วนตัว หรือข้อมูลลับอื่น ๆ** หน้านี้เป็นสาธารณะ
+  - type: input
+    id: title
+    attributes:
+      label: Feature title | ชื่อฟีเจอร์
+      placeholder: "e.g. Export to Android APK"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve? | แก้ปัญหาอะไร
+      description: What are you trying to do, and what makes it hard today? | คุณอยากทำอะไร และตอนนี้ติดตรงไหน
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution | วิธีที่เสนอ
+      description: How should it work? | ควรทำงานอย่างไร
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Example workflow or mockup | ตัวอย่างขั้นตอนการใช้งานหรือภาพร่าง
+      description: Steps you would take, or a sketch/screenshot. | ขั้นตอนที่จะใช้ หรือภาพร่าง/ภาพหน้าจอ
+    validations:
+      required: false
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it be useful? | ทำไมถึงมีประโยชน์
+      description: Who would use it, and how often? | ใครจะได้ใช้ และใช้บ่อยแค่ไหน
+    validations:
+      required: false

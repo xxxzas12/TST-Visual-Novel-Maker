@@ -2,7 +2,8 @@
 
 Each version below has a git tag, an entry in [CHANGELOG.md](../CHANGELOG.md) and a detailed report
 in [docs/updates](updates/). Dates are commit dates. Version numbers come from `package.json` and were
-raised once per feature or fix. Nothing has been published as a GitHub Release yet.
+raised once per feature or fix. Only v1.0.0 and v1.1.0 are published as GitHub Releases (see
+[below](#github-releases-downloads)).
 
 | Version | Tag commit | Date | Summary | Report |
 |---|---|---|---|---|
@@ -27,7 +28,7 @@ raised once per feature or fix. Nothing has been published as a GitHub Release y
 | 1.0.18 | bc86063 | 2026-10-08 | Style Library (reusable textbox and choice styles) | [v1.0.18](updates/v1.0.18.md) |
 | 1.0.19 | f2095da | 2026-10-08 | UI polish pass | [v1.0.19](updates/v1.0.19.md) |
 | 1.0.20 | eeb6c2b | 2026-10-08 | RC fix: startup settings no longer undo early preference changes; GitHub README/LICENSE merged | [v1.0.20](updates/v1.0.20.md) |
-| **1.1.0** | (this commit) | 2026-10-09 | First public release of the new version line; same app as 1.0.20 | [v1.1.0](updates/v1.1.0.md) |
+| **1.1.0** | 18ca57a | 2026-10-09 | First public release of the new version line; same app as 1.0.20 | [v1.1.0](updates/v1.1.0.md) |
 
 ## Where tags point
 

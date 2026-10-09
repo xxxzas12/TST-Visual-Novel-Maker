@@ -1,11 +1,14 @@
 # Builds the Windows installer for a version tag and creates a DRAFT GitHub Release with it.
 #
 #   1. Set the version in package.json (e.g. 1.2.0), commit, then tag it:  git tag v1.2.0 && git push origin v1.2.0
-#   2. This workflow builds TSTVN-Setup-1.2.0.exe from exactly that tag and creates a draft release.
+#   2. This workflow builds TSTVN-Setup-1.2.0.exe from exactly that tag and creates a draft release with the
+#      installer and its .sha256 checksum file. Notes come from docs/releases/<tag>.md (write it bilingual,
+#      Thai + English, like docs/releases/v1.1.0.md); without it, the CHANGELOG section is used (English only).
 #   3. Review the draft on GitHub (Releases) and click "Publish release".
 #
 # Safety: it never edits, replaces or deletes an existing release. If a release for the tag already
-# exists (draft or published), the run stops without changing anything. The tag must match package.json.
+# exists (draft or published), the run stops without changing anything. The tag must look like v1.2.3 and
+# match package.json.
 name: Release
 
 on:
@@ -35,6 +38,13 @@ jobs:
       run:
         shell: bash
     steps:
+      - name: Check the tag format
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a release tag like v1.2.3. Nothing was changed."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           ref: refs/tags/${{ inputs.tag || github.ref_name }}
@@ -68,12 +78,13 @@ jobs:
         # --publish never: electron-builder must not upload anything itself.
         run: npm run dist -- --publish never
 
-      - name: Release notes
+      - name: Release notes and checksum
         # docs/releases/<tag>.md if written for this version, else the version's section of CHANGELOG.md.
         run: |
           if [ -f "docs/releases/$TAG.md" ]; then
             cp "docs/releases/$TAG.md" notes.md
           else
+            echo "::warning::docs/releases/$TAG.md not found; using the English-only CHANGELOG section. Add Thai notes to the draft before publishing."
             awk -v h="## $TAG" '$0 == h { on = 1; next } on && /^## v/ { exit } on' CHANGELOG.md > section.md
             if [ ! -s section.md ]; then
               echo "::error::No notes found: add docs/releases/$TAG.md or a '## $TAG' section to CHANGELOG.md."
@@ -84,11 +95,13 @@ jobs:
           exe="release/TSTVN-Setup-$VERSION.exe"
           test -f "$exe"
           sha="$(sha256sum "$exe" | cut -d' ' -f1 | tr 'a-f' 'A-F')"
+          printf '%s  TSTVN-Setup-%s.exe\n' "$sha" "$VERSION" > "$exe.sha256"
           if ! grep -q "$sha" notes.md; then printf '\n**Checksum:** `TSTVN-Setup-%s.exe` SHA-256 `%s`\n' "$VERSION" "$sha" >> notes.md; fi
+          echo "SHA-256 of TSTVN-Setup-$VERSION.exe: $sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create the draft release
         run: |
-          gh release create "$TAG" "release/TSTVN-Setup-$VERSION.exe" \
+          gh release create "$TAG" "release/TSTVN-Setup-$VERSION.exe" "release/TSTVN-Setup-$VERSION.exe.sha256" \
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --draft \

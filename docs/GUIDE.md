@@ -104,6 +104,9 @@ working example: [plugins/README.md](../plugins/README.md).
 
 ## Quick start (users)
 
+A step-by-step tutorial in Thai and English, from download to sharing an exported game, is in
+[GETTING_STARTED.md](GETTING_STARTED.md).
+
 1. Start TSTVN (Desktop shortcut, `release/win-unpacked/TSTVN.exe`, or `npm start` from source).
 2. **Create Project** — pick a template (Blank, Romance, Horror, Mystery, Comedy, or your own).
 3. **Assets → Import Folder** (or drag a folder onto the window). Subfolders are scanned, types detected,
@@ -183,13 +186,30 @@ See [docs/architecture.md](architecture.md) and [docs/development-log.md](develo
 Installers are built by GitHub Actions; nothing is published without your approval.
 
 1. Set the new version in `package.json` (and `package-lock.json`: `npm install --package-lock-only`), add a
-   `## vX.Y.Z` section to `CHANGELOG.md` (and optionally a bilingual `docs/releases/vX.Y.Z.md`), commit.
-2. Tag and push: `git tag vX.Y.Z && git push origin main vX.Y.Z`.
-3. **Release** workflow (`.github/workflows/release.yml`) checks that the tag matches `package.json`, runs lint
-   and unit tests, builds `TSTVN-Setup-X.Y.Z.exe` from exactly that tag and creates a **draft** release with
-   the notes (from `docs/releases/vX.Y.Z.md`, else the CHANGELOG section) and the installer's SHA-256.
-4. Open **Releases** on GitHub, check the draft, and click **Publish release**.
+   `## vX.Y.Z` section to `CHANGELOG.md`, and write the bilingual release notes in `docs/releases/vX.Y.Z.md`
+   (Thai and English, same layout as [docs/releases/v1.1.0.md](releases/v1.1.0.md)). Commit.
+2. Run the checks locally: `npm run lint`, `npm test`, and the Electron end-to-end tests `npm run test:e2e`
+   (about 7 minutes; CI does not run them). Optionally `npm run dist` and test the installer.
+3. Push `main`, wait for **CI** to pass, then tag and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+4. The **Release** workflow (`.github/workflows/release.yml`):
+   - accepts only tags like `v1.2.3` (pre-release suffixes such as `-beta` are rejected);
+   - stops if a release for the tag already exists (draft or published);
+   - checks out exactly the tagged commit and checks that the tag matches `package.json`;
+   - runs `npm ci`, lint and unit tests, then builds `TSTVN-Setup-X.Y.Z.exe` with `--publish never`;
+   - creates a **draft** release with the installer, a `TSTVN-Setup-X.Y.Z.exe.sha256` file and the notes from
+     `docs/releases/vX.Y.Z.md`, with the SHA-256 appended. Without that file it falls back to the English-only
+     CHANGELOG section and shows a warning; add the Thai part to the draft by hand.
+5. Open **Releases** on GitHub, check the draft (notes, file name, checksum), and click **Publish release**.
+   Publishing makes it **Latest**, which is where the README's download links point.
 
-The workflow never edits or replaces an existing release: if a release for the tag exists, it stops. It can
-also be started by hand (Actions → Release → Run workflow) for an existing tag. **CI**
-(`.github/workflows/ci.yml`) runs lint, unit tests and the build on every push and pull request.
+The workflow only needs `contents: write` and never edits, replaces or deletes an existing release. It can also be
+started by hand (Actions → Release → Run workflow) for an existing tag that has no release yet. Don't run it for
+tags that already have releases (v1.1.0, V1.0.0): it would stop, but there is nothing to gain. Intermediate tags
+(v1.0.1–v1.0.20) deliberately have no releases.
+
+**Status:** the release workflow was reviewed and its YAML validated, but it has not run on GitHub yet. Its first
+real run will be the next version tag. **CI** (`.github/workflows/ci.yml`) runs lint, unit tests and the build on
+every push to `main`, every pull request, and by hand (Actions → CI → Run workflow); it has passed on GitHub.
+
+Never rename an installer to look like another version, and never replace the asset of a published release; make
+a new version instead.
